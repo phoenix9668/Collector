@@ -55,13 +55,13 @@ void CC1101SetAddress(uint8_t address, ADDR_MODE AddressMode);
 void CC1101SetSYNC(uint16_t sync);
 
 /*Receive a packet*/
-uint8_t CC1101RecPacket(uint8_t *rxBuffer);
+uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr);
 
 /*Initialize the WOR function of CC1101*/
-void  CC1101WORInit(void);
+void CC1101WORInit(void);
 
 /*Initialize the CC1101, User can modify it*/
-void CC1101Init(void);
+void CC1101Init(uint8_t addr, uint16_t sync);
 
 /*read some bytes from the rigisters continously*/
 void CC1101ReadMultiReg(uint8_t addr, uint8_t *buff, uint8_t size);
