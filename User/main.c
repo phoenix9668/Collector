@@ -35,7 +35,8 @@
 #define RECV_TIMEOUT    800     // 接收超时
 
 extern uint8_t   SendFlag;      // =1发送无线数据，=0不处理
-extern uint16_t  RecvWaitTime;  // 接收等待时间               
+extern uint16_t  RecvWaitTime;  // 接收等待时间
+uint8_t	Chip_Addr	= 0;					// 芯片地址
 uint16_t SendCnt = 0;           // 计数发送的数据包数  
 uint16_t RecvCnt = 0;           // 计数接收的数据包数
 
@@ -72,11 +73,11 @@ void MCU_Initial(void)
 * 说明 ：CC1101的操作，已经被建成C库，见CC1101.c文件， 提供SPI和CSN操作，	*
          即可调用其内部所有函数用户无需再关心CC1101的寄存器操作问题。       *
 ============================================================================*/
-void RF_Initial(uint8_t mode)
+void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 {
-	CC1101Init();                                       // 初始化CC1101寄存器
-	if (RX == mode)     {CC1101SetTRMode(RX_MODE);}   // 接收模式
-    else                {CC1101SetTRMode(TX_MODE);}   // 发送模式
+	CC1101Init(addr, sync);                       		// 初始化CC1101寄存器
+	if (RX == mode)     {CC1101SetTRMode(RX_MODE);}			// 接收模式
+	else                {CC1101SetTRMode(TX_MODE);}   // 发送模式
 }
 
 /*===========================================================================
@@ -85,7 +86,7 @@ void RF_Initial(uint8_t mode)
 void System_Initial(void)
 {
     MCU_Initial();      // 初始化CPU所有硬件
-    RF_Initial(RX);     // 初始化无线芯片,发送模式       
+    RF_Initial(0x31, 0x8799, RX);     // 初始化无线芯片,发送模式       
 }
 
 /*===========================================================================
@@ -98,10 +99,18 @@ uint8_t RF_SendPacket(void)
 
     uint8_t i=0;
     uint8_t SendBuffer[64];
+		int chip_address;
 //    uint8_t length;
     // 数组请零
     for (i=0; i<64; i++)
         {SendBuffer[i] = 0;}
+		printf("set receive chip address in package\r\n");
+    scanf("%d",&chip_address);
+		printf("%x\n", chip_address);
+		getchar();																// 排除回车
+		RF_Initial(chip_address, 0x8799, RX);     // 初始化无线芯片  				
+				
+		printf("please write down what you want to say\r\n");
     scanf("%[^\n]",SendBuffer);
 //    length=strlen(temp);
     printf("%s\n", SendBuffer);
@@ -112,9 +121,6 @@ uint8_t RF_SendPacket(void)
     Usart_SendString(DEBUG_USART,"Transmit OK\r\n");    
     
     CC1101SetTRMode(RX_MODE);       // 进入接收模式，等待应答
-    
-    //temp2=GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT, CC1101_IRQ_PIN);
-    //printf("%d\n", temp2);
     
     Delay(0x3FFFFF);
     
@@ -146,10 +152,19 @@ void RF_RecvHandler(void)
         for (i=0; i<64; i++)   { recv_buffer[i] = 0; } 
             
         // 读取接收到的数据长度和数据内容
-        length = CC1101RecPacket(recv_buffer);
+        length = CC1101RecPacket(recv_buffer, &Chip_Addr);
         // 打印数据
-        printf("receive data length is %d\n",length);
-        printf("receive data is %s\n",recv_buffer);
+				if(length == 0)
+				{
+					printf("receive error or Address Filtering fail\n");
+				}
+				else
+				{
+					printf("receive data length is %d\n",length);
+					printf("receive chip address is %d\n",Chip_Addr);
+					printf("receive data is %s\n",recv_buffer);
+				}
+
     }    
 }
 

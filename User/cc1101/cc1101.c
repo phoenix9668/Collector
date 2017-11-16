@@ -43,12 +43,13 @@ uint8_t temp1;//for debug
 // PA table 
 #define PA_TABLE {0xc2,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
 
-static const uint8_t CC1101InitData[22][2]= 
+static const uint8_t CC1101InitData[23][2]= 
 {
   {CC1101_IOCFG0,      0x06},
   {CC1101_FIFOTHR,     0x47},
+	{CC1101_PKTCTRL1,    0x07},
   {CC1101_PKTCTRL0,    0x05},
-  {CC1101_CHANNR,      0x01},
+  {CC1101_CHANNR,      0x00},
   {CC1101_FSCTRL1,     0x06},
   {CC1101_FREQ2,       0x0F},
   {CC1101_FREQ1,       0x62},
@@ -86,7 +87,7 @@ void  CC1101WORInit(void)
     CC1101WriteReg(CC1101_WOREVT1, 0x8C);
     CC1101WriteReg(CC1101_WOREVT0, 0xA0);
 	
-	CC1101WriteCmd(CC1101_SWORRST);
+		CC1101WriteCmd(CC1101_SWORRST);
 }
 /*
 ================================================================================
@@ -306,20 +307,11 @@ void CC1101SendPacket(uint8_t *txbuffer, uint8_t size, TX_DATA_MODE mode)
     CC1101WriteMultiReg(CC1101_TXFIFO, txbuffer, size);
     
 //    CC1101WriteCmd(CC1101_SIDLE); 	//**********************就是这个语句，卖家给的代码里没有**********************
-
-    //temp1 = GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT,CC1101_IRQ_PIN);
-    //printf("%d\n",temp1);
     
     CC1101SetTRMode(TX_MODE);
     //i = CC1101ReadStatus( CC1101_TXBYTES );//for test, TX status
-    //temp1 = GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT,CC1101_IRQ_PIN);
-    //printf("%d\n",temp1);
     while(GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT, CC1101_IRQ_PIN) != 0);
-    //temp1 = GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT,CC1101_IRQ_PIN);
-    //printf("%d\n",temp1);
     while(GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT, CC1101_IRQ_PIN) == 0);
-    //temp1 = GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT,CC1101_IRQ_PIN);
-    //printf("%d\n",temp1);
     //i = CC1101ReadStatus( CC1101_TXBYTES );//for test, TX status
 
     CC1101ClrTXBuff();
@@ -375,18 +367,17 @@ INPUT    : rxBuffer, A buffer store the received data
 OUTPUT   : 1:received count, 0:no data
 ================================================================================
 */
-uint8_t CC1101RecPacket(uint8_t *rxBuffer)
+uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr)
 {
     uint8_t status[2];
     uint8_t pktLen;
-    uint8_t addr=0;
 
     if (CC1101GetRXCnt() != 0)
     {
         pktLen=CC1101ReadReg(CC1101_RXFIFO);                    // Read length byte
         if((CC1101ReadReg(CC1101_PKTCTRL1) & ~0x03) != 0)
         {
-            addr=CC1101ReadReg(CC1101_RXFIFO);
+            *addr=CC1101ReadReg(CC1101_RXFIFO);
         }
         if(pktLen == 0) {return 0;}
         else    {pktLen--;}
@@ -408,18 +399,18 @@ INPUT    : None
 OUTPUT   : None
 ================================================================================
 */
-void CC1101Init(void)
+void CC1101Init(uint8_t addr, uint16_t sync)
 {
     volatile uint8_t i, j;
 
     CC1101Reset();    
     
-    for(i=0; i<22; i++)
+    for(i=0; i<23; i++)
     {
         CC1101WriteReg(CC1101InitData[i][0], CC1101InitData[i][1]);
     }
-    CC1101SetAddress(0x05, BROAD_0AND255);
-    CC1101SetSYNC(0x8799);
+    CC1101SetAddress(addr, BROAD_0AND255);
+    CC1101SetSYNC(sync);
     CC1101WriteReg(CC1101_MDMCFG1, 0x72); //Modem Configuration
 
     CC1101WriteMultiReg(CC1101_PATABLE, PaTabel, 8);
