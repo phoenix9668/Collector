@@ -18,6 +18,7 @@
 #include "./spi/bsp_spi.h"
 #include "./key/bsp_key.h" 
 #include "stm32f4_discovery.h"
+#include	<stdlib.h>
 
 
 /** @addtogroup STM32F4_Discovery_Peripheral_Examples
@@ -31,7 +32,7 @@
 #define TX              1       // 发送模式
 #define RX              0       // 接收模式
 #define ACK_LENGTH      10      // 应答信号长度      
-#define SEND_LENGTH     10      // 发送数据每包的长度
+#define SEND_LENGTH     60      // 发送数据每包的长度
 #define RECV_TIMEOUT    800     // 接收超时
 
 extern uint8_t   SendFlag;      // =1发送无线数据，=0不处理
@@ -41,7 +42,7 @@ uint16_t SendCnt = 0;           // 计数发送的数据包数
 uint16_t RecvCnt = 0;           // 计数接收的数据包数
 
 // 需要发送的数据  
-uint8_t SendBuffer[SEND_LENGTH] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; 
+uint8_t SendBuffer[SEND_LENGTH] = {0,0,'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z','d','a','l','u','o','b'}; 
 // 需要应答的数据
 uint8_t AckBuffer[ACK_LENGTH] = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
 
@@ -86,7 +87,7 @@ void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 void System_Initial(void)
 {
     MCU_Initial();      // 初始化CPU所有硬件
-    RF_Initial(0x31, 0x8799, RX);     // 初始化无线芯片,发送模式       
+    RF_Initial(0x5, 0xD391, RX);     // 初始化无线芯片,发送模式       
 }
 
 /*===========================================================================
@@ -102,13 +103,13 @@ uint8_t RF_SendPacket(void)
 		int chip_address;
 //    uint8_t length;
     // 数组请零
-    for (i=0; i<64; i++)
+    for (i=0; i<SEND_LENGTH; i++)
         {SendBuffer[i] = 0;}
 		printf("set receive chip address in package\r\n");
     scanf("%d",&chip_address);
 		printf("%x\n", chip_address);
 		getchar();																// 排除回车
-		RF_Initial(chip_address, 0x8799, RX);     // 初始化无线芯片  				
+		RF_Initial(chip_address, 0xD391, RX);     // 初始化无线芯片  				
 				
 		printf("please write down what you want to say\r\n");
     scanf("%[^\n]",SendBuffer);
@@ -116,7 +117,7 @@ uint8_t RF_SendPacket(void)
     printf("%s\n", SendBuffer);
 //    printf("length = %d\r\n", length);
 
-    CC1101SendPacket(SendBuffer, 60, ADDRESS_CHECK);    // 发送数据
+    CC1101SendPacket(SendBuffer, SEND_LENGTH, ADDRESS_CHECK);    // 发送数据
     
     Usart_SendString(DEBUG_USART,"Transmit OK\r\n");    
     
@@ -134,7 +135,7 @@ uint8_t RF_SendPacket(void)
 ============================================================================*/
 void RF_RecvHandler(void)
 {
-    uint8_t i=0, length=0, recv_buffer[64]={0};
+    uint8_t i=0, length=0, recv_buffer[SEND_LENGTH]={0};
     
     CC1101ReadStatus( CC1101_RXBYTES );//for test, TX status
     //temp2 = GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT,CC1101_IRQ_PIN);
@@ -149,7 +150,7 @@ void RF_RecvHandler(void)
         while (CC1101_IRQ_READ() == 0);
 
         // 数据请零，防止误判断
-        for (i=0; i<64; i++)   { recv_buffer[i] = 0; } 
+        for (i=0; i<SEND_LENGTH; i++)   { recv_buffer[i] = 0; } 
             
         // 读取接收到的数据长度和数据内容
         length = CC1101RecPacket(recv_buffer, &Chip_Addr);

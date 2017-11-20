@@ -41,33 +41,92 @@ uint8_t temp1;//for debug
 // Modulated = true 
 // Channel number = 1 
 // PA table 
-#define PA_TABLE {0xc2,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
+//#define PA_TABLE {0xc2,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
 
-static const uint8_t CC1101InitData[23][2]= 
+//static const uint8_t CC1101InitData[23][2]= 
+//{
+//  {CC1101_IOCFG0,      0x06},
+//  {CC1101_FIFOTHR,     0x47},
+//	{CC1101_PKTCTRL1,    0x07},
+//  {CC1101_PKTCTRL0,    0x05},
+//  {CC1101_CHANNR,      0x00},
+//  {CC1101_FSCTRL1,     0x06},
+//  {CC1101_FREQ2,       0x0F},
+//  {CC1101_FREQ1,       0x62},
+//  {CC1101_FREQ0,       0x76},
+//  {CC1101_MDMCFG4,     0xF6},
+//  {CC1101_MDMCFG3,     0x43},
+//  {CC1101_MDMCFG2,     0x13},
+//  {CC1101_DEVIATN,     0x15},
+//  {CC1101_MCSM0,       0x18},
+//  {CC1101_FOCCFG,      0x16},
+//  {CC1101_WORCTRL,     0xFB},
+//  {CC1101_FSCAL3,      0xE9},
+//  {CC1101_FSCAL2,      0x2A},
+//  {CC1101_FSCAL1,      0x00},
+//  {CC1101_FSCAL0,      0x1F},
+//  {CC1101_TEST2,       0x81},
+//  {CC1101_TEST1,       0x35},
+//  {CC1101_MCSM1,       0x3B},
+//};
+
+// Sync word qualifier mode = 30/32 sync word bits detected 
+// CRC autoflush = false 
+// Channel spacing = 199.951172 
+// Data format = Normal mode 
+// Data rate = 76.767
+// RX filter BW = 232.142857
+// PA ramping = false 
+// Preamble count = 4 
+// Whitening = ture 
+// Address config = Address check and 0 (0x00) and 255 (0xFF) broadcast
+// Carrier frequency = 432.999817
+// Device address = 5 
+// TX power = 10 
+// Manchester enable = ture 
+// CRC enable = true 
+// Deviation = 31.738281
+// Packet length mode = Variable packet length mode. Packet length configured by the first byte after sync word 
+// Packet length = 255 
+// Modulation format = 2-FSK
+// Base frequency = 432.999817
+// Modulated = true 
+// Channel number = 0 
+// PA table 
+#define PA_TABLE {0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
+
+static const uint8_t CC1101InitData[29][2]= 
 {
   {CC1101_IOCFG0,      0x06},
   {CC1101_FIFOTHR,     0x47},
 	{CC1101_PKTCTRL1,    0x07},
-  {CC1101_PKTCTRL0,    0x05},
+  {CC1101_PKTCTRL0,    0x45},
   {CC1101_CHANNR,      0x00},
-  {CC1101_FSCTRL1,     0x06},
-  {CC1101_FREQ2,       0x0F},
-  {CC1101_FREQ1,       0x62},
-  {CC1101_FREQ0,       0x76},
-  {CC1101_MDMCFG4,     0xF6},
-  {CC1101_MDMCFG3,     0x43},
-  {CC1101_MDMCFG2,     0x13},
-  {CC1101_DEVIATN,     0x15},
+  {CC1101_FSCTRL1,     0x0B},
+  {CC1101_FREQ2,       0x10},
+  {CC1101_FREQ1,       0xA7},
+  {CC1101_FREQ0,       0x62},
+  {CC1101_MDMCFG4,     0x7B},
+  {CC1101_MDMCFG3,     0x83},
+  {CC1101_MDMCFG2,     0x8B},
+  {CC1101_DEVIATN,     0x42},
+	{CC1101_MCSM1,       0x30},
   {CC1101_MCSM0,       0x18},
-  {CC1101_FOCCFG,      0x16},
+  {CC1101_FOCCFG,      0x1D},
+	{CC1101_BSCFG,			 0x1C},
+	{CC1101_AGCCTRL2,    0xC7},
+	{CC1101_AGCCTRL1,    0x00},
+	{CC1101_AGCCTRL0,  	 0xB2},
   {CC1101_WORCTRL,     0xFB},
-  {CC1101_FSCAL3,      0xE9},
+	{CC1101_FREND1,      0xB6},
+  {CC1101_FSCAL3,      0xEA},
   {CC1101_FSCAL2,      0x2A},
   {CC1101_FSCAL1,      0x00},
   {CC1101_FSCAL0,      0x1F},
   {CC1101_TEST2,       0x81},
   {CC1101_TEST1,       0x35},
-  {CC1101_MCSM1,       0x3B},
+	{CC1101_TEST0,       0x09},
+
 };
 
 /*
@@ -82,11 +141,14 @@ void  CC1101WORInit(void)
 {
 
     CC1101WriteReg(CC1101_MCSM0, 0x18);
-    CC1101WriteReg(CC1101_WORCTRL, 0x78); //Wake On Radio Control
-    CC1101WriteReg(CC1101_MCSM2, 0x00);
+    CC1101WriteReg(CC1101_WORCTRL, 0x78); //EVENT1 = 7,RC_CAL = 1,WOR_RES = 0
+																					//tEvent1 = 750/fXOSC * 7 = 48*750/(26*10^6) = 1.385ms
+    CC1101WriteReg(CC1101_MCSM2, 0x00);		//RX_TIME = 0,Duty cycle = 12.5%
+																					//tRXtimeout = tEvent0 * Duty cycle = 129.75ms
     CC1101WriteReg(CC1101_WOREVT1, 0x8C);
-    CC1101WriteReg(CC1101_WOREVT0, 0xA0);
-	
+    CC1101WriteReg(CC1101_WOREVT0, 0xA0);	//EVENT = 0d36000
+																					//tEvent0 = 750/fXOSC * EVENT0 * 2^(5*wWOR_RES)
+																					//tEvent0 = 750/(26*10^6) * 36000 * 2^0 = 1.038s
 		CC1101WriteCmd(CC1101_SWORRST);
 }
 /*
