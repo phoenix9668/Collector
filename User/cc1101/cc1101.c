@@ -148,6 +148,33 @@ void CC1101WORInit(void)
 		CC1101WriteReg(CC1101_WOREVT0, 0xA0);	//EVENT0 = 0d36000
 																					//tEvent0 = 750/fXOSC * EVENT0 * 2^(5*WOR_RES)
 																					//tEvent0 = 750/(26*10^6) * 36000 * 2^0 = 1.038s
+}
+
+//测试用tEvent0 = 60.495s，tRXtimeout = 1.18s，测得RX状态下电流17.72mA，SLEEP状态下电流0.3uA
+//void CC1101WORInit(void)
+//{
+//    CC1101WriteReg(CC1101_MCSM0, 0x18);
+//    CC1101WriteReg(CC1101_WORCTRL, 0x79); //EVENT1 = 7,RC_CAL = 1,WOR_RES = 1
+//																					//tEvent1 = 750/fXOSC * 7 = 48*750/(26*10^6) = 1.385ms
+//    CC1101WriteReg(CC1101_MCSM2, 0x00);		//RX_TIME = 0,Duty cycle = 1.95%
+//																					//tRXtimeout = tEvent0 * Duty cycle = 1.18s
+//		CC1101WriteReg(CC1101_WOREVT1, 0xFF);
+//		CC1101WriteReg(CC1101_WOREVT0, 0xFF);	//EVENT0 = 0d65535
+//																					//tEvent0 = 750/fXOSC * EVENT0 * 2^(5*WOR_RES)
+//																					//tEvent0 = 750/(26*10^6) * 65535 * 2^5 = 60.495s
+//}
+/*
+================================================================================
+Function : CC1101SetWORMode()
+    set the WOR function of CC1101,include configure IOCFG0,IOCFG2
+INPUT    : None
+OUTPUT   : None
+================================================================================
+*/
+void CC1101SetWORMode(void)
+{
+		CC1101WriteReg(CC1101_IOCFG0, 0x46);
+		CC1101WriteReg(CC1101_IOCFG2, 0x64);	//Event0 monitor
 		CC1101WriteCmd(CC1101_SWORRST);
 		CC1101WriteCmd(CC1101_SWOR);
 }
