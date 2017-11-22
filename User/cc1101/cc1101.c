@@ -137,19 +137,19 @@ INPUT    : None
 OUTPUT   : None
 ================================================================================
 */
-void  CC1101WORInit(void)
+void CC1101WORInit(void)
 {
-
     CC1101WriteReg(CC1101_MCSM0, 0x18);
     CC1101WriteReg(CC1101_WORCTRL, 0x78); //EVENT1 = 7,RC_CAL = 1,WOR_RES = 0
 																					//tEvent1 = 750/fXOSC * 7 = 48*750/(26*10^6) = 1.385ms
     CC1101WriteReg(CC1101_MCSM2, 0x00);		//RX_TIME = 0,Duty cycle = 12.5%
 																					//tRXtimeout = tEvent0 * Duty cycle = 129.75ms
     CC1101WriteReg(CC1101_WOREVT1, 0x8C);
-    CC1101WriteReg(CC1101_WOREVT0, 0xA0);	//EVENT = 0d36000
-																					//tEvent0 = 750/fXOSC * EVENT0 * 2^(5*wWOR_RES)
+		CC1101WriteReg(CC1101_WOREVT0, 0xA0);	//EVENT0 = 0d36000
+																					//tEvent0 = 750/fXOSC * EVENT0 * 2^(5*WOR_RES)
 																					//tEvent0 = 750/(26*10^6) * 36000 * 2^0 = 1.038s
 		CC1101WriteCmd(CC1101_SWORRST);
+		CC1101WriteCmd(CC1101_SWOR);
 }
 /*
 ================================================================================
@@ -467,7 +467,7 @@ void CC1101Init(uint8_t addr, uint16_t sync)
 
     CC1101Reset();    
     
-    for(i=0; i<23; i++)
+    for(i=0; i<29; i++)
     {
         CC1101WriteReg(CC1101InitData[i][0], CC1101InitData[i][1]);
     }

@@ -61,12 +61,19 @@ you must offer the following functions for this module
 #define CC1101_GDO2_PIN                 GPIO_Pin_6                  /* PE.06 */
 #define CC1101_GDO2_GPIO_PORT           GPIOE                       /* GPIOE */
 #define CC1101_GDO2_GPIO_CLK            RCC_AHB1Periph_GPIOE
+#define CC1101_GDO2_EXTI_PORTSOURCE  		EXTI_PortSourceGPIOE
+#define CC1101_GDO2_EXTI_PINSOURCE    	EXTI_PinSource6
+#define CC1101_GDO2_EXTI_LINE         	EXTI_Line6
+#define CC1101_GDO2_EXTI_IRQ          	EXTI9_5_IRQn
+#define CC1101_GDO2_IRQHandler         	EXTI9_5_IRQHandler
 
 #define CC1101_CSN_LOW()                GPIO_ResetBits(CC1101_SPI_CSN_GPIO_PORT,CC1101_SPI_CSN_PIN)
 
 #define CC1101_CSN_HIGH()               GPIO_SetBits(CC1101_SPI_CSN_GPIO_PORT,CC1101_SPI_CSN_PIN)
 
 #define CC1101_IRQ_READ()               GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT,CC1101_IRQ_PIN)
+
+#define CC1101_GDO2_READ()             	GPIO_ReadInputDataBit(CC1101_GDO2_GPIO_PORT,CC1101_GDO2_PIN)
 
 /**
   * @brief  LED Interface pins

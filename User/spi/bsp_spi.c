@@ -15,6 +15,29 @@
 #include "./spi/bsp_spi.h"
 #include "./usart/bsp_debug_usart.h"
 
+ /**
+  * @brief  配置嵌套向量中断控制器NVIC
+  * @param  无
+  * @retval 无
+  */
+//static void NVIC_Configuration(void)
+//{
+//  NVIC_InitTypeDef NVIC_InitStructure;
+//  
+//  /* 配置NVIC为优先级组1 */
+//  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_1);
+//  
+//  /* 配置中断源：GDO2 */
+//  NVIC_InitStructure.NVIC_IRQChannel = CC1101_GDO2_EXTI_IRQ;
+//  /* 配置抢占优先级:1 */
+//  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+//  /* 配置子优先级:1 */
+//  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+//  /* 配置中断通道 */
+//  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+//  NVIC_Init(&NVIC_InitStructure);
+//}
+
 /**
   * @brief  GPIO_Initial function
   * @param  None
@@ -23,11 +46,18 @@
 void GPIO_Initial(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
+//		EXTI_InitTypeDef EXTI_InitStructure;
     //开启GPIO外设时钟
     RCC_AHB1PeriphClockCmd(LED_GPIO_CLK, ENABLE);
     RCC_AHB1PeriphClockCmd(CC1101_IRQ_GPIO_CLK, ENABLE);
     RCC_AHB1PeriphClockCmd(CC1101_GDO2_GPIO_CLK, ENABLE);
     
+		//使能 SYSCFG 时钟 ,使用GPIO外部中断时必须使能SYSCFG时钟
+//		RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);  
+
+		//配置NVIC
+//		NVIC_Configuration();
+	
     //配置LED3的GPIO引脚
     GPIO_InitStructure.GPIO_Pin = LED3_Orange_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
@@ -60,6 +90,18 @@ void GPIO_Initial(void)
     GPIO_InitStructure.GPIO_Pin = CC1101_GDO2_PIN;
     GPIO_Init(CC1101_GDO2_GPIO_PORT, &GPIO_InitStructure);
     
+//		//连接EXTI中断源到GDO2引脚
+//		SYSCFG_EXTILineConfig(CC1101_GDO2_EXTI_PORTSOURCE,CC1101_GDO2_EXTI_PINSOURCE);
+
+//		//选择EXTI中断源
+//		EXTI_InitStructure.EXTI_Line = CC1101_GDO2_EXTI_LINE;
+//		//中断模式
+//		EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+//		//下降沿触发
+//		EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  
+//		//使能中断/事件线
+//		EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+//		EXTI_Init(&EXTI_InitStructure);
 }
 
 /**
@@ -80,8 +122,8 @@ void SPI_Initial(void)
 
     /* Set Pin AF */
     GPIO_PinAFConfig(CC1101_SPI_SCK_GPIO_PORT, CC1101_SPI_SCK_SOURCE, CC1101_SPI_SCK_AF);
-	GPIO_PinAFConfig(CC1101_SPI_MISO_GPIO_PORT, CC1101_SPI_MISO_SOURCE, CC1101_SPI_MISO_AF); 
-	GPIO_PinAFConfig(CC1101_SPI_MOSI_GPIO_PORT, CC1101_SPI_MOSI_SOURCE, CC1101_SPI_MOSI_AF); 
+		GPIO_PinAFConfig(CC1101_SPI_MISO_GPIO_PORT, CC1101_SPI_MISO_SOURCE, CC1101_SPI_MISO_AF); 
+		GPIO_PinAFConfig(CC1101_SPI_MOSI_GPIO_PORT, CC1101_SPI_MOSI_SOURCE, CC1101_SPI_MOSI_AF); 
     
     /* Set SPI_SCK Pin */
     GPIO_InitStructure.GPIO_Pin = CC1101_SPI_SCK_PIN;

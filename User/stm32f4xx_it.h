@@ -50,6 +50,7 @@ void PendSV_Handler(void);
 void SysTick_Handler(void);
 void DEBUG_USART_IRQHandler(void);
 void BASIC_TIM_IRQHandler(void);
+void CC1101_GDO2_IRQHandler(void);
 
 #ifdef __cplusplus
 }

@@ -60,6 +60,9 @@ uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr);
 /*Initialize the WOR function of CC1101*/
 void CC1101WORInit(void);
 
+/*Set the device as the WOR mode*/
+void CC1101SetWORMode(void);
+
 /*Initialize the CC1101, User can modify it*/
 void CC1101Init(uint8_t addr, uint16_t sync);
 
