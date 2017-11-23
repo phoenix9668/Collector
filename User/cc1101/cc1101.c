@@ -456,7 +456,7 @@ INPUT    : rxBuffer, A buffer store the received data
 OUTPUT   : 1:received count, 0:no data
 ================================================================================
 */
-uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr)
+uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr, uint8_t *rssi)
 {
     uint8_t status[2];
     uint8_t pktLen;
@@ -466,12 +466,13 @@ uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr)
         pktLen=CC1101ReadReg(CC1101_RXFIFO);                    // Read length byte
         if((CC1101ReadReg(CC1101_PKTCTRL1) & ~0x03) != 0)
         {
-            *addr=CC1101ReadReg(CC1101_RXFIFO);
+            *addr = CC1101ReadReg(CC1101_RXFIFO);
         }
         if(pktLen == 0) {return 0;}
         else    {pktLen--;}
         CC1101ReadMultiReg(CC1101_RXFIFO, rxBuffer, pktLen);    // Pull data
-        CC1101ReadMultiReg(CC1101_RXFIFO, status, 2);           // Read  status bytes
+        CC1101ReadMultiReg(CC1101_RXFIFO, status, 2);           // Read status bytes
+				*rssi = status[0];
 
         CC1101ClrRXBuff();
 
@@ -504,10 +505,49 @@ void CC1101Init(uint8_t addr, uint16_t sync)
 
     CC1101WriteMultiReg(CC1101_PATABLE, PaTabel, 8);
 
-    i = CC1101ReadStatus( CC1101_PARTNUM);//for test, must be 0x00
-    i = CC1101ReadStatus( CC1101_VERSION);//for test, refer to the datasheet,must be 0x14
+    i = CC1101ReadStatus(CC1101_PARTNUM);//for test, must be 0x00
+    i = CC1101ReadStatus(CC1101_VERSION);//for test, refer to the datasheet,must be 0x14
 }
-
+/*
+================================================================================
+Function : int16_t CC1101ReadRSSI(void)
+    Read the RSSI value of the CC1101
+INPUT    : RSSI, 8bit 
+OUTPUT   : rssi_dBm
+================================================================================
+*/
+int16_t CC1101ReadRSSI(void)
+{
+	uint8_t rssi_dec;
+	int16_t rssi_dBm;
+	uint8_t	rssi_offset = 74;
+	
+	rssi_dec = CC1101ReadStatus(CC1101_RSSI);
+	if(rssi_dec >= 128)
+		rssi_dBm = (int16_t)((int16_t)(rssi_dec - 256)/2) - rssi_offset;
+	else
+		rssi_dBm = (rssi_dec/2) - rssi_offset;
+	return rssi_dBm;
+}
+/*
+================================================================================
+Function : int16_t CC1101CalcRSSI_dBm(uint8_t)
+    Calc the RSSI value to RSSI dBm
+INPUT    : RSSI, 8bit 
+OUTPUT   : rssi_dBm
+================================================================================
+*/
+int16_t CC1101CalcRSSI_dBm(uint8_t rssi_dec)
+{
+	int16_t rssi_dBm;
+	uint8_t	rssi_offset = 74;
+	
+	if(rssi_dec >= 128)
+		rssi_dBm = (int16_t)((int16_t)(rssi_dec - 256)/2) - rssi_offset;
+	else
+		rssi_dBm = (rssi_dec/2) - rssi_offset;
+	return rssi_dBm;
+}
 /*
 ================================================================================
 ------------------------------------THE END-------------------------------------

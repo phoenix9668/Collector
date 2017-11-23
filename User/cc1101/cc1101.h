@@ -55,7 +55,7 @@ void CC1101SetAddress(uint8_t address, ADDR_MODE AddressMode);
 void CC1101SetSYNC(uint16_t sync);
 
 /*Receive a packet*/
-uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr);
+uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr, uint8_t *rssi);
 
 /*Initialize the WOR function of CC1101*/
 void CC1101WORInit(void);
@@ -89,6 +89,12 @@ void CC1101WriteMultiReg(uint8_t addr, uint8_t *buff, uint8_t size);
 
 /*write one byte through SPI,in the meantime read one byte*/
 extern uint8_t SPI_ExchangeByte(SPI_TypeDef* SPIx, uint8_t input);
+
+/*Read the RSSI value in rx*/
+int16_t CC1101ReadRSSI(void);
+
+/*Calc the RSSI value to RSSI dBm*/
+int16_t CC1101CalcRSSI_dBm(uint8_t rssi_dec);
 
 #endif // _CC1101_H_
 

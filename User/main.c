@@ -38,6 +38,7 @@
 extern uint8_t   SendFlag;      // =1发送无线数据，=0不处理
 extern uint16_t  RecvWaitTime;  // 接收等待时间
 uint8_t	Chip_Addr	= 0;					// 芯片地址
+uint8_t	RSSI = 0;								// RSSI状态值
 uint16_t SendCnt = 0;           // 计数发送的数据包数  
 uint16_t RecvCnt = 0;           // 计数接收的数据包数
 
@@ -140,6 +141,7 @@ uint8_t RF_SendPacket(void)
 void Get_Address(void)
 {   
 		int chip_address;
+		unsigned int	sync_word;
 	
 		CC1101SetIdle();			//退出WOR模式
 		Delay(0x3FFFF);
@@ -150,7 +152,12 @@ void Get_Address(void)
     scanf("%d",&chip_address);
 		printf("%x\n", chip_address);
 		getchar();																// 排除回车
-		RF_Initial(chip_address, 0xD391, RX);     // 初始化无线芯片
+	
+		printf("set receive chip sync word in package\r\n");
+    scanf("%x",&sync_word);
+		printf("%x\n", sync_word);
+		getchar();																// 排除回车
+		RF_Initial(chip_address, sync_word, RX);     // 初始化无线芯片
 }
 
 /*===========================================================================
@@ -159,7 +166,7 @@ void Get_Address(void)
 void RF_RecvHandler(void)
 {
 	uint8_t i=0, length=0, recv_buffer[SEND_LENGTH]={0};
-    
+	int16_t rssi_p,rssi_dBm;
 	//CC1101ReadStatus(CC1101_RXBYTES);//for test, TX status
 
 	//CC1101SetTRMode(RX_MODE);           // 设置RF芯片接收模式，接收数据
@@ -176,8 +183,10 @@ void RF_RecvHandler(void)
 			while (CC1101_IRQ_READ() == 0);
 			for (i=0; i<SEND_LENGTH; i++)   { recv_buffer[i] = 0; } // clear array
             
+			rssi_p = CC1101ReadRSSI();
+			printf("RSSI_p = %ddBm ",rssi_p);
 			// 读取接收到的数据长度和数据内容
-			length = CC1101RecPacket(recv_buffer, &Chip_Addr);
+			length = CC1101RecPacket(recv_buffer, &Chip_Addr, &RSSI);
 			// 打印数据
 			if(length == 0)
 				{
@@ -185,15 +194,17 @@ void RF_RecvHandler(void)
 				}
 			else
 				{
-					printf("receive data length is %d\n",length);
-					printf("receive chip address is %d\n",Chip_Addr);
-					printf("receive data is %d\n",recv_buffer[0]);
-					printf("receive data is %s\n",recv_buffer);
+						rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
+						printf("RSSI = %ddBm, length = %d, address = %d, number = %d\n%s\n",rssi_dBm,length,Chip_Addr,recv_buffer[0],recv_buffer);
+//					printf("receive data length is %d\n",length);
+//					printf("receive chip address is %d\n",Chip_Addr);
+//					printf("receive data is %d\n",recv_buffer[0]);
+//					printf("receive data is %s\n",recv_buffer);
 				}
-			temp2 = CC1101ReadStatus(CC1101_WORTIME1);//for test, TX status
-			printf("WORTIME1 is %x\n",temp2);
-			temp2 = CC1101ReadStatus(CC1101_WORTIME0);//for test, TX status
-			printf("WORTIME0 is %x\n",temp2);
+//			temp2 = CC1101ReadStatus(CC1101_WORTIME1);//for test, TX status
+//			printf("WORTIME1 is %x\n",temp2);
+//			temp2 = CC1101ReadStatus(CC1101_WORTIME0);//for test, TX status
+//			printf("WORTIME0 is %x\n",temp2);
 			CC1101SetIdle();																	// 空闲模式，以转到sleep状态
 			CC1101WORInit();																	// 初始化电磁波激活功能
 			CC1101SetWORMode();
