@@ -137,19 +137,46 @@ INPUT    : None
 OUTPUT   : None
 ================================================================================
 */
-void  CC1101WORInit(void)
+void CC1101WORInit(void)
 {
-
     CC1101WriteReg(CC1101_MCSM0, 0x18);
     CC1101WriteReg(CC1101_WORCTRL, 0x78); //EVENT1 = 7,RC_CAL = 1,WOR_RES = 0
 																					//tEvent1 = 750/fXOSC * 7 = 48*750/(26*10^6) = 1.385ms
     CC1101WriteReg(CC1101_MCSM2, 0x00);		//RX_TIME = 0,Duty cycle = 12.5%
 																					//tRXtimeout = tEvent0 * Duty cycle = 129.75ms
     CC1101WriteReg(CC1101_WOREVT1, 0x8C);
-    CC1101WriteReg(CC1101_WOREVT0, 0xA0);	//EVENT = 0d36000
-																					//tEvent0 = 750/fXOSC * EVENT0 * 2^(5*wWOR_RES)
+		CC1101WriteReg(CC1101_WOREVT0, 0xA0);	//EVENT0 = 0d36000
+																					//tEvent0 = 750/fXOSC * EVENT0 * 2^(5*WOR_RES)
 																					//tEvent0 = 750/(26*10^6) * 36000 * 2^0 = 1.038s
+}
+
+//测试用tEvent0 = 60.495s，tRXtimeout = 1.18s，测得RX状态下电流17.72mA，SLEEP状态下电流0.3uA
+//void CC1101WORInit(void)
+//{
+//    CC1101WriteReg(CC1101_MCSM0, 0x18);
+//    CC1101WriteReg(CC1101_WORCTRL, 0x79); //EVENT1 = 7,RC_CAL = 1,WOR_RES = 1
+//																					//tEvent1 = 750/fXOSC * 7 = 48*750/(26*10^6) = 1.385ms
+//    CC1101WriteReg(CC1101_MCSM2, 0x00);		//RX_TIME = 0,Duty cycle = 1.95%
+//																					//tRXtimeout = tEvent0 * Duty cycle = 1.18s
+//		CC1101WriteReg(CC1101_WOREVT1, 0xFF);
+//		CC1101WriteReg(CC1101_WOREVT0, 0xFF);	//EVENT0 = 0d65535
+//																					//tEvent0 = 750/fXOSC * EVENT0 * 2^(5*WOR_RES)
+//																					//tEvent0 = 750/(26*10^6) * 65535 * 2^5 = 60.495s
+//}
+/*
+================================================================================
+Function : CC1101SetWORMode()
+    set the WOR function of CC1101,include configure IOCFG0,IOCFG2
+INPUT    : None
+OUTPUT   : None
+================================================================================
+*/
+void CC1101SetWORMode(void)
+{
+		CC1101WriteReg(CC1101_IOCFG0, 0x46);
+		CC1101WriteReg(CC1101_IOCFG2, 0x64);	//Event0 monitor
 		CC1101WriteCmd(CC1101_SWORRST);
+		CC1101WriteCmd(CC1101_SWOR);
 }
 /*
 ================================================================================
@@ -429,7 +456,7 @@ INPUT    : rxBuffer, A buffer store the received data
 OUTPUT   : 1:received count, 0:no data
 ================================================================================
 */
-uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr)
+uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr, uint8_t *rssi)
 {
     uint8_t status[2];
     uint8_t pktLen;
@@ -439,12 +466,13 @@ uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr)
         pktLen=CC1101ReadReg(CC1101_RXFIFO);                    // Read length byte
         if((CC1101ReadReg(CC1101_PKTCTRL1) & ~0x03) != 0)
         {
-            *addr=CC1101ReadReg(CC1101_RXFIFO);
+            *addr = CC1101ReadReg(CC1101_RXFIFO);
         }
         if(pktLen == 0) {return 0;}
         else    {pktLen--;}
         CC1101ReadMultiReg(CC1101_RXFIFO, rxBuffer, pktLen);    // Pull data
-        CC1101ReadMultiReg(CC1101_RXFIFO, status, 2);           // Read  status bytes
+        CC1101ReadMultiReg(CC1101_RXFIFO, status, 2);           // Read status bytes
+				*rssi = status[0];
 
         CC1101ClrRXBuff();
 
@@ -467,7 +495,7 @@ void CC1101Init(uint8_t addr, uint16_t sync)
 
     CC1101Reset();    
     
-    for(i=0; i<23; i++)
+    for(i=0; i<29; i++)
     {
         CC1101WriteReg(CC1101InitData[i][0], CC1101InitData[i][1]);
     }
@@ -477,10 +505,49 @@ void CC1101Init(uint8_t addr, uint16_t sync)
 
     CC1101WriteMultiReg(CC1101_PATABLE, PaTabel, 8);
 
-    i = CC1101ReadStatus( CC1101_PARTNUM);//for test, must be 0x00
-    i = CC1101ReadStatus( CC1101_VERSION);//for test, refer to the datasheet,must be 0x14
+    i = CC1101ReadStatus(CC1101_PARTNUM);//for test, must be 0x00
+    i = CC1101ReadStatus(CC1101_VERSION);//for test, refer to the datasheet,must be 0x14
 }
-
+/*
+================================================================================
+Function : int16_t CC1101ReadRSSI(void)
+    Read the RSSI value of the CC1101
+INPUT    : RSSI, 8bit 
+OUTPUT   : rssi_dBm
+================================================================================
+*/
+int16_t CC1101ReadRSSI(void)
+{
+	uint8_t rssi_dec;
+	int16_t rssi_dBm;
+	uint8_t	rssi_offset = 74;
+	
+	rssi_dec = CC1101ReadStatus(CC1101_RSSI);
+	if(rssi_dec >= 128)
+		rssi_dBm = (int16_t)((int16_t)(rssi_dec - 256)/2) - rssi_offset;
+	else
+		rssi_dBm = (rssi_dec/2) - rssi_offset;
+	return rssi_dBm;
+}
+/*
+================================================================================
+Function : int16_t CC1101CalcRSSI_dBm(uint8_t)
+    Calc the RSSI value to RSSI dBm
+INPUT    : RSSI, 8bit 
+OUTPUT   : rssi_dBm
+================================================================================
+*/
+int16_t CC1101CalcRSSI_dBm(uint8_t rssi_dec)
+{
+	int16_t rssi_dBm;
+	uint8_t	rssi_offset = 74;
+	
+	if(rssi_dec >= 128)
+		rssi_dBm = (int16_t)((int16_t)(rssi_dec - 256)/2) - rssi_offset;
+	else
+		rssi_dBm = (rssi_dec/2) - rssi_offset;
+	return rssi_dBm;
+}
 /*
 ================================================================================
 ------------------------------------THE END-------------------------------------

@@ -165,7 +165,12 @@ void BASIC_TIM_IRQHandler(void)
 {
 	if (TIM_GetITStatus(BASIC_TIM, TIM_IT_Update) != RESET ) 
 	{	
-        if(RecvWaitTime != 0)   {RecvWaitTime--;}   // 数据接收计时
+        if(RecvWaitTime != 0 && RecvWaitTime != 1)												// 数据接收计时
+					{	RecvWaitTime--;}
+				else if(RecvWaitTime == 1)
+					{	RecvFlag=1;}
+				else
+					{	RecvFlag=0;}
         
         if(SendTime != 0)                           // 1ms时间到，置位SendFlag标志，主函数查询发送数据    
         { 
@@ -178,6 +183,17 @@ void BASIC_TIM_IRQHandler(void)
         TIM_ClearITPendingBit(BASIC_TIM, TIM_IT_Update);  	      
 	}		 	
 }
+
+//void CC1101_GDO2_IRQHandler(void)
+//{
+//  //是否产生EXTI Line中断
+//	if(EXTI_GetITStatus(CC1101_GDO2_EXTI_LINE) != RESET) 
+//	{	
+//		LED5_Red_TOG();
+//    //清除中断标志位
+//		EXTI_ClearITPendingBit(CC1101_GDO2_EXTI_LINE);     
+//	}  
+//}
 
 /**
   * @}
