@@ -31,21 +31,21 @@
 #define TX              0       // 发送模式
 #define RX              1       // 接收模式
 #define IDLE          	2       // 空闲模式
-#define ACK_LENGTH      10      // 应答信号长度      
+#define ACK_LENGTH      11      // 应答信号长度      
 #define SEND_LENGTH     60      // 发送数据每包的长度
-#define RECV_TIMEOUT    800     // 接收超时
+#define RECV_TIMEOUT		2000    // 接收等待2s
 
-extern uint8_t   SendFlag;      // =1发送无线数据，=0不处理
-extern uint16_t  RecvWaitTime;  // 接收等待时间
+extern uint16_t RecvWaitTime;  	// 接收等待时间
+extern uint8_t RecvFlag;       	// =1接收等待时间结束，=0不处理
 uint8_t	Chip_Addr	= 0;					// 芯片地址
 uint8_t	RSSI = 0;								// RSSI状态值
-uint16_t SendCnt = 0;           // 计数发送的数据包数  
+uint16_t SendCnt = 0;           // 计数发送的数据包数
 uint16_t RecvCnt = 0;           // 计数接收的数据包数
 
 // 需要发送的数据  
 uint8_t SendBuffer[SEND_LENGTH] = {0};
 // 需要应答的数据
-uint8_t AckBuffer[ACK_LENGTH] = {10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+uint8_t AckBuffer[ACK_LENGTH] = {'a','c','k','n','o','w','l','e','d','g','e'};
 
 uint8_t temp2;
 
@@ -54,6 +54,7 @@ uint8_t temp2;
 /* Private function prototypes -----------------------------------------------*/
 void Delay(__IO uint32_t nCount);
 static void Show_Message(void);
+uint8_t	RF_Acknowledge(void);
 /* Private functions ---------------------------------------------------------*/
 
 /*===========================================================================
@@ -98,14 +99,14 @@ void System_Initial(void)
 }
 
 /*===========================================================================
-* 函数 : BSP_RF_SendPacket() => 无线发送数据函数                            *
+* 函数 : RF_SendPacket() => 无线发送数据函数                            *
 * 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                     *
 * 输出 ：0，发送失败；else，发送成功                                        *
 ============================================================================*/
 uint8_t RF_SendPacket(void)
 {
 
-	uint8_t i=0;		
+	uint8_t i=0;	
 	
 	for (i=0; i<SEND_LENGTH; i++) // clear array
 		{SendBuffer[i] = 0;}	
@@ -120,24 +121,26 @@ uint8_t RF_SendPacket(void)
 
 		CC1101SetTRMode(RX_MODE);       // 进入接收模式，等待应答
 		
-		Delay(0xFFFFF);									// 计算得到平均130ms发送一次数据
+		Delay(0xFFFF);									// 计算得到平均27ms发送一次数据
+//		Delay(0xFFFFF);									// 计算得到平均130ms发送一次数据
 	}
 
 	Usart_SendString(DEBUG_USART,"Transmit OK\r\n");
-    
+	RF_Initial(0x5, 0xD391, RX);
+	RecvWaitTime = RECV_TIMEOUT;
+	while(RF_Acknowledge() == 0 && RecvFlag == 0);
+	RecvWaitTime = 0;
 	CC1101SetIdle();																	// 空闲模式，以转到sleep状态
 	CC1101WORInit();																	// 初始化电磁波激活功能
 	CC1101SetWORMode();
 	//i=CC1101ReadStatus(CC1101_TXBYTES);//for test, TX status
-    
-	return(1);  
+	return(1);
 }
 
-/**
-  * @brief  得到要打印的内容
-  * @param  无
-  * @retval 无
-  */
+
+/*===========================================================================
+* 函数 ：Get_Address() => 设置数据包地址和同步                             * 
+============================================================================*/
 void Get_Address(void)
 {   
 		int chip_address;
@@ -145,8 +148,8 @@ void Get_Address(void)
 	
 		CC1101SetIdle();			//退出WOR模式
 		Delay(0x3FFFF);
-		temp2 = CC1101ReadStatus(CC1101_MARCSTATE);//for test, TX status
-		printf("state is %x\n",temp2);
+//		temp2 = CC1101ReadStatus(CC1101_MARCSTATE);//for test, right is IDLE status
+//		printf("state is %x\n",temp2);
 	
 		printf("set receive chip address in package\r\n");
     scanf("%d",&chip_address);
@@ -161,12 +164,51 @@ void Get_Address(void)
 }
 
 /*===========================================================================
+* 函数 ：RF_Acknowledge() => 无线数据接收应答                               * 
+============================================================================*/
+uint8_t	RF_Acknowledge(void)
+{
+	uint8_t i=0, k, length=0, rec_buffer[ACK_LENGTH]={0};
+	int16_t rssi_dBm;
+
+//	CC1101SetTRMode(RX_MODE);           // 设置RF芯片接收模式，接收数据
+//	temp2 = CC1101ReadStatus(CC1101_MARCSTATE);//for test, TX status
+//	printf("state is %x\n",temp2);
+	
+	if(CC1101_IRQ_READ() == 0)         // 检测无线模块是否产生接收中断 
+	{
+		while (CC1101_IRQ_READ() == 0);
+		for (i=0; i<ACK_LENGTH; i++)   { rec_buffer[i] = 0; } // clear array
+
+		// 读取接收到的数据长度和数据内容
+		length = CC1101RecPacket(rec_buffer, &Chip_Addr, &RSSI);
+		// 打印数据
+		if(length == 0)
+		{
+			printf("receive error or Address Filtering fail\n");
+			return 0;
+		}
+		else
+		{
+			rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
+			printf("RSSI = %ddBm, length = %d, address = %d\n",rssi_dBm,length,Chip_Addr);
+			for(k=0; k<ACK_LENGTH; k++)
+			{	
+				printf("%c",rec_buffer[k]);
+			}
+			printf("\n");
+			return 1;
+		}
+	}
+	else	{return 0;}
+}
+/*===========================================================================
 * 函数 ：RF_RecvHandler() => 无线数据接收处理                               * 
 ============================================================================*/
-void RF_RecvHandler(void)
+uint8_t RF_RecvHandler(void)
 {
 	uint8_t i=0, length=0, recv_buffer[SEND_LENGTH]={0};
-	int16_t rssi_p,rssi_dBm;
+	int16_t rssi_dBm;
 	//CC1101ReadStatus(CC1101_RXBYTES);//for test, TX status
 
 	//CC1101SetTRMode(RX_MODE);           // 设置RF芯片接收模式，接收数据
@@ -183,32 +225,45 @@ void RF_RecvHandler(void)
 			while (CC1101_IRQ_READ() == 0);
 			for (i=0; i<SEND_LENGTH; i++)   { recv_buffer[i] = 0; } // clear array
             
-			rssi_p = CC1101ReadRSSI();
-			printf("RSSI_p = %ddBm ",rssi_p);
+//			rssi_p = CC1101ReadRSSI();
+//			printf("RSSI_p = %ddBm ",rssi_p);
 			// 读取接收到的数据长度和数据内容
 			length = CC1101RecPacket(recv_buffer, &Chip_Addr, &RSSI);
 			// 打印数据
 			if(length == 0)
 				{
 					printf("receive error or Address Filtering fail\n");
+					return 0;
 				}
 			else
 				{
-						rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
-						printf("RSSI = %ddBm, length = %d, address = %d, number = %d\n%s\n",rssi_dBm,length,Chip_Addr,recv_buffer[0],recv_buffer);
-//					printf("receive data length is %d\n",length);
-//					printf("receive chip address is %d\n",Chip_Addr);
-//					printf("receive data is %d\n",recv_buffer[0]);
-//					printf("receive data is %s\n",recv_buffer);
+					rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
+					printf("RSSI = %ddBm, length = %d, address = %d, number = %d\n%s\n",rssi_dBm,length,Chip_Addr,recv_buffer[0],recv_buffer);
+					return 1;
 				}
+
 //			temp2 = CC1101ReadStatus(CC1101_WORTIME1);//for test, TX status
 //			printf("WORTIME1 is %x\n",temp2);
 //			temp2 = CC1101ReadStatus(CC1101_WORTIME0);//for test, TX status
 //			printf("WORTIME0 is %x\n",temp2);
+		}
+	else	{return 0;}
+}
+
+/*===========================================================================
+* 函数 ：RF_Reply() => 无线数据接收端回复                              * 
+============================================================================*/
+void RF_Reply(void)
+{
+			uint8_t i;
+			for(i=0; i<20; i++)
+			{
+				Delay(0xFFFFF);
+				CC1101SendPacket(AckBuffer, ACK_LENGTH, ADDRESS_CHECK);    // 发送数据
+			}
 			CC1101SetIdle();																	// 空闲模式，以转到sleep状态
 			CC1101WORInit();																	// 初始化电磁波激活功能
 			CC1101SetWORMode();
-		}		
 }
 
 /*===========================================================================
@@ -239,7 +294,11 @@ int main(void)
         {
 					LED3_Orange_ON();
 					LED4_Green_OFF();
-					RF_RecvHandler();   // 无线数据接收处理  
+					if(RF_RecvHandler() == 1)   // 无线数据接收处理
+						{
+							printf("receive succeed!!\r\n");
+							RF_Reply();
+						}
         }
 		}
 }
