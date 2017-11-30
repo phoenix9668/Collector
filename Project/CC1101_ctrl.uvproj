@@ -455,6 +455,16 @@
               <FileType>1</FileType>
               <FilePath>..\Libraries\FWlib\src\stm32f4xx_tim.c</FilePath>
             </File>
+            <File>
+              <FileName>stm32f4xx_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\FWlib\src\stm32f4xx_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\FWlib\src\stm32f4xx_dma.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -564,6 +574,16 @@
               <FileName>bsp_key.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\key\bsp_key.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\adc\bsp_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_adc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\adc\bsp_adc.h</FilePath>
             </File>
           </Files>
         </Group>

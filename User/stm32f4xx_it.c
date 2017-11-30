@@ -26,6 +26,7 @@
 #include "./usart/bsp_debug_usart.h"
 #include "./tim/bsp_basic_tim.h"
 #include "./spi/bsp_spi.h"
+#include "./adc/bsp_adc.h"
 
 /** @addtogroup STM32F4_Discovery_Peripheral_Examples
   * @{
@@ -177,7 +178,8 @@ void BASIC_TIM_IRQHandler(void)
             if(--SendTime == 0)    
                 {   SendTime=SEND_GAP; 
                     SendFlag=1;
-                    LED6_Blue_TOG(); 
+                    LED6_Blue_TOG();
+										MMA7361L_ReadHandler();
                 }
         } 
         TIM_ClearITPendingBit(BASIC_TIM, TIM_IT_Update);  	      
@@ -194,6 +196,38 @@ void BASIC_TIM_IRQHandler(void)
 //		EXTI_ClearITPendingBit(CC1101_GDO2_EXTI_LINE);     
 //	}  
 //}
+
+void MMA7361L_ReadHandler(void)
+{
+	uint16_t i;
+	MMA7361L_GS_1G5();
+	MMA7361L_SL_OFF();
+	for(i=0; i<600; i++)
+	if(CollectCnt < ACK_CNT)
+		{
+			AckBuffer[CollectCnt*6] = 0xFF & ADC_ConvertedValue[0];
+			AckBuffer[CollectCnt*6 + 1] = ((0x0F & (ADC_ConvertedValue[0]>>8)) + (0xF0 & ((uint8_t)CollectCnt<<4)));
+			AckBuffer[CollectCnt*6 + 2] = 0xFF & ADC_ConvertedValue[1];
+			AckBuffer[CollectCnt*6 + 3] = 0xFF & (ADC_ConvertedValue[1]>>8);
+			AckBuffer[CollectCnt*6 + 4] = 0xFF & ADC_ConvertedValue[2];
+			AckBuffer[CollectCnt*6 + 5] = 0xFF & (ADC_ConvertedValue[2]>>8);
+		}
+		
+//	printf("The current AD1 value = 0x%08X \r\n", ((uint16_t)(AckBuffer[CollectCnt*6 + 1])<<8) + (uint16_t)AckBuffer[CollectCnt*6]); 
+//	printf("The current AD2 value = 0x%08X \r\n", ((uint16_t)(AckBuffer[CollectCnt*6 + 3])<<8) + (uint16_t)AckBuffer[CollectCnt*6 + 2]);
+//	printf("The current AD3 value = 0x%08X \r\n", ((uint16_t)(AckBuffer[CollectCnt*6 + 5])<<8) + (uint16_t)AckBuffer[CollectCnt*6 + 4]);   
+   
+	MMA7361L_SL_ON();
+	CollectCnt++;
+//	printf("CollectCnt = %d\r\n", CollectCnt-1);
+	if(CollectCnt == ACK_CNT)
+		{
+			CollectCnt = 0;
+//			for(i=0; i<ACK_LENGTH; i++) // clear array
+//				{AckBuffer[i] = 0;}	
+		}
+}
+
 
 /**
   * @}

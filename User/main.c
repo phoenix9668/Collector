@@ -18,6 +18,7 @@
 #include "./spi/bsp_spi.h"
 #include "./key/bsp_key.h" 
 #include "stm32f4_discovery.h"
+#include "./adc/bsp_adc.h"
 
 
 /** @addtogroup STM32F4_Discovery_Peripheral_Examples
@@ -31,12 +32,14 @@
 #define TX              0       // 发送模式
 #define RX              1       // 接收模式
 #define IDLE          	2       // 空闲模式
-#define ACK_LENGTH      11      // 应答信号长度      
+#define ACK_LENGTH      60   	// 反馈数据包长度 
+#define ACK_CNT					ACK_LENGTH/6
 #define SEND_LENGTH     60      // 发送数据每包的长度
 #define RECV_TIMEOUT		2000    // 接收等待2s
 
-extern uint16_t RecvWaitTime;  	// 接收等待时间
-extern uint8_t RecvFlag;       	// =1接收等待时间结束，=0不处理
+extern __IO uint16_t	RecvWaitTime;  	// 接收等待时间
+extern __IO uint8_t		RecvFlag;       	// =1接收等待时间结束，=0不处理
+extern __IO uint8_t		CollectCnt;      	// 当前的电压值数据的编号
 uint8_t	Chip_Addr	= 0;					// 芯片地址
 uint8_t	RSSI = 0;								// RSSI状态值
 uint16_t SendCnt = 0;           // 计数发送的数据包数
@@ -45,9 +48,12 @@ uint16_t RecvCnt = 0;           // 计数接收的数据包数
 // 需要发送的数据  
 uint8_t SendBuffer[SEND_LENGTH] = {0};
 // 需要应答的数据
-uint8_t AckBuffer[ACK_LENGTH] = {'a','c','k','n','o','w','l','e','d','g','e'};
+extern uint8_t AckBuffer[ACK_LENGTH];
 
-uint8_t temp2;
+// 局部变量，用于保存转换计算后的电压值 	 
+float ADC_ConvertedValueLocal[3]; 
+
+uint8_t temp2 = 0;//for test
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -194,9 +200,18 @@ uint8_t	RF_Acknowledge(void)
 			printf("RSSI = %ddBm, length = %d, address = %d\n",rssi_dBm,length,Chip_Addr);
 			for(k=0; k<ACK_LENGTH; k++)
 			{	
-				printf("%c",rec_buffer[k]);
+				printf("%x ",rec_buffer[k]);
 			}
 			printf("\n");
+			for(k=0; k<ACK_CNT; k++)
+			{
+				ADC_ConvertedValueLocal[0] =(float)((((uint16_t)rec_buffer[k*6+0]) + (0x0F00 & (((uint16_t)rec_buffer[k*6+1])<<8)))*3.3/4096); 
+				ADC_ConvertedValueLocal[1] =(float)((((uint16_t)rec_buffer[k*6+2]) + (0x0F00 & (((uint16_t)rec_buffer[k*6+3])<<8)))*3.3/4096); 
+				ADC_ConvertedValueLocal[2] =(float)((((uint16_t)rec_buffer[k*6+4]) + (0x0F00 & (((uint16_t)rec_buffer[k*6+5])<<8)))*3.3/4096);  
+				printf("The current ADC1 value = %f V \r\n", ADC_ConvertedValueLocal[0]); 
+				printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[1]);
+				printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[2]);
+			}
 			return 1;
 		}
 	}
@@ -209,6 +224,7 @@ uint8_t RF_RecvHandler(void)
 {
 	uint8_t i=0, length=0, recv_buffer[SEND_LENGTH]={0};
 	int16_t rssi_dBm;
+	
 	//CC1101ReadStatus(CC1101_RXBYTES);//for test, TX status
 
 	//CC1101SetTRMode(RX_MODE);           // 设置RF芯片接收模式，接收数据
@@ -259,12 +275,75 @@ void RF_Reply(void)
 			for(i=0; i<20; i++)
 			{
 				Delay(0xFFFFF);
+				AckBuffer[3] = ((0x0F & AckBuffer[3]) + (0xF0 & ((uint8_t)(CollectCnt-1)<<4))); // 返回当前电压值数据包的最新数据的编号
 				CC1101SendPacket(AckBuffer, ACK_LENGTH, ADDRESS_CHECK);    // 发送数据
 			}
 			CC1101SetIdle();																	// 空闲模式，以转到sleep状态
 			CC1101WORInit();																	// 初始化电磁波激活功能
 			CC1101SetWORMode();
 }
+
+/*===========================================================================
+* 函数 ：RF_Reply() => 无线数据接收端回复                              * 
+============================================================================*/
+//void MMA7361L_display(void)
+//{
+//	Delay(0xffffee);
+//	if(temp2 < 10)
+//	{
+//		MMA7361L_GS_1G5();
+//		MMA7361L_SL_OFF();
+//		ADC_ConvertedValueLocal[0] =(float)((uint16_t)ADC_ConvertedValue[0]*3.3/4096); 
+//		ADC_ConvertedValueLocal[1] =(float)((uint16_t)ADC_ConvertedValue[1]*3.3/4096);
+//		ADC_ConvertedValueLocal[2] =(float)((uint16_t)ADC_ConvertedValue[2]*3.3/4096);  
+//    
+//		printf("The current AD1 value = 0x%08X \r\n", ADC_ConvertedValue[0]); 
+//		printf("The current AD2 value = 0x%08X \r\n", ADC_ConvertedValue[1]);
+//		printf("The current AD3 value = 0x%08X \r\n", ADC_ConvertedValue[2]);   
+//    
+//		printf("The current ADC1 value = %f V \r\n", ADC_ConvertedValueLocal[0]); 
+//		printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[1]);
+//		printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[2]);
+//		temp2++;
+//	}
+//	else if(temp2 < 20)
+//	{
+//		MMA7361L_GS_6G();
+//		MMA7361L_SL_OFF();
+//		ADC_ConvertedValueLocal[0] =(float)((uint16_t)ADC_ConvertedValue[0]*3.3/4096); 
+//		ADC_ConvertedValueLocal[1] =(float)((uint16_t)ADC_ConvertedValue[1]*3.3/4096);
+//		ADC_ConvertedValueLocal[2] =(float)((uint16_t)ADC_ConvertedValue[2]*3.3/4096);  
+//    
+//		printf("The current AD1 value = 0x%08X \r\n", ADC_ConvertedValue[0]); 
+//		printf("The current AD2 value = 0x%08X \r\n", ADC_ConvertedValue[1]);
+//		printf("The current AD3 value = 0x%08X \r\n", ADC_ConvertedValue[2]);   
+//    
+//		printf("The current ADC1 value = %f V \r\n", ADC_ConvertedValueLocal[0]); 
+//		printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[1]);
+//		printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[2]);
+//		temp2++;
+//	}
+//	else if(temp2 < 30)
+//	{
+//		MMA7361L_SL_ON();
+//		ADC_ConvertedValueLocal[0] =(float)((uint16_t)ADC_ConvertedValue[0]*3.3/4096); 
+//		ADC_ConvertedValueLocal[1] =(float)((uint16_t)ADC_ConvertedValue[1]*3.3/4096);
+//		ADC_ConvertedValueLocal[2] =(float)((uint16_t)ADC_ConvertedValue[2]*3.3/4096);  
+//    
+//		printf("The current AD1 value = 0x%08X \r\n", ADC_ConvertedValue[0]); 
+//		printf("The current AD2 value = 0x%08X \r\n", ADC_ConvertedValue[1]);
+//		printf("The current AD3 value = 0x%08X \r\n", ADC_ConvertedValue[2]);   
+//    
+//		printf("The current ADC1 value = %f V \r\n", ADC_ConvertedValueLocal[0]); 
+//		printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[1]);
+//		printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[2]);
+//		temp2++;
+//	}
+//	else
+//	{
+//		temp2 = 0;
+//	}
+//}
 
 /*===========================================================================
 * 函数 : main() => 主函数，程序入口                                         *
@@ -274,6 +353,7 @@ void RF_Reply(void)
 int main(void)
 {
 	System_Initial();
+	MMA7361L_Init();
     
 //    temp2 = CC1101ReadReg(CC1101_IOCFG0);//for test, TX status
 //    printf("发送状态确认：%x\n",temp2);
@@ -299,6 +379,7 @@ int main(void)
 							printf("receive succeed!!\r\n");
 							RF_Reply();
 						}
+//					MMA7361L_display();
         }
 		}
 }

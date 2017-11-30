@@ -24,7 +24,7 @@
 #define DEBUG_USART_TX_SOURCE                   GPIO_PinSource8
 
 #define DEBUG_USART_IRQHandler                  USART3_IRQHandler
-#define DEBUG_USART_IRQ                 	    USART3_IRQn
+#define DEBUG_USART_IRQ                 	    	USART3_IRQn
 /************************************************************/
 
 void Debug_USART_Config(void);
