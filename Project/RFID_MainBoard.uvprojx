@@ -1,42 +1,46 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="project_proj.xsd">
+<Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="project_projx.xsd">
 
-  <SchemaVersion>1.1</SchemaVersion>
+  <SchemaVersion>2.1</SchemaVersion>
 
   <Header>### uVision Project, (C) Keil Software</Header>
 
   <Targets>
     <Target>
-      <TargetName>CC1101_ctrl</TargetName>
+      <TargetName>RFID_MainBoard</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060528::V5.06 update 5 (build 528)::ARMCC</pCCUsed>
+      <uAC6>0</uAC6>
       <TargetOption>
         <TargetCommonOption>
-          <Device>STM32F407VG</Device>
+          <Device>STM32F407VGTx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <Cpu>IRAM(0x20000000-0x2001FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x80FFFFF) CLOCK(25000000) CPUTYPE("Cortex-M4") FPU2</Cpu>
+          <PackID>Keil.STM32F4xx_DFP.2.11.0</PackID>
+          <PackURL>http://www.keil.com/pack</PackURL>
+          <Cpu>IRAM(0x20000000,0x20000) IRAM2(0x10000000,0x10000) IROM(0x08000000,0x100000) CPUTYPE("Cortex-M4") FPU2 CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
-          <StartupFile>"Startup\ST\STM32F4xx\startup_stm32f40_41xxx.s" ("STM32F40/41xxx Startup Code")</StartupFile>
-          <FlashDriverDll>UL2CM3(-O207 -S0 -C0 -FO7 -FD20000000 -FC800 -FN1 -FF0STM32F4xx_1024 -FS08000000 -FL0100000)</FlashDriverDll>
-          <DeviceId>6103</DeviceId>
-          <RegisterFile>stm32f4xx.h</RegisterFile>
+          <StartupFile></StartupFile>
+          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F4xx_1024 -FS08000000 -FL0100000 -FP0($$Device:STM32F407VGTx$CMSIS\Flash\STM32F4xx_1024.FLM))</FlashDriverDll>
+          <DeviceId>0</DeviceId>
+          <RegisterFile>$$Device:STM32F407VGTx$Drivers\CMSIS\Device\ST\STM32F4xx\Include\stm32f4xx.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
           <Cmp></Cmp>
           <Asm></Asm>
           <Linker></Linker>
           <OHString></OHString>
           <InfinionOptionDll></InfinionOptionDll>
-          <SLE66CMisc>-DSTM32F40_41xxx</SLE66CMisc>
+          <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile>SFD\ST\STM32F4xx\STM32F40x.sfr</SFDFile>
+          <SFDFile>$$Device:STM32F407VGTx$CMSIS\SVD\STM32F40x.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
           <IncludePath></IncludePath>
           <LibPath></LibPath>
-          <RegisterFilePath>ST\STM32F4xx\</RegisterFilePath>
-          <DBRegisterFilePath>ST\STM32F4xx\</DBRegisterFilePath>
+          <RegisterFilePath></RegisterFilePath>
+          <DBRegisterFilePath></DBRegisterFilePath>
           <TargetStatus>
             <Error>0</Error>
             <ExitCodeStop>0</ExitCodeStop>
@@ -44,17 +48,17 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>..\Output\</OutputDirectory>
-          <OutputName>CC1101_ctrl</OutputName>
+          <OutputDirectory>..\Objects\</OutputDirectory>
+          <OutputName>RFID_MainBoard</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>..\Listing\</ListingPath>
+          <ListingPath>..\Listings\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
-          <CreateBatchFile>0</CreateBatchFile>
+          <CreateBatchFile>1</CreateBatchFile>
           <BeforeCompile>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
@@ -72,6 +76,8 @@
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
+            <nStopB1X>0</nStopB1X>
+            <nStopB2X>0</nStopB2X>
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>0</RunUserProg1>
@@ -80,6 +86,8 @@
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
+            <nStopA1X>0</nStopA1X>
+            <nStopA2X>0</nStopA2X>
           </AfterMake>
           <SelectedForBatchBuild>0</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
@@ -102,11 +110,11 @@
         </CommonProperty>
         <DllOption>
           <SimDllName>SARMCM3.DLL</SimDllName>
-          <SimDllArguments>-MPU -REMAP</SimDllArguments>
+          <SimDllArguments> -REMAP -MPU</SimDllArguments>
           <SimDlgDll>DCM.DLL</SimDlgDll>
           <SimDlgDllArguments>-pCM4</SimDlgDllArguments>
           <TargetDllName>SARMCM3.DLL</TargetDllName>
-          <TargetDllArguments>-MPU</TargetDllArguments>
+          <TargetDllArguments> -MPU</TargetDllArguments>
           <TargetDlgDll>TCM.DLL</TargetDlgDll>
           <TargetDlgDllArguments>-pCM4</TargetDlgDllArguments>
         </DllOption>
@@ -118,48 +126,6 @@
             <HexOffset>0</HexOffset>
             <Oh166RecLen>16</Oh166RecLen>
           </OPTHX>
-          <Simulator>
-            <UseSimulator>0</UseSimulator>
-            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
-            <RunToMain>1</RunToMain>
-            <RestoreBreakpoints>1</RestoreBreakpoints>
-            <RestoreWatchpoints>1</RestoreWatchpoints>
-            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
-            <RestoreFunctions>1</RestoreFunctions>
-            <RestoreToolbox>1</RestoreToolbox>
-            <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
-            <RestoreSysVw>1</RestoreSysVw>
-          </Simulator>
-          <Target>
-            <UseTarget>1</UseTarget>
-            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
-            <RunToMain>1</RunToMain>
-            <RestoreBreakpoints>1</RestoreBreakpoints>
-            <RestoreWatchpoints>1</RestoreWatchpoints>
-            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
-            <RestoreFunctions>0</RestoreFunctions>
-            <RestoreToolbox>1</RestoreToolbox>
-            <RestoreTracepoints>1</RestoreTracepoints>
-            <RestoreSysVw>1</RestoreSysVw>
-            <UsePdscDebugDescription>0</UsePdscDebugDescription>
-          </Target>
-          <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>11</TargetSelection>
-          <SimDlls>
-            <CpuDll></CpuDll>
-            <CpuDllArguments></CpuDllArguments>
-            <PeripheralDll></PeripheralDll>
-            <PeripheralDllArguments></PeripheralDllArguments>
-            <InitializationFile></InitializationFile>
-          </SimDlls>
-          <TargetDlls>
-            <CpuDll></CpuDll>
-            <CpuDllArguments></CpuDllArguments>
-            <PeripheralDll></PeripheralDll>
-            <PeripheralDllArguments></PeripheralDllArguments>
-            <InitializationFile></InitializationFile>
-            <Driver>STLink\ST-LINKIII-KEIL_SWO.dll</Driver>
-          </TargetDlls>
         </DebugOption>
         <Utilities>
           <Flash1>
@@ -167,12 +133,12 @@
             <UseExternalTool>0</UseExternalTool>
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
-            <Capability>1</Capability>
-            <DriverSelection>4096</DriverSelection>
+            <Capability>0</Capability>
+            <DriverSelection>-1</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -221,11 +187,12 @@
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>1</useUlib>
+            <useUlib>0</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
+            <nSecure>0</nSecure>
             <RoSelD>3</RoSelD>
-            <RwSelD>3</RwSelD>
+            <RwSelD>4</RwSelD>
             <CodeSel>0</CodeSel>
             <OptFeed>0</OptFeed>
             <NoZi1>0</NoZi1>
@@ -353,16 +320,23 @@
             <PlainCh>0</PlainCh>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
-            <wLevel>0</wLevel>
+            <wLevel>2</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
+            <uC99>1</uC99>
             <useXO>0</useXO>
+            <v6Lang>1</v6Lang>
+            <v6LangP>1</v6LangP>
+            <vShortEn>1</vShortEn>
+            <vShortWch>1</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
+            <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F4XX</Define>
               <Undefine></Undefine>
-              <IncludePath>..\User;..\Libraries\FWlib\inc;..\Libraries\CMSIS\ST\STM32F4xx\Include;..\Libraries\STM32F4-Discovery</IncludePath>
+              <IncludePath>..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\Libraries\CMSIS\Include;..\Libraries\CMSIS\Device\ST\STM32F4xx\Include;..\User</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -375,6 +349,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
+            <uClangAs>0</uClangAs>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -408,62 +383,7 @@
             <File>
               <FileName>startup_stm32f4xx.s</FileName>
               <FileType>2</FileType>
-              <FilePath>..\Libraries\CMSIS\ST\STM32F4xx\Source\Templates\arm\startup_stm32f4xx.s</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>STM32F4xx_StdPeriph_Driver</GroupName>
-          <Files>
-            <File>
-              <FileName>misc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\misc.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_exti.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\stm32f4xx_exti.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_rcc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\stm32f4xx_rcc.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_syscfg.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\stm32f4xx_syscfg.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_gpio.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\stm32f4xx_gpio.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_spi.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\stm32f4xx_spi.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\stm32f4xx_usart.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_tim.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\stm32f4xx_tim.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_adc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\stm32f4xx_adc.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_dma.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Libraries\FWlib\src\stm32f4xx_dma.c</FilePath>
+              <FilePath>..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\arm\startup_stm32f4xx.s</FilePath>
             </File>
           </Files>
         </Group>
@@ -473,27 +393,62 @@
             <File>
               <FileName>system_stm32f4xx.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Libraries\CMSIS\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Libraries\CMSIS\ST\STM32F4xx\Include\stm32f4xx.h</FilePath>
-            </File>
-            <File>
-              <FileName>system_stm32f4xx.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Libraries\CMSIS\ST\STM32F4xx\Include\system_stm32f4xx.h</FilePath>
+              <FilePath>..\Libraries\CMSIS\Device\ST\STM32F4xx\Source\Templates\system_stm32f4xx.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>STM32F-Discovery</GroupName>
+          <GroupName>STM32F4xx_StdPeriph_Driver</GroupName>
           <Files>
             <File>
-              <FileName>stm32f4_discovery.c</FileName>
+              <FileName>misc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\Libraries\STM32F4-Discovery\stm32f4_discovery.c</FilePath>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\misc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_exti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_exti.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_rcc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_rcc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_syscfg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_syscfg.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f4xx_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Libraries\STM32F4xx_StdPeriph_Driver\src\stm32f4xx_usart.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -506,74 +461,9 @@
               <FilePath>..\User\main.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f4xx_conf.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\stm32f4xx_conf.h</FilePath>
-            </File>
-            <File>
               <FileName>stm32f4xx_it.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\stm32f4xx_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_it.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\stm32f4xx_it.h</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_debug_usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\usart\bsp_debug_usart.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_debug_usart.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\usart\bsp_debug_usart.h</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_basic_tim.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\tim\bsp_basic_tim.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_basic_tim.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\tim\bsp_basic_tim.h</FilePath>
-            </File>
-            <File>
-              <FileName>cc1101.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\cc1101\cc1101.c</FilePath>
-            </File>
-            <File>
-              <FileName>cc1101.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\cc1101\cc1101.h</FilePath>
-            </File>
-            <File>
-              <FileName>cc1101_reg.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\cc1101\cc1101_reg.h</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_spi.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\spi\bsp_spi.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_spi.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\spi\bsp_spi.h</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_key.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\key\bsp_key.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_key.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\key\bsp_key.h</FilePath>
             </File>
             <File>
               <FileName>bsp_adc.c</FileName>
@@ -581,24 +471,43 @@
               <FilePath>..\User\adc\bsp_adc.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_adc.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\adc\bsp_adc.h</FilePath>
+              <FileName>cc1101.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\cc1101\cc1101.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_key.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\key\bsp_key.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\spi\bsp_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_basic_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\tim\bsp_basic_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_debug_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\usart\bsp_debug_usart.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
           <GroupName>DOC</GroupName>
-          <Files>
-            <File>
-              <FileName>README.txt</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\Doc\README.txt</FilePath>
-            </File>
-          </Files>
         </Group>
       </Groups>
     </Target>
   </Targets>
+
+  <RTE>
+    <apis/>
+    <components/>
+    <files/>
+  </RTE>
 
 </Project>

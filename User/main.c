@@ -17,7 +17,6 @@
 #include "./tim/bsp_basic_tim.h"
 #include "./spi/bsp_spi.h"
 #include "./key/bsp_key.h" 
-#include "stm32f4_discovery.h"
 #include "./adc/bsp_adc.h"
 
 
