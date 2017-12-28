@@ -18,7 +18,7 @@
 #define SEND_LENGTH     10			// 发送数据包长度
 #define RECV_LENGTH   	15			// 接收数据包长度
 #define RECV_TIMEOUT		2000  	// 接收等待2s
-#define SEND_PACKAGE_NUM	100		// 发生数据包数
+#define SEND_PACKAGE_NUM	80		// 发生数据包数
 /* Exported macro ------------------------------------------------------------*/
 extern __IO uint16_t	RecvWaitTime;  	// 接收等待时间
 extern __IO uint8_t		RecvFlag;     	// =1接收等待时间结束，=0不处理
@@ -29,7 +29,8 @@ void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode);
 void System_Initial(void);
 void Function_Ctrl(uint8_t *commend);
 void Check_Assign_RFID(uint8_t *commend);
-void RF_SendPacket(uint32_t rfid);
+void Check_All_RFID(uint8_t *commend);
+void RF_SendPacket(uint8_t *commend, uint32_t rfid);
 uint8_t	RF_Acknowledge(void);
 void Reply_PC(uint8_t index);
 

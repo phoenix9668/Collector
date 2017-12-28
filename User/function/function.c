@@ -84,7 +84,7 @@ void Function_Ctrl(uint8_t *commend)
 		switch(((uint16_t)(0xFF00 & commend[4]<<8)+(uint16_t)(0x00FF & commend[5])))
 		{
 			/* 上位批量查询标签数据 */
-			case 0xA0A0:	printf("no this function now\n");
+			case 0xA0A0:	Check_All_RFID(commend);
 										break;
 			/* 上位发生时间同步数据 */
 			case 0xA1A1:	printf("no this function now\n");
@@ -109,6 +109,24 @@ void Function_Ctrl(uint8_t *commend)
 }
 
 /*===========================================================================
+* 函数 Check_All_RFID() => 上位机查询指定编号标签                      * 
+============================================================================*/
+void Check_All_RFID(uint8_t *commend)
+{   	
+	uint32_t rfid;
+	rfid = ((uint32_t)(0xFF000000 & commend[6]<<24)+(uint32_t)(0x00FF0000 & commend[7]<<16)+(uint32_t)(0x0000FF00 & commend[8]<<8)+(uint32_t)(0x000000FF & commend[9]));
+	/* RFID coding is 1*/
+	RF_Initial(0x5, 0xD391, RX);     // 初始化无线芯片
+	RF_SendPacket(commend, rfid);
+	Delay(0xFFFF);
+	rfid = rfid + (uint32_t)1;
+	/* RFID coding is 2*/
+	RF_Initial(0x6, 0x8289, RX);     // 初始化无线芯片
+	RF_SendPacket(commend, rfid);
+	Delay(0xFFFF);
+}
+
+/*===========================================================================
 * 函数 ：Check_Assign_RFID() => 上位机查询指定编号标签                      * 
 ============================================================================*/
 void Check_Assign_RFID(uint8_t *commend)
@@ -120,12 +138,12 @@ void Check_Assign_RFID(uint8_t *commend)
 		/* RFID coding is 1*/
 		case 0x1:
 			RF_Initial(0x5, 0xD391, RX);     // 初始化无线芯片
-			RF_SendPacket(rfid);
+			RF_SendPacket(commend, rfid);
 			break;
 		/* RFID coding is 2*/
 		case 0x2:
 			RF_Initial(0x6, 0x8289, RX);     // 初始化无线芯片
-			RF_SendPacket(rfid);
+			RF_SendPacket(commend, rfid);
 			break;
 		default:	printf("RFID coding error\n");
 							break;
@@ -138,24 +156,40 @@ void Check_Assign_RFID(uint8_t *commend)
 * 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                     *
 * 输出 ：0，发送失败；else，发送成功                                        *
 ============================================================================*/
-void RF_SendPacket(uint32_t rfid)
+void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 {
-	uint8_t i=0;	
+	uint8_t i=0;
 	
 	for (i=0; i<SEND_LENGTH; i++) // clear array
 		{SendBuffer[i] = 0;}
 	
-	SendBuffer[0] = 0xAB;
-	SendBuffer[1] = 0xCD;
-	SendBuffer[2] = 0x00;
-	SendBuffer[3] = 0x00;
-	SendBuffer[4] = 0xB4;
-	SendBuffer[5] = 0xB4;
-	SendBuffer[6] = (uint8_t)(0xff & rfid>>24);
-	SendBuffer[7] = (uint8_t)(0xff & rfid>>16);
-	SendBuffer[8] = (uint8_t)(0xff & rfid>>8);
-	SendBuffer[9] = (uint8_t)(0xff & rfid);
-		
+	if(commend[4] == 0xA0 && commend[5] == 0xA0)
+	{
+		SendBuffer[0] = 0xAB;
+		SendBuffer[1] = 0xCD;
+		SendBuffer[2] = 0x00;
+		SendBuffer[3] = 0x00;
+		SendBuffer[4] = 0xB0;
+		SendBuffer[5] = 0xB0;
+		SendBuffer[6] = (uint8_t)(0xff & rfid>>24);
+		SendBuffer[7] = (uint8_t)(0xff & rfid>>16);
+		SendBuffer[8] = (uint8_t)(0xff & rfid>>8);
+		SendBuffer[9] = (uint8_t)(0xff & rfid);
+	}
+	else if(commend[4] == 0xA4 && commend[5] == 0xA4)
+	{
+		SendBuffer[0] = 0xAB;
+		SendBuffer[1] = 0xCD;
+		SendBuffer[2] = 0x00;
+		SendBuffer[3] = 0x00;
+		SendBuffer[4] = 0xB4;
+		SendBuffer[5] = 0xB4;
+		SendBuffer[6] = commend[6];
+		SendBuffer[7] = commend[7];
+		SendBuffer[8] = commend[8];
+		SendBuffer[9] = commend[9];
+	}
+
 	for(i=0; i<SEND_PACKAGE_NUM; i++)
 	{
 		CC1101SendPacket(SendBuffer, SEND_LENGTH, ADDRESS_CHECK);    // 发送数据
@@ -218,23 +252,29 @@ uint8_t	RF_Acknowledge(void)
 						Reply_PC(index);
 						return 5;
 					}
-					else if(RecvBuffer[2] == 0x01 && RecvBuffer[3] == 0x01)
+					else if(RecvBuffer[2] == 0xB4 && RecvBuffer[3] == 0xB4)
 					{	
 						index = 6;
 						Reply_PC(index);
 						return 6;
 					}
-					else if(RecvBuffer[2] == 0x02 && RecvBuffer[3] == 0x02)
+					else if(RecvBuffer[2] == 0x01 && RecvBuffer[3] == 0x01)
 					{	
 						index = 7;
 						Reply_PC(index);
 						return 7;
 					}
-					else if(RecvBuffer[2] == 0x03 && RecvBuffer[3] == 0x03)
+					else if(RecvBuffer[2] == 0x02 && RecvBuffer[3] == 0x02)
 					{	
 						index = 8;
 						Reply_PC(index);
 						return 8;
+					}
+					else if(RecvBuffer[2] == 0x03 && RecvBuffer[3] == 0x03)
+					{	
+						index = 9;
+						Reply_PC(index);
+						return 9;
 					}
 					else
 					{	
@@ -267,8 +307,8 @@ void Reply_PC(uint8_t index)
 		AckBuffer[1] = 0xCD;
 		AckBuffer[2] = PCCommend[2];
 		AckBuffer[3] = PCCommend[2];
-		AckBuffer[4] = 0xB4;
-		AckBuffer[5] = 0xB4;
+		AckBuffer[4] = 0xB0;
+		AckBuffer[5] = 0xB0;
 		for(i=0;i<ACK_LENGTH-7;i++)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+4];
@@ -279,6 +319,7 @@ void Reply_PC(uint8_t index)
 			printf("%x ",AckBuffer[i]);
 //			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
 		}
+		printf("\n");	
 //		for(i=0; i<ACK_LENGTH; i++)
 //		{	
 //			printf("%x ",RecvBuffer[i]);
@@ -313,6 +354,26 @@ void Reply_PC(uint8_t index)
 		}
 	}
 	else if(index == 6)
+	{		
+		AckBuffer[0] = 0xAB;
+		AckBuffer[1] = 0xCD;
+		AckBuffer[2] = PCCommend[2];
+		AckBuffer[3] = PCCommend[2];
+		AckBuffer[4] = 0xB4;
+		AckBuffer[5] = 0xB4;
+		for(i=0;i<ACK_LENGTH-7;i++)
+		{
+			AckBuffer[i+6] = RecvBuffer[i+4];
+		}	
+		AckBuffer[17] = RSSI;
+		for(i=0; i<ACK_LENGTH; i++)
+		{
+			printf("%x ",AckBuffer[i]);
+//			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
+		}
+		printf("\n");	
+	}	
+	else if(index == 7)
 	{
 		AckBuffer[0] = 0xAB;
 		AckBuffer[1] = 0xCD;
@@ -330,7 +391,7 @@ void Reply_PC(uint8_t index)
 			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
 		}
 	}
-	else if(index == 7)
+	else if(index == 8)
 	{
 		AckBuffer[0] = 0xAB;
 		AckBuffer[1] = 0xCD;
@@ -348,7 +409,7 @@ void Reply_PC(uint8_t index)
 			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
 		}
 	}	
-	else if(index == 8)
+	else if(index == 9)
 	{
 		AckBuffer[0] = 0xAB;
 		AckBuffer[1] = 0xCD;
