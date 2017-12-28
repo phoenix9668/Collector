@@ -43,7 +43,7 @@
   * @param  None
   * @retval None
   */
-void GPIO_Initial(void)
+void GPIO_Config(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 //		EXTI_InitTypeDef EXTI_InitStructure;
@@ -59,7 +59,7 @@ void GPIO_Initial(void)
 //		NVIC_Configuration();
 	
     //配置LED3的GPIO引脚
-    GPIO_InitStructure.GPIO_Pin = LED3_Orange_PIN;
+    GPIO_InitStructure.GPIO_Pin = LED_RUN_PIN;
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
     GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
     GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
@@ -67,15 +67,11 @@ void GPIO_Initial(void)
     GPIO_Init(LED_GPIO_PORT, &GPIO_InitStructure);
     
     //配置LED4的GPIO引脚
-    GPIO_InitStructure.GPIO_Pin = LED4_Green_PIN;
+    GPIO_InitStructure.GPIO_Pin = LED_STA_PIN;
     GPIO_Init(LED_GPIO_PORT, &GPIO_InitStructure);
 
     //配置LED5的GPIO引脚
-    GPIO_InitStructure.GPIO_Pin = LED5_Red_PIN;
-    GPIO_Init(LED_GPIO_PORT, &GPIO_InitStructure);
-    
-    //配置LED6的GPIO引脚
-    GPIO_InitStructure.GPIO_Pin = LED6_Blue_PIN;
+    GPIO_InitStructure.GPIO_Pin = LED_COM_PIN;
     GPIO_Init(LED_GPIO_PORT, &GPIO_InitStructure);
     
     //配置IRQ的GPIO引脚
@@ -109,7 +105,7 @@ void GPIO_Initial(void)
   * @param  None
   * @retval None
   */
-void SPI_Initial(void)
+void SPI_Config(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
     SPI_InitTypeDef  SPI_InitStructure;

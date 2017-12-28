@@ -1,0 +1,6 @@
+--c99 -c --cpu Cortex-M4.fp -g -O0 --apcs=interwork --split_sections -I ..\Libraries\STM32F4xx_StdPeriph_Driver\inc -I ..\Libraries\CMSIS\Include -I ..\Libraries\CMSIS\Device\ST\STM32F4xx\Include -I ..\User
+-I.\RTE\_RFID_MainBoard
+-IC:\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\2.11.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include
+-IC:\Keil_v5\ARM\CMSIS\Include
+-D__UVISION_VERSION="524" -DSTM32F407xx -DUSE_STDPERIPH_DRIVER -DSTM32F4XX
+-o ..\objects\bsp_clkconfig.o --omf_browse ..\objects\bsp_clkconfig.crf --depend ..\objects\bsp_clkconfig.d "..\User\rcc\bsp_clkconfig.c"
