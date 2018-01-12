@@ -31,23 +31,23 @@ extern void Delay(__IO uint32_t nCount);
 /* Private functions ---------------------------------------------------------*/
 
 /*===========================================================================
-* 函数 ：MCU_Initial() => 初始化CPU所有硬件                                 *
-* 说明 ：关于所有硬件的初始化操作，已经被建成C库，见bsp.c文件               *
+* 函数 ：MCU_Initial() => 初始化CPU所有硬件                                 													*
+* 说明 ：关于所有硬件的初始化操作，已经被建成C库，见bsp.c文件              	 						*
 ============================================================================*/
 void MCU_Initial(void)
 { 
-    Debug_USART_Config();   // 初始化串口
     GPIO_Config();         // 初始化GPIO
+		Debug_USART_Config();   // 初始化串口
     Key_GPIO_Config();      // 初始化按键
     TIMx_Configuration();   // 初始化定时器6，0.5s 一个事件
     SPI_Config();          // 初始化SPI                           
 }
 
 /*===========================================================================
-* 函数 ：RF_Initial() => 初始化RF芯片                                       *
-* 输入 ：mode, =0,接收模式， else,发送模式                                  *
-* 说明 ：CC1101的操作，已经被建成C库，见CC1101.c文件， 提供SPI和CSN操作，	*
-         即可调用其内部所有函数用户无需再关心CC1101的寄存器操作问题。       *
+* 函数 ：RF_Initial() => 初始化RF芯片                                       																*
+* 输入 ：mode, =0,接收模式， else,发送模式                                  														*
+* 说明 ：CC1101的操作，已经被建成C库，见CC1101.c文件， 提供SPI和CSN操作，				*
+         即可调用其内部所有函数用户无需再关心CC1101的寄存器操作问题。       						*
 ============================================================================*/
 void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 {
@@ -63,7 +63,7 @@ void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 }
 
 /*===========================================================================
-* 函数: System_Initial() => 初始化系统所有外设                              *
+* 函数: System_Initial() => 初始化系统所有外设                              															*
 ============================================================================*/
 void System_Initial(void)
 {
@@ -75,7 +75,7 @@ void System_Initial(void)
 }
 
 /*===========================================================================
-* 函数 ：Function_Ctrl() => 功能控制码解析和流程分解                        * 
+* 函数 ：Function_Ctrl() => 功能控制码解析和流程分解                        												* 
 ============================================================================*/
 void Function_Ctrl(uint8_t *commend)
 {   
@@ -92,7 +92,7 @@ void Function_Ctrl(uint8_t *commend)
 			/* 查询主控设备电源电量低标志、RTC电量低标志 */	
 			case 0xA2A2:	printf("no this function now\n");
 										break;
-			/* 查询标签电量、加速度过小，加速度过大标志 */				
+			/* 查询标签电量、加速度过小，加速度过大标志 */
 			case 0xA3A3:	printf("no this function now\n");
 										break;
 			/* 上位机查询指定编号标签 */
@@ -109,25 +109,25 @@ void Function_Ctrl(uint8_t *commend)
 }
 
 /*===========================================================================
-* 函数 Check_All_RFID() => 上位机查询指定编号标签                      * 
+* 函数 Check_All_RFID() => 上位机查询指定编号标签                      														* 
 ============================================================================*/
 void Check_All_RFID(uint8_t *commend)
 {   	
 	uint32_t rfid;
 	rfid = ((uint32_t)(0xFF000000 & commend[6]<<24)+(uint32_t)(0x00FF0000 & commend[7]<<16)+(uint32_t)(0x0000FF00 & commend[8]<<8)+(uint32_t)(0x000000FF & commend[9]));
 	/* RFID coding is 1*/
-	RF_Initial(0x5, 0xD391, RX);     // 初始化无线芯片
+	RF_Initial(0x35, 0x4D5A, RX);     // 初始化无线芯片
 	RF_SendPacket(commend, rfid);
 	Delay(0xFFFF);
 	rfid = rfid + (uint32_t)1;
 	/* RFID coding is 2*/
-	RF_Initial(0x6, 0x8289, RX);     // 初始化无线芯片
+	RF_Initial(0x36, 0x6D7A, RX);     // 初始化无线芯片
 	RF_SendPacket(commend, rfid);
 	Delay(0xFFFF);
 }
 
 /*===========================================================================
-* 函数 ：Check_Assign_RFID() => 上位机查询指定编号标签                      * 
+* 函数 ：Check_Assign_RFID() => 上位机查询指定编号标签                      											* 
 ============================================================================*/
 void Check_Assign_RFID(uint8_t *commend)
 {   	
@@ -137,12 +137,12 @@ void Check_Assign_RFID(uint8_t *commend)
 	{
 		/* RFID coding is 1*/
 		case 0x1:
-			RF_Initial(0x5, 0xD391, RX);     // 初始化无线芯片
+			RF_Initial(0x35, 0x4D5A, RX);     // 初始化无线芯片
 			RF_SendPacket(commend, rfid);
 			break;
 		/* RFID coding is 2*/
 		case 0x2:
-			RF_Initial(0x6, 0x8289, RX);     // 初始化无线芯片
+			RF_Initial(0x36, 0x6D7A, RX);     // 初始化无线芯片
 			RF_SendPacket(commend, rfid);
 			break;
 		default:	printf("RFID coding error\n");
@@ -152,9 +152,9 @@ void Check_Assign_RFID(uint8_t *commend)
 }
 
 /*===========================================================================
-* 函数 : RF_SendPacket() => 无线发送数据函数                            *
-* 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                     *
-* 输出 ：0，发送失败；else，发送成功                                        *
+* 函数 : RF_SendPacket() => 无线发送数据函数                            															*
+* 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                     										*
+* 输出 ：0，发送失败；else，发送成功                                        															*
 ============================================================================*/
 void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 {
@@ -205,7 +205,7 @@ void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 }
 
 /*===========================================================================
-* 函数 ：RF_Acknowledge() => 无线数据接收应答                               *
+* 函数 ：RF_Acknowledge() => 无线数据接收应答                               													*
 ============================================================================*/
 uint8_t	RF_Acknowledge(void)
 {
@@ -295,7 +295,7 @@ uint8_t	RF_Acknowledge(void)
 }
 
 /*===========================================================================
-* 函数 ：Reply_PC() => WIFI回复PC							                              *
+* 函数 ：Reply_PC() => WIFI回复PC							                              													*
 ============================================================================*/
 void Reply_PC(uint8_t index)
 {
