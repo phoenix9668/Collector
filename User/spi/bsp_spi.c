@@ -85,6 +85,10 @@ void GPIO_Config(void)
     //配置GDO2的GPIO引脚
     GPIO_InitStructure.GPIO_Pin = CC1101_GDO2_PIN;
     GPIO_Init(CC1101_GDO2_GPIO_PORT, &GPIO_InitStructure);
+		
+		LED_RUN_OFF();
+		LED_STA_OFF();
+		LED_COM_OFF();
     
 //		//连接EXTI中断源到GDO2引脚
 //		SYSCFG_EXTILineConfig(CC1101_GDO2_EXTI_PORTSOURCE,CC1101_GDO2_EXTI_PINSOURCE);

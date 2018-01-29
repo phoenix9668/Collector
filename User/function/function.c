@@ -20,6 +20,10 @@
 /* Private variables ---------------------------------------------------------*/
 uint8_t	Chip_Addr	= 0;								// cc1101地址
 uint8_t	RSSI = 0;											// RSSI值
+flashInfo		flshInfo;
+NAND_IDTypeDef		NAND_ID;
+uint8_t	gBuff[300] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
+uint8_t	buff[300] = {0};
 
 extern uint8_t PCCommend[PCCOMMEND_LENGTH];	// 接收上位机命令数组
 uint8_t SendBuffer[SEND_LENGTH] = {0};// 发送数据包
@@ -31,23 +35,25 @@ extern void Delay(__IO uint32_t nCount);
 /* Private functions ---------------------------------------------------------*/
 
 /*===========================================================================
-* 函数 ：MCU_Initial() => 初始化CPU所有硬件                                 													*
-* 说明 ：关于所有硬件的初始化操作，已经被建成C库，见bsp.c文件              	 						*
+* 函数 ：MCU_Initial() => 初始化CPU所有硬件                                 																											*
+* 说明 ：关于所有硬件的初始化操作，已经被建成C库，见bsp.c文件              	 														*
 ============================================================================*/
 void MCU_Initial(void)
 { 
-    GPIO_Config();         // 初始化GPIO
-		Debug_USART_Config();   // 初始化串口
-    Key_GPIO_Config();      // 初始化按键
-    TIMx_Configuration();   // 初始化定时器6，0.5s 一个事件
-    SPI_Config();          // 初始化SPI                           
+    GPIO_Config();         					// 初始化GPIO
+		Debug_USART_Config();  // 初始化串口
+    Key_GPIO_Config();      		// 初始化按键
+    TIMx_Configuration();   		// 初始化定时器6，0.5s 一个事件
+    SPI_Config();          							// 初始化SPI
+//		FSMC_GPIO_Config();			// 初始化FSMC接口
+//		FSMC_NAND_Config();			// 初始化FSMC接口
 }
 
 /*===========================================================================
-* 函数 ：RF_Initial() => 初始化RF芯片                                       																*
-* 输入 ：mode, =0,接收模式， else,发送模式                                  														*
-* 说明 ：CC1101的操作，已经被建成C库，见CC1101.c文件， 提供SPI和CSN操作，				*
-         即可调用其内部所有函数用户无需再关心CC1101的寄存器操作问题。       						*
+* 函数 ：RF_Initial() => 初始化RF芯片                                       																																*
+* 输入 ：mode, =0,接收模式， else,发送模式                                  																												*
+* 说明 ：CC1101的操作，已经被建成C库，见CC1101.c文件， 提供SPI和CSN操作，									*
+         即可调用其内部所有函数用户无需再关心CC1101的寄存器操作问题。       													*
 ============================================================================*/
 void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 {
@@ -63,19 +69,37 @@ void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 }
 
 /*===========================================================================
-* 函数: System_Initial() => 初始化系统所有外设                              															*
+* 函数: System_Initial() => 初始化系统所有外设                              																												*
 ============================================================================*/
 void System_Initial(void)
 {
+//		uint16_t i;
+//		uint32_t flshStatus;
     MCU_Initial();      // 初始化CPU所有硬件
     RF_Initial(0x5, 0xD391, RX);     // 初始化无线芯片,空闲模式
-		LED_RUN_OFF();
-		LED_STA_OFF();
-		LED_COM_OFF();
+	
+//		FSMC_NAND_ReadID(&NAND_ID);
+//		printf("%x,%x,%x,%x,%x",NAND_ID.Maker_ID,NAND_ID.Device_ID,NAND_ID.Third_ID,NAND_ID.Fourth_ID,NAND_ID.Fifth_ID);
+//	
+//		GetNandFlashAddr(&flshInfo);
+//		// A new block.we erase it before use it.
+//		if(flshInfo.pageNo == 0)
+//		flshStatus = FlashBlockErase(flshInfo);
+//		printf("flshStatus = %x",flshStatus);
+//		// program 1 page data
+//		flshStatus = FlashSecPageProgram(flshInfo, gBuff, 30);
+//		printf("flshStatus = %x",flshStatus);
+//		// read 1 page data
+//		flshStatus = FlashSecPageRead(flshInfo, buff, 30);
+//		printf("flshStatus = %x",flshStatus);
+//		for(i=0; i<30; i++)
+//		{
+//			printf("%x ",buff[i]);
+//		}
 }
 
 /*===========================================================================
-* 函数 ：Function_Ctrl() => 功能控制码解析和流程分解                        												* 
+* 函数 ：Function_Ctrl() => 功能控制码解析和流程分解                        																							* 
 ============================================================================*/
 void Function_Ctrl(uint8_t *commend)
 {   
@@ -109,7 +133,7 @@ void Function_Ctrl(uint8_t *commend)
 }
 
 /*===========================================================================
-* 函数 Check_All_RFID() => 上位机查询指定编号标签                      														* 
+* 函数 Check_All_RFID() => 上位机查询指定编号标签                      																										* 
 ============================================================================*/
 void Check_All_RFID(uint8_t *commend)
 {   	
@@ -127,7 +151,7 @@ void Check_All_RFID(uint8_t *commend)
 }
 
 /*===========================================================================
-* 函数 ：Check_Assign_RFID() => 上位机查询指定编号标签                      											* 
+* 函数 ：Check_Assign_RFID() => 上位机查询指定编号标签                      																				* 
 ============================================================================*/
 void Check_Assign_RFID(uint8_t *commend)
 {   	
@@ -152,9 +176,9 @@ void Check_Assign_RFID(uint8_t *commend)
 }
 
 /*===========================================================================
-* 函数 : RF_SendPacket() => 无线发送数据函数                            															*
-* 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                     										*
-* 输出 ：0，发送失败；else，发送成功                                        															*
+* 函数 : RF_SendPacket() => 无线发送数据函数                            																													*
+* 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                     																			*
+* 输出 ：0，发送失败；else，发送成功                                        																													*
 ============================================================================*/
 void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 {
@@ -295,14 +319,14 @@ uint8_t	RF_Acknowledge(void)
 }
 
 /*===========================================================================
-* 函数 ：Reply_PC() => WIFI回复PC							                              													*
+* 函数 ：Reply_PC() => WIFI回复PC							                              																															*
 ============================================================================*/
 void Reply_PC(uint8_t index)
 {
 	uint8_t i=0;	
 		
 	if(index == 4)
-	{		
+	{
 		AckBuffer[0] = 0xAB;
 		AckBuffer[1] = 0xCD;
 		AckBuffer[2] = PCCommend[2];
@@ -312,14 +336,15 @@ void Reply_PC(uint8_t index)
 		for(i=0;i<ACK_LENGTH-7;i++)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+4];
-		}	
+		}
 		AckBuffer[17] = RSSI;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);
 //			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
 		}
-		printf("\n");	
+		printf("\n");
+		
 //		for(i=0; i<ACK_LENGTH; i++)
 //		{	
 //			printf("%x ",RecvBuffer[i]);
@@ -439,6 +464,16 @@ void Reply_PC(uint8_t index)
 	{
 		printf("RFID receive function order error\r\n");
 	}
+}
+
+/*===========================================================================
+* 函数 ：GetNandFlashAddr() => 获得NandFlash地址							                              																*
+============================================================================*/
+void GetNandFlashAddr(flashInfo* pFlshInfo)
+{
+	pFlshInfo->blockNo = 10;
+	pFlshInfo->pageNo = 0;
+	pFlshInfo->pageAddr = 0;
 }
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

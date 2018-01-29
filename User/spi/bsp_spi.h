@@ -12,8 +12,8 @@
   ******************************************************************************
   */ 
 
-#ifndef _BSP_SPI_H_
-#define _BSP_SPI_H_
+#ifndef __BSP_SPI_H_
+#define __BSP_SPI_H_
 
 #include "stm32f4xx_conf.h"
 #include "./cc1101/cc1101.h"

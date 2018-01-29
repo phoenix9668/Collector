@@ -7,6 +7,7 @@
 #include "./tim/bsp_basic_tim.h"
 #include "./spi/bsp_spi.h"
 #include "./key/bsp_key.h"
+#include "./fsmc/bsp_fsmc.h" 
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -33,6 +34,7 @@ void Check_All_RFID(uint8_t *commend);
 void RF_SendPacket(uint8_t *commend, uint32_t rfid);
 uint8_t	RF_Acknowledge(void);
 void Reply_PC(uint8_t index);
+void GetNandFlashAddr(flashInfo* pFlshInfo);
 
 #endif /* __FUNCTION_H */
 
