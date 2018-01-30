@@ -8,16 +8,17 @@
 #include "./spi/bsp_spi.h"
 #include "./key/bsp_key.h"
 #include "./fsmc/bsp_fsmc.h" 
+#include "./rtc/bsp_rtc.h"
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 #define TX              0       // cc1101发送模式
 #define RX              1       // cc1101接收模式
 #define IDLE          	2       // cc1101空闲模式
-#define ACK_LENGTH      18   		// 反馈数据包长度
+#define ACK_LENGTH      24   		// 反馈数据包长度
 #define ACK_CNT					ACK_LENGTH/6	// floor(ACK_LENGTH/6)
 #define SEND_LENGTH     10			// 发送数据包长度
-#define RECV_LENGTH   	15			// 接收数据包长度
+#define RECV_LENGTH   		17			// 接收数据包长度
 #define RECV_TIMEOUT		2000  	// 接收等待2s
 #define SEND_PACKAGE_NUM	80		// 发生数据包数
 /* Exported macro ------------------------------------------------------------*/
