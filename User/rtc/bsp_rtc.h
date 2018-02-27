@@ -4,8 +4,8 @@
 #include "stm32f4xx.h"
 
 // 时钟源宏定义
-//#define RTC_CLOCK_SOURCE_LSE
-#define RTC_CLOCK_SOURCE_LSI
+#define RTC_CLOCK_SOURCE_LSE
+//#define RTC_CLOCK_SOURCE_LSI
 
 // 异步分频因子
 #define ASYNCHPREDIV		0X7F

@@ -48,8 +48,9 @@ void MCU_Initial(void)
     TIMx_Configuration();   		// 初始化定时器6，0.5s 一个事件
     SPI_Config();          							// 初始化SPI
 		RTC_Config();											// 初始化RTC
-//		FSMC_GPIO_Config();			// 初始化FSMC接口
-//		FSMC_NAND_Config();			// 初始化FSMC接口
+		MOD_GPRS_Config();				// 初始化GPRS
+		FSMC_GPIO_Config();			// 初始化FSMC接口
+		FSMC_NAND_Config();			// 初始化FSMC接口
 }
 
 /*===========================================================================
@@ -270,7 +271,7 @@ uint8_t	RF_Acknowledge(void)
 		{
 			printf("%x ",RecvBuffer[i]);
 		}
-		printf("\n");		
+		printf("\r\n");		
 		if(length == 0)
 			{
 				index = 1;
@@ -355,14 +356,15 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[16] = rtc_datestructure.RTC_Year;
-		AckBuffer[17] = rtc_datestructure.RTC_Month;
-		AckBuffer[18] = rtc_datestructure.RTC_Date;
-		AckBuffer[19] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[20] = rtc_timestructure.RTC_Hours;
-		AckBuffer[21] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[22] = rtc_timestructure.RTC_Seconds;
-		AckBuffer[23] = RSSI;
+		AckBuffer[60] = RSSI;
+		AckBuffer[61] = rtc_datestructure.RTC_Year;
+		AckBuffer[62] = rtc_datestructure.RTC_Month;
+		AckBuffer[63] = rtc_datestructure.RTC_Date;
+		AckBuffer[64] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[65] = rtc_timestructure.RTC_Hours;
+		AckBuffer[66] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
+		
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);
@@ -398,14 +400,14 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[16] = rtc_datestructure.RTC_Year;
-		AckBuffer[17] = rtc_datestructure.RTC_Month;
-		AckBuffer[18] = rtc_datestructure.RTC_Date;
-		AckBuffer[19] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[20] = rtc_timestructure.RTC_Hours;
-		AckBuffer[21] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[22] = rtc_timestructure.RTC_Seconds;
-		AckBuffer[23] = RSSI;
+		AckBuffer[60] = RSSI;
+		AckBuffer[61] = rtc_datestructure.RTC_Year;
+		AckBuffer[62] = rtc_datestructure.RTC_Month;
+		AckBuffer[63] = rtc_datestructure.RTC_Date;
+		AckBuffer[64] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[65] = rtc_timestructure.RTC_Hours;
+		AckBuffer[66] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
@@ -424,14 +426,14 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[16] = rtc_datestructure.RTC_Year;
-		AckBuffer[17] = rtc_datestructure.RTC_Month;
-		AckBuffer[18] = rtc_datestructure.RTC_Date;
-		AckBuffer[19] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[20] = rtc_timestructure.RTC_Hours;
-		AckBuffer[21] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[22] = rtc_timestructure.RTC_Seconds;
-		AckBuffer[23] = RSSI;
+		AckBuffer[60] = RSSI;
+		AckBuffer[61] = rtc_datestructure.RTC_Year;
+		AckBuffer[62] = rtc_datestructure.RTC_Month;
+		AckBuffer[63] = rtc_datestructure.RTC_Date;
+		AckBuffer[64] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[65] = rtc_timestructure.RTC_Hours;
+		AckBuffer[66] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);
@@ -452,14 +454,14 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[16] = rtc_datestructure.RTC_Year;
-		AckBuffer[17] = rtc_datestructure.RTC_Month;
-		AckBuffer[18] = rtc_datestructure.RTC_Date;
-		AckBuffer[19] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[20] = rtc_timestructure.RTC_Hours;
-		AckBuffer[21] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[22] = rtc_timestructure.RTC_Seconds;
-		AckBuffer[23] = RSSI;
+		AckBuffer[60] = RSSI;
+		AckBuffer[61] = rtc_datestructure.RTC_Year;
+		AckBuffer[62] = rtc_datestructure.RTC_Month;
+		AckBuffer[63] = rtc_datestructure.RTC_Date;
+		AckBuffer[64] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[65] = rtc_timestructure.RTC_Hours;
+		AckBuffer[66] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
@@ -478,14 +480,14 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[16] = rtc_datestructure.RTC_Year;
-		AckBuffer[17] = rtc_datestructure.RTC_Month;
-		AckBuffer[18] = rtc_datestructure.RTC_Date;
-		AckBuffer[19] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[20] = rtc_timestructure.RTC_Hours;
-		AckBuffer[21] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[22] = rtc_timestructure.RTC_Seconds;
-		AckBuffer[23] = RSSI;
+		AckBuffer[60] = RSSI;
+		AckBuffer[61] = rtc_datestructure.RTC_Year;
+		AckBuffer[62] = rtc_datestructure.RTC_Month;
+		AckBuffer[63] = rtc_datestructure.RTC_Date;
+		AckBuffer[64] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[65] = rtc_timestructure.RTC_Hours;
+		AckBuffer[66] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
@@ -504,14 +506,14 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[16] = rtc_datestructure.RTC_Year;
-		AckBuffer[17] = rtc_datestructure.RTC_Month;
-		AckBuffer[18] = rtc_datestructure.RTC_Date;
-		AckBuffer[19] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[20] = rtc_timestructure.RTC_Hours;
-		AckBuffer[21] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[22] = rtc_timestructure.RTC_Seconds;
-		AckBuffer[23] = RSSI;
+		AckBuffer[60] = RSSI;
+		AckBuffer[61] = rtc_datestructure.RTC_Year;
+		AckBuffer[62] = rtc_datestructure.RTC_Month;
+		AckBuffer[63] = rtc_datestructure.RTC_Date;
+		AckBuffer[64] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[65] = rtc_timestructure.RTC_Hours;
+		AckBuffer[66] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
@@ -530,17 +532,17 @@ void Reply_PC(uint8_t index)
 		AckBuffer[7] = PCCommend[7];
 		AckBuffer[8] = PCCommend[8];
 		AckBuffer[9] = PCCommend[9];
-		for(i=0;i<6;i++)
+		for(i=0;i<51;i++)
 		{
 			AckBuffer[i+10] = 0;
 		}
-		AckBuffer[16] = rtc_datestructure.RTC_Year;
-		AckBuffer[17] = rtc_datestructure.RTC_Month;
-		AckBuffer[18] = rtc_datestructure.RTC_Date;
-		AckBuffer[19] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[20] = rtc_timestructure.RTC_Hours;
-		AckBuffer[21] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[22] = rtc_timestructure.RTC_Seconds;
+		AckBuffer[61] = rtc_datestructure.RTC_Year;
+		AckBuffer[62] = rtc_datestructure.RTC_Month;
+		AckBuffer[63] = rtc_datestructure.RTC_Date;
+		AckBuffer[64] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[65] = rtc_timestructure.RTC_Hours;
+		AckBuffer[66] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);

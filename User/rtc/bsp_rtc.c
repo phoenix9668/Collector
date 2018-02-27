@@ -140,7 +140,7 @@ void RTC_Config(void)
 //  RCC_BackupResetCmd(DISABLE);
 
 #if defined (RTC_CLOCK_SOURCE_LSI) 
-  /* 使用LSI作为RTC时钟源会有误差 
+  /* 使用LSI作为RTC时钟源会有误差
 	 * 默认选择LSE作为RTC的时钟源
 	 */
   /* Enable the LSI OSC */
@@ -172,7 +172,7 @@ void RTC_Config(void)
 	/* 设置异步预分频器的值 */
 	RTC_InitStructure.RTC_AsynchPrediv = ASYNCHPREDIV;
 	/* 设置同步预分频器的值 */
-	RTC_InitStructure.RTC_SynchPrediv = SYNCHPREDIV;	
+	RTC_InitStructure.RTC_SynchPrediv = SYNCHPREDIV;
 	RTC_InitStructure.RTC_HourFormat = RTC_HourFormat_24; 
 	/* 用RTC_InitStructure的内容初始化RTC寄存器 */
 	if (RTC_Init(&RTC_InitStructure) == ERROR)
@@ -180,7 +180,6 @@ void RTC_Config(void)
 		printf("RTC configure error \r\n");
 	}
 }
-
 
 /**
   * @brief  RTC配置检查： 当我们配置过RTC时间之后就往备份寄存器0写入一个数据做标记
