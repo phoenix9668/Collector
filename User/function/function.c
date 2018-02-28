@@ -139,6 +139,10 @@ void Function_Ctrl(uint8_t *commend)
 			case 0xA4A4:	
 										Check_Assign_RFID(commend);
 										break;
+			/* 上位机编程标签地址码、同步码、RFID码 */
+			case 0xA5A5:	
+										Prog_Assign_RFID(commend);
+										break;
 			default:	printf("function order error\n");
 										break;
 		}
@@ -150,7 +154,7 @@ void Function_Ctrl(uint8_t *commend)
 }
 
 /*===========================================================================
-* 函数 Check_All_RFID() => 上位机查询指定编号标签                      																										* 
+* 函数 Check_All_RFID() => 上位机查询所有编号标签                     			* 
 ============================================================================*/
 void Check_All_RFID(uint8_t *commend)
 {   	
@@ -168,7 +172,7 @@ void Check_All_RFID(uint8_t *commend)
 }
 
 /*===========================================================================
-* 函数 ：Check_Assign_RFID() => 上位机查询指定编号标签                      																				* 
+* 函数 ：Check_Assign_RFID() => 上位机查询指定编号标签                    	* 
 ============================================================================*/
 void Check_Assign_RFID(uint8_t *commend)
 {   	
@@ -194,9 +198,18 @@ void Check_Assign_RFID(uint8_t *commend)
 }
 
 /*===========================================================================
-* 函数 : RF_SendPacket() => 无线发送数据函数                            																													*
-* 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                     																			*
-* 输出 ：0，发送失败；else，发送成功                                        																													*
+* 函数 ：Prog_Assign_RFID() => 上位机编程标签地址码、同步码、RFID码       	* 
+============================================================================*/
+void Prog_Assign_RFID(uint8_t *commend)
+{   	
+	RF_Initial(0x20, 0x2020, RX);     // 初始化无线芯片
+	RF_SendPacket(commend, 0x20202020);
+}
+
+/*===========================================================================
+* 函数 : RF_SendPacket() => 无线发送数据函数                            		*
+* 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                    	*
+* 输出 ：0，发送失败；else，发送成功                                        *
 ============================================================================*/
 void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 {
@@ -230,6 +243,17 @@ void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 		SendBuffer[7] = commend[7];
 		SendBuffer[8] = commend[8];
 		SendBuffer[9] = commend[9];
+	}
+	else if(commend[4] == 0xA5 && commend[5] == 0xA5)
+	{
+		SendBuffer[0] = 0xAB;
+		SendBuffer[1] = 0xCD;
+		SendBuffer[2] = commend[2];
+		SendBuffer[3] = commend[3];
+		SendBuffer[4] = 0xC5;
+		SendBuffer[5] = 0xC5;
+		for (i=6; i<SEND_LENGTH; i++) // clear array
+		{SendBuffer[i] = commend[i];}
 	}
 
 	for(i=0; i<SEND_PACKAGE_NUM; i++)
@@ -265,7 +289,7 @@ uint8_t	RF_Acknowledge(void)
 		// 打印数据
 		rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
 		printf("RSSI = %ddBm, length = %d, address = %d\n",rssi_dBm,length,Chip_Addr);
-		rssi_dBm = CC1101CalcRSSI_dBm(RecvBuffer[14]);
+		rssi_dBm = CC1101CalcRSSI_dBm(RecvBuffer[59]);
 		printf("RFID RSSI = %ddBm\n",rssi_dBm);
 		for(i=0; i<RECV_LENGTH; i++)
 		{
@@ -300,7 +324,7 @@ uint8_t	RF_Acknowledge(void)
 						Reply_PC(index);
 						return 6;
 					}
-					else if(RecvBuffer[4] == 0x01 && RecvBuffer[5] == 0x01)
+					else if(RecvBuffer[4] == 0xD5 && RecvBuffer[5] == 0x01)
 					{
 						index = 7;
 						Reply_PC(index);
@@ -368,7 +392,7 @@ void Reply_PC(uint8_t index)
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);
-//			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
+//			USART_SendData(DEBUG_USART, AckBuffer[i]);
 		}
 		printf("\n");
 		
@@ -410,7 +434,7 @@ void Reply_PC(uint8_t index)
 		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
-			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
+			printf("%x ",AckBuffer[i]);
 		}
 	}
 	else if(index == 6)
@@ -437,7 +461,6 @@ void Reply_PC(uint8_t index)
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);
-//			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
 		}
 		printf("\n");	
 	}	
@@ -448,7 +471,7 @@ void Reply_PC(uint8_t index)
 		AckBuffer[1] = 0xCD;
 		AckBuffer[2] = RecvBuffer[2];
 		AckBuffer[3] = RecvBuffer[3];
-		AckBuffer[4] = 0x01;
+		AckBuffer[4] = 0xB5;
 		AckBuffer[5] = 0x01;
 		for(i=0;i<ACK_LENGTH-14;i++)
 		{
@@ -464,7 +487,7 @@ void Reply_PC(uint8_t index)
 		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
-			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
+			printf("%x ",AckBuffer[i]);
 		}
 	}
 	else if(index == 8)

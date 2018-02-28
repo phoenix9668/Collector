@@ -17,7 +17,7 @@
 #define RX              1       // cc1101接收模式
 #define IDLE          	2       // cc1101空闲模式
 #define ACK_LENGTH      68   		// 反馈数据包长度
-#define SEND_LENGTH     10			// 发送数据包长度
+#define SEND_LENGTH     18			// 发送数据包长度
 #define RECV_LENGTH   	60			// 接收数据包长度
 #define RECV_TIMEOUT		2000  	// 接收等待2s
 #define SEND_PACKAGE_NUM	80		// 发生数据包数
@@ -32,6 +32,7 @@ void System_Initial(void);
 void Function_Ctrl(uint8_t *commend);
 void Check_Assign_RFID(uint8_t *commend);
 void Check_All_RFID(uint8_t *commend);
+void Prog_Assign_RFID(uint8_t *commend);
 void RF_SendPacket(uint8_t *commend, uint32_t rfid);
 uint8_t	RF_Acknowledge(void);
 void Reply_PC(uint8_t index);
