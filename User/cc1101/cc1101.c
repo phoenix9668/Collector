@@ -95,10 +95,11 @@ uint8_t temp1;//for debug
 // PA table 
 #define PA_TABLE {0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
 
-static const uint8_t CC1101InitData[29][2]= 
+static const uint8_t CC1101InitData[30][2]= 
 {
   {CC1101_IOCFG0,      0x06},
-  {CC1101_FIFOTHR,     0x47},
+  {CC1101_FIFOTHR,     0x4E},
+	{CC1101_PKTLEN,			 0xFF},
 	{CC1101_PKTCTRL1,    0x07},
   {CC1101_PKTCTRL0,    0x45},
   {CC1101_CHANNR,      0x00},
@@ -174,7 +175,8 @@ OUTPUT   : None
 void CC1101SetWORMode(void)
 {
 		CC1101WriteReg(CC1101_IOCFG0, 0x46);
-		CC1101WriteReg(CC1101_IOCFG2, 0x64);	//Event0 monitor
+		CC1101WriteReg(CC1101_IOCFG2, 0x00);	//rx fifo threshold
+//		CC1101WriteReg(CC1101_IOCFG2, 0x64);	//Event0 monitor
 		CC1101WriteCmd(CC1101_SWORRST);
 		CC1101WriteCmd(CC1101_SWOR);
 }
@@ -247,11 +249,13 @@ void CC1101SetTRMode(TRMODE mode)
     if(mode == TX_MODE)
     {
         CC1101WriteReg(CC1101_IOCFG0, 0x46);
+				CC1101WriteReg(CC1101_IOCFG2, 0x02);	//tx fifo threshold
         CC1101WriteCmd(CC1101_STX);  
     }
     else if(mode == RX_MODE)
     {
         CC1101WriteReg(CC1101_IOCFG0, 0x46);
+				CC1101WriteReg(CC1101_IOCFG2, 0x00);	//rx fifo threshold
         CC1101WriteCmd(CC1101_SRX);
     }
 }
@@ -376,13 +380,14 @@ OUTPUT   : None
 void CC1101SendPacket(uint8_t *txbuffer, uint8_t size, TX_DATA_MODE mode)
 {
     uint8_t address;
-    volatile uint8_t i;
-    
+    volatile uint8_t i,k,j;
+	
+		k = size/60;
+		j = size%60;
     if(mode == BROADCAST)             {address=0;}
     else if(mode == ADDRESS_CHECK)    {address=CC1101ReadReg(CC1101_ADDR);}
     
     CC1101ClrTXBuff();
-    
     if((CC1101ReadReg(CC1101_PKTCTRL1) & ~0x03) != 0)
     {
         CC1101WriteReg(CC1101_TXFIFO, size+1);
@@ -392,15 +397,35 @@ void CC1101SendPacket(uint8_t *txbuffer, uint8_t size, TX_DATA_MODE mode)
     {
         CC1101WriteReg(CC1101_TXFIFO, size);
     }
-
-    CC1101WriteMultiReg(CC1101_TXFIFO, txbuffer, size);
-    
+		
+		if(size <= 60)
+		{
+			CC1101WriteMultiReg(CC1101_TXFIFO, txbuffer, size);
+			CC1101SetTRMode(TX_MODE);
+		}
+		else
+		{
+			CC1101WriteMultiReg(CC1101_TXFIFO, txbuffer, 60);
+			CC1101SetTRMode(TX_MODE);
+			for(i=1; i<k; i++)
+			{
+				while(CC1101_GDO2_READ() == 0);//等待tx fifo中断下降沿
+				while(CC1101_GDO2_READ() != 0);
+				CC1101WriteMultiReg(CC1101_TXFIFO, (txbuffer+60*i), 60);
+			}
+			if(j != 0)
+			{
+				while(CC1101_GDO2_READ() == 0);//等待tx fifo中断下降沿
+				while(CC1101_GDO2_READ() != 0);
+				CC1101WriteMultiReg(CC1101_TXFIFO, (txbuffer+60*k), j);
+			}
+		}
+		
 //    CC1101WriteCmd(CC1101_SIDLE); 	//**********************就是这个语句，卖家给的代码里没有**********************
     
-    CC1101SetTRMode(TX_MODE);
     //i = CC1101ReadStatus( CC1101_TXBYTES );//for test, TX status
-    while(GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT, CC1101_IRQ_PIN) != 0);
-    while(GPIO_ReadInputDataBit(CC1101_IRQ_GPIO_PORT, CC1101_IRQ_PIN) == 0);
+    while(CC1101_IRQ_READ() != 0);
+    while(CC1101_IRQ_READ() == 0);
     //i = CC1101ReadStatus( CC1101_TXBYTES );//for test, TX status
 
     CC1101ClrTXBuff();
@@ -460,26 +485,39 @@ uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr, uint8_t *rssi)
 {
     uint8_t status[2];
     uint8_t pktLen;
+		uint8_t i,k,j;
 
-    if (CC1101GetRXCnt() != 0)
-    {
-        pktLen=CC1101ReadReg(CC1101_RXFIFO);                    // Read length byte
-        if((CC1101ReadReg(CC1101_PKTCTRL1) & ~0x03) != 0)
-        {
-            *addr = CC1101ReadReg(CC1101_RXFIFO);
-        }
-        if(pktLen == 0) {return 0;}
-        else    {pktLen--;}
-        CC1101ReadMultiReg(CC1101_RXFIFO, rxBuffer, pktLen);    // Pull data
-        CC1101ReadMultiReg(CC1101_RXFIFO, status, 2);           // Read status bytes
-				*rssi = status[0];
+    while(CC1101GetRXCnt() == 0);
+		pktLen=CC1101ReadReg(CC1101_RXFIFO);                    // Read length byte
+		if((CC1101ReadReg(CC1101_PKTCTRL1) & ~0x03) != 0)
+		{
+			*addr = CC1101ReadReg(CC1101_RXFIFO);
+		}
+		if(pktLen == 0) {return 0;}
+		else    {pktLen--;}
+				
+		k = pktLen/60;
+		j = pktLen%60;
+				
+		for(i=0; i<k; i++)
+		{
+			while(CC1101_GDO2_READ() != 0);//等待rx fifo中断上升沿
+			while(CC1101_GDO2_READ() == 0);
+			CC1101ReadMultiReg(CC1101_RXFIFO, (rxBuffer+60*i), 60);    // Pull data
+		}
+		if(j != 0)
+		{
+			while(CC1101_IRQ_READ() != 0);//等待rx fifo中断上升沿
+			while(CC1101_IRQ_READ() == 0);
+			CC1101ReadMultiReg(CC1101_RXFIFO, (rxBuffer+60*k), j);    // Pull data
+		}
+		CC1101ReadMultiReg(CC1101_RXFIFO, status, 2);           // Read status bytes
+		*rssi = status[0];
 
-        CC1101ClrRXBuff();
+		CC1101ClrRXBuff();
 
-        if(status[1] & CRC_OK)  {return pktLen;}
-        else    {return 0;}
-    }
-    else    {return 0;}                                       // Error
+		if(status[1] & CRC_OK)  {return pktLen;}
+		else    {return 0;}
 }
 /*
 ================================================================================
@@ -495,7 +533,7 @@ void CC1101Init(uint8_t addr, uint16_t sync)
 
     CC1101Reset();    
     
-    for(i=0; i<29; i++)
+    for(i=0; i<30; i++)
     {
         CC1101WriteReg(CC1101InitData[i][0], CC1101InitData[i][1]);
     }

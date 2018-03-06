@@ -49,7 +49,7 @@ static void TIMx_NVIC_Configuration(void)
  * TIM_RepetitionCounter TIMx,x[1,8]才有(高级定时器)
  *-----------------------------------------------------------------------------
  */
-static void TIM_Mode_Config(void)
+void TIM_Mode_Config(void)
 {
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 
