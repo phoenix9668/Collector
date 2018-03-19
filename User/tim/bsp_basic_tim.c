@@ -54,21 +54,20 @@ void TIM_Mode_Config(void)
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 
 	// 开启TIMx_CLK,x[6,7] 
-    RCC_APB1PeriphClockCmd(BASIC_TIM_CLK, ENABLE); 
+	RCC_APB1PeriphClockCmd(BASIC_TIM_CLK, ENABLE); 
 
-    /* 累计 TIM_Period个后产生一个更新或者中断*/		
-    //当定时器从0计数到9999，即为10000次，为一个定时周期
-    TIM_TimeBaseStructure.TIM_Period = 5-1;       
+	/* 累计 TIM_Period个后产生一个更新或者中断*/		
+	//当定时器从0计数到9999，即为10000次，为一个定时周期
+	TIM_TimeBaseStructure.TIM_Period = 10000-1;       
 	
 	//定时器时钟源TIMxCLK = 2 * PCLK1  
-    //				PCLK1 = HCLK / 4 
-    //				=> TIMxCLK=HCLK/2=SystemCoreClock/2=84MHz
+	//				PCLK1 = HCLK / 4 
+	//				=> TIMxCLK=HCLK/2=SystemCoreClock/2=84MHz
 	// 设定定时器频率为=TIMxCLK/(TIM_Prescaler+1)=10000Hz
-    TIM_TimeBaseStructure.TIM_Prescaler = 8400-1;	
+	TIM_TimeBaseStructure.TIM_Prescaler = 8400-1;	
 	
 	// 初始化定时器TIMx, x[2,3,4,5]
 	TIM_TimeBaseInit(BASIC_TIM, &TIM_TimeBaseStructure);
-	
 	
 	// 清除定时器更新中断标志位
 	TIM_ClearFlag(BASIC_TIM, TIM_FLAG_Update);

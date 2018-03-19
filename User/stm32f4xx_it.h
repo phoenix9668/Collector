@@ -31,12 +31,9 @@
 #include "stm32f4xx.h"
 
 /* Exported types ------------------------------------------------------------*/
-__IO uint8_t   SendFlag = 0;         // =1发送无线数据，=0不处理
-__IO uint16_t  SendTime = 1;         // 计数数据发送间隔时间
 __IO uint8_t   RecvFlag = 0;         // =1接收等待时间结束，=0不处理
 __IO uint16_t  RecvWaitTime = 0;     // 接收等待时间
 /* Exported constants --------------------------------------------------------*/
-#define 	SEND_GAP  			1000 	// 发送等待0.1s
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
 
@@ -51,6 +48,7 @@ void PendSV_Handler(void);
 void SysTick_Handler(void);
 void DEBUG_USART_IRQHandler(void);
 void BASIC_TIM_IRQHandler(void);
+void CC1101_IRQ_IRQHandler(void);
 void CC1101_GDO2_IRQHandler(void);
 #ifdef __cplusplus
 }

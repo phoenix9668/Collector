@@ -23,19 +23,23 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
-#include "./usart/bsp_debug_usart.h"
-#include "./tim/bsp_basic_tim.h"
-#include "./spi/bsp_spi.h"
+#include "./function/function.h"
 
 /** @addtogroup STM32F4_Discovery_Peripheral_Examples
   * @{
   */
 
 /* Private typedef -----------------------------------------------------------*/
+__IO ITStatus RFReady = RESET;
+extern __IO FlagStatus TxRxState;
+extern __IO uint8_t cnt_i,cnt_k,cnt_j;
+extern uint8_t SendBuffer[SEND_LENGTH];
+extern uint8_t RecvBuffer[RECV_LENGTH];
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
+extern void Delay(__IO uint32_t nCount);
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
@@ -164,36 +168,67 @@ void DEBUG_USART_IRQHandler(void)
 void BASIC_TIM_IRQHandler(void)
 {
 	if (TIM_GetITStatus(BASIC_TIM, TIM_IT_Update) != RESET ) 
-	{	
-        if(RecvWaitTime != 0 && RecvWaitTime != 1)												// 数据接收计时
-					{	RecvWaitTime--;}
-				else if(RecvWaitTime == 1)
-					{	RecvFlag=1;}
-				else
-					{	RecvFlag=0;}
-        
-        if(SendTime != 0)                           // 1ms时间到，置位SendFlag标志，主函数查询发送数据    
-        { 
-            if(--SendTime == 0)    
-                {   SendTime=SEND_GAP; 
-                    SendFlag=1;
-                    LED_RUN_TOG();
-                }
-        } 
-        TIM_ClearITPendingBit(BASIC_TIM, TIM_IT_Update);  	      
+	{
+		if(RecvWaitTime != 0 && RecvWaitTime != 1)												// 数据接收计时
+				{	RecvWaitTime--;}
+		else if(RecvWaitTime == 1)
+				{	RecvFlag=1;}
+		else
+				{	RecvFlag=0;}
+
+		LED_RUN_TOG();
+		TIM_ClearITPendingBit(BASIC_TIM, TIM_IT_Update);
 	}		 	
 }
 
-//void CC1101_GDO2_IRQHandler(void)
-//{
-//  //是否产生EXTI Line中断
-//	if(EXTI_GetITStatus(CC1101_GDO2_EXTI_LINE) != RESET) 
-//	{	
-//		LED5_Red_TOG();
-//    //清除中断标志位
-//		EXTI_ClearITPendingBit(CC1101_GDO2_EXTI_LINE);     
-//	}  
-//}
+void CC1101_IRQ_IRQHandler(void)
+{
+	if(EXTI_GetITStatus(CC1101_IRQ_EXTI_LINE) != RESET) 
+	{
+		if(TxRxState == SET)
+		{
+			RFReady = SET;
+		}
+		else if(TxRxState == RESET)
+		{
+			RFReady = SET;
+			Delay(0xFFFF);
+		}
+
+    /* Clear the EXTI line 1 pending bit */
+		EXTI_ClearITPendingBit(CC1101_IRQ_EXTI_LINE);     
+	}  
+}
+
+void CC1101_GDO2_IRQHandler(void)
+{
+	if(EXTI_GetITStatus(CC1101_GDO2_EXTI_LINE) != RESET) 
+	{
+		if(TxRxState == SET)
+		{
+			cnt_i++;
+			if(cnt_i == cnt_k)
+			{
+				CC1101WriteMultiReg(CC1101_TXFIFO, (SendBuffer+60*cnt_k), cnt_j);
+			}
+			else
+			{
+				CC1101WriteMultiReg(CC1101_TXFIFO, (SendBuffer+60*cnt_i), 60);
+			}
+		}
+		else if(TxRxState == RESET)
+		{
+			if(cnt_i != cnt_k)
+			{
+				CC1101ReadMultiReg(CC1101_RXFIFO, (RecvBuffer+60*cnt_i), 60);// Pull data
+				cnt_i++;
+			}
+		}
+
+    /* Clear the EXTI line 1 pending bit */
+		EXTI_ClearITPendingBit(CC1101_GDO2_EXTI_LINE);     
+	}  
+}
 
 
 /**

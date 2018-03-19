@@ -13,10 +13,11 @@
 #include "./cc1101/cc1101.h"
 #include "./usart/bsp_debug_usart.h"
 
-//10, 7, 5, 0, -5, -10, -15, -20, dbm output power, 0x12 == -30dbm
-uint8_t PaTabel[]={0xc0, 0xC8, 0x84, 0x60, 0x68, 0x34, 0x1D, 0x0E};
-
-uint8_t temp1;//for debug
+//10, 7, 5, 0, -10, -15, -20, -30,dbm output power
+uint8_t PaTabel[]={0xc0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};
+extern __IO ITStatus RFReady;
+__IO FlagStatus TxRxState = RESET;//RESET on behalf of RX mode,SET on behalf of TX mode
+__IO uint8_t cnt_i = 0,cnt_k = 0,cnt_j = 0;
 
 // Sync word qualifier mode = 30/32 sync word bits detected 
 // CRC autoflush = false 
@@ -244,18 +245,24 @@ INPUT    : mode selection
 OUTPUT   : None
 ================================================================================
 */
-void CC1101SetTRMode(TRMODE mode)
+void CC1101SetTRMode(TRMODE mode, FunctionalState EXTI_LineCmd)
 {
     if(mode == TX_MODE)
     {
         CC1101WriteReg(CC1101_IOCFG0, 0x46);
 				CC1101WriteReg(CC1101_IOCFG2, 0x02);	//tx fifo threshold
-        CC1101WriteCmd(CC1101_STX);  
+				/*## Set the CC1101_GDO2_EXTI_LINE enable ###################################*/  
+				EXTI_Config(CC1101_GDO2_EXTI_LINE, EXTI_Trigger_Falling, EXTI_LineCmd);
+        CC1101WriteCmd(CC1101_STX);
     }
     else if(mode == RX_MODE)
     {
         CC1101WriteReg(CC1101_IOCFG0, 0x46);
 				CC1101WriteReg(CC1101_IOCFG2, 0x00);	//rx fifo threshold
+				/*## Set the CC1101_IRQ_EXTI_LINE and CC1101_GDO2_EXTI_LINE enable ###################################*/
+				EXTI_Config(CC1101_IRQ_EXTI_LINE, EXTI_Trigger_Falling, EXTI_LineCmd);			
+				EXTI_Config(CC1101_GDO2_EXTI_LINE, EXTI_Trigger_Rising, EXTI_LineCmd);
+				TxRxState = RESET;
         CC1101WriteCmd(CC1101_SRX);
     }
 }
@@ -380,10 +387,13 @@ OUTPUT   : None
 void CC1101SendPacket(uint8_t *txbuffer, uint8_t size, TX_DATA_MODE mode)
 {
     uint8_t address;
-    volatile uint8_t i,k,j;
 	
-		k = size/60;
-		j = size%60;
+		/*##-1- Set the TxRxState ###################################*/  
+		TxRxState = SET;
+
+		cnt_i	= 0;
+		cnt_k = size/60;
+		cnt_j = size%60;
     if(mode == BROADCAST)             {address=0;}
     else if(mode == ADDRESS_CHECK)    {address=CC1101ReadReg(CC1101_ADDR);}
     
@@ -401,31 +411,34 @@ void CC1101SendPacket(uint8_t *txbuffer, uint8_t size, TX_DATA_MODE mode)
 		if(size <= 60)
 		{
 			CC1101WriteMultiReg(CC1101_TXFIFO, txbuffer, size);
-			CC1101SetTRMode(TX_MODE);
+			CC1101SetTRMode(TX_MODE, DISABLE);
 		}
 		else
 		{
 			CC1101WriteMultiReg(CC1101_TXFIFO, txbuffer, 60);
-			CC1101SetTRMode(TX_MODE);
-			for(i=1; i<k; i++)
+			CC1101SetTRMode(TX_MODE, ENABLE);
+			/*##-2- Wait for the trigger of the threshold ###################################*/   
+			while (cnt_i != cnt_k)
 			{
-				while(CC1101_GDO2_READ() == 0);//等待tx fifo中断下降沿
-				while(CC1101_GDO2_READ() != 0);
-				CC1101WriteMultiReg(CC1101_TXFIFO, (txbuffer+60*i), 60);
-			}
-			if(j != 0)
-			{
-				while(CC1101_GDO2_READ() == 0);//等待tx fifo中断下降沿
-				while(CC1101_GDO2_READ() != 0);
-				CC1101WriteMultiReg(CC1101_TXFIFO, (txbuffer+60*k), j);
+//				while(CC1101_GDO2_READ() == 0);//等待tx fifo中断下降沿
+//				while(CC1101_GDO2_READ() != 0);
 			}
 		}
-		
-//    CC1101WriteCmd(CC1101_SIDLE); 	//**********************就是这个语句，卖家给的代码里没有**********************
-    
+		/*##-3- Set the CC1101_IRQ_EXTI_LINE to the EXTI_Trigger_Rising ###################################*/  
+		EXTI_Config(CC1101_IRQ_EXTI_LINE, EXTI_Trigger_Rising, ENABLE);
+		/*##-4- Wait for the end of the transfer ###################################*/   
+		while (RFReady != SET){}
+		/* Reset transmission flag */
+		RFReady = RESET;
+		cnt_i	= 0;
+		cnt_k = 0;
+		cnt_j = 0;
+		/*##-5- Set the CC1101_IRQ_EXTI_LINE and CC1101_GDO2_EXTI_LINE disable ###################################*/  
+		EXTI_Config(CC1101_IRQ_EXTI_LINE, EXTI_Trigger_Rising, DISABLE);
+		EXTI_Config(CC1101_GDO2_EXTI_LINE, EXTI_Trigger_Rising, DISABLE);	
     //i = CC1101ReadStatus( CC1101_TXBYTES );//for test, TX status
-    while(CC1101_IRQ_READ() != 0);
-    while(CC1101_IRQ_READ() == 0);
+//    while(CC1101_IRQ_READ() != 0);
+//    while(CC1101_IRQ_READ() == 0);
     //i = CC1101ReadStatus( CC1101_TXBYTES );//for test, TX status
 
     CC1101ClrTXBuff();
@@ -483,11 +496,13 @@ OUTPUT   : 1:received count, 0:no data
 */
 uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr, uint8_t *rssi)
 {
-    uint8_t status[2];
-    uint8_t pktLen;
-		uint8_t i,k,j;
+	uint8_t status[2];
+	uint8_t pktLen;
 
-    while(CC1101GetRXCnt() == 0);
+	if(CC1101GetRXCnt() != 0)
+	{
+		/*##-1- Set the CC1101_IRQ_EXTI_LINE enable ###################################*/  
+		EXTI_Config(CC1101_IRQ_EXTI_LINE, EXTI_Trigger_Rising, ENABLE);
 		pktLen=CC1101ReadReg(CC1101_RXFIFO);                    // Read length byte
 		if((CC1101ReadReg(CC1101_PKTCTRL1) & ~0x03) != 0)
 		{
@@ -495,29 +510,35 @@ uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr, uint8_t *rssi)
 		}
 		if(pktLen == 0) {return 0;}
 		else    {pktLen--;}
-				
-		k = pktLen/60;
-		j = pktLen%60;
-				
-		for(i=0; i<k; i++)
+		
+		cnt_i	= 0;
+		cnt_k = pktLen/60;
+		cnt_j = pktLen%60;
+		
+		/*##-2- Wait for the trigger of the threshold ###################################*/  
+		while (cnt_i != cnt_k)
 		{
-			while(CC1101_GDO2_READ() != 0);//等待rx fifo中断上升沿
-			while(CC1101_GDO2_READ() == 0);
-			CC1101ReadMultiReg(CC1101_RXFIFO, (rxBuffer+60*i), 60);    // Pull data
+//			while(CC1101_GDO2_READ() != 0);//等待rx fifo中断上升沿
+//			while(CC1101_GDO2_READ() == 0);		
 		}
-		if(j != 0)
-		{
-			while(CC1101_IRQ_READ() != 0);//等待rx fifo中断上升沿
-			while(CC1101_IRQ_READ() == 0);
-			CC1101ReadMultiReg(CC1101_RXFIFO, (rxBuffer+60*k), j);    // Pull data
-		}
+		
+		/*##-4- Wait for the end of the transfer ###################################*/   
+		while (RFReady != SET){}
+		/* Reset transmission flag */
+		RFReady = RESET;
+
+		CC1101ReadMultiReg(CC1101_RXFIFO, (rxBuffer+60*cnt_k), cnt_j);    // Pull data
 		CC1101ReadMultiReg(CC1101_RXFIFO, status, 2);           // Read status bytes
 		*rssi = status[0];
-
+		cnt_i	= 0;
+		cnt_k = 0;
+		cnt_j = 0;
 		CC1101ClrRXBuff();
 
 		if(status[1] & CRC_OK)  {return pktLen;}
-		else    {return 0;}
+		else	{return 1;}		
+	}
+	else	{return 0;}
 }
 /*
 ================================================================================
@@ -529,7 +550,11 @@ OUTPUT   : None
 */
 void CC1101Init(uint8_t addr, uint16_t sync)
 {
-    volatile uint8_t i, j;
+    volatile uint8_t i;
+
+		/*## Set the CC1101_IRQ_EXTI_LINE and CC1101_GDO2_EXTI_LINE disable ###################################*/  
+		EXTI_Config(CC1101_IRQ_EXTI_LINE, EXTI_Trigger_Rising, DISABLE);
+		EXTI_Config(CC1101_GDO2_EXTI_LINE, EXTI_Trigger_Rising, DISABLE);	
 
     CC1101Reset();    
     
@@ -542,6 +567,12 @@ void CC1101Init(uint8_t addr, uint16_t sync)
     CC1101WriteReg(CC1101_MDMCFG1, 0x72); //Modem Configuration
 
     CC1101WriteMultiReg(CC1101_PATABLE, PaTabel, 8);
+//		uint8_t pa_group[8];
+//		CC1101ReadMultiReg(CC1101_PATABLE, pa_group, 8);           // Read status bytes
+//		for(i=0; i<8; i++)
+//		{
+//			printf("%x ",pa_group[i]);
+//		}
 
     i = CC1101ReadStatus(CC1101_PARTNUM);//for test, must be 0x00
     i = CC1101ReadStatus(CC1101_VERSION);//for test, refer to the datasheet,must be 0x14

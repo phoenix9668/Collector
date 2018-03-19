@@ -17,7 +17,7 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 RTC_TimeTypeDef	rtc_timestructure;
-RTC_DateTypeDef		rtc_datestructure;
+RTC_DateTypeDef	rtc_datestructure;
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 uint8_t	Chip_Addr	= 0;								// cc1101地址
@@ -28,6 +28,7 @@ uint8_t	gBuff[300] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o
 uint8_t	buff[300] = {0};
 
 extern uint8_t PCCommend[PCCOMMEND_LENGTH];	// 接收上位机命令数组
+extern __IO ITStatus RFReady;
 uint8_t SendBuffer[SEND_LENGTH] = {0};// 发送数据包
 uint8_t RecvBuffer[RECV_LENGTH] = {0};// 接收数据包
 uint8_t AckBuffer[ACK_LENGTH] = {0};	// 应答数据包
@@ -62,8 +63,8 @@ void MCU_Initial(void)
 void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 {
 	CC1101Init(addr, sync);                       			// 初始化CC1101寄存器
-	if(mode == RX)				{CC1101SetTRMode(RX_MODE);}		// 接收模式
-	else if(mode == TX)		{CC1101SetTRMode(TX_MODE);}   // 发送模式
+	if(mode == RX)				{CC1101SetTRMode(RX_MODE, DISABLE);}		// 接收模式
+	else if(mode == TX)		{CC1101SetTRMode(TX_MODE, DISABLE);}   // 发送模式
 	else
 	{
 		CC1101SetIdle();																	// 空闲模式，以转到sleep状态
@@ -264,15 +265,13 @@ void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 		Delay(0xFFFF);									// 计算得到平均27ms发送一次数据
 //		Delay(0xFFFFF);								// 计算得到平均130ms发送一次数据
 	}
-	CC1101SetTRMode(RX_MODE);       	// 进入接收模式，等待应答
+	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
 	Usart_SendString(DEBUG_USART,"Transmit OK\n");
 	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
 //	RF_Initial(addr, sync, RX);
 	RecvWaitTime = RECV_TIMEOUT;
-	while(RF_Acknowledge() == 0 && RecvFlag == 0);
+	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvFlag == 0);
 	RecvWaitTime = 0;
-	
-
 }
 
 /*===========================================================================
@@ -284,11 +283,15 @@ uint8_t	RF_Acknowledge(void)
 	uint8_t index;
 	int16_t rssi_dBm;	
 	
-	if(CC1101_IRQ_READ() == 0)         // 检测无线模块是否产生接收中断 
+	if(RFReady == SET)         // 检测无线模块是否产生接收中断 
 	{
-//		while (CC1101_IRQ_READ() == 0);
-		for (i=0; i<RECV_LENGTH; i++)   { RecvBuffer[i] = 0; } // clear array
+		/* Reset transmission flag */
+		RFReady = RESET;
+		/* clear array */
+		for (i=0; i<RECV_LENGTH; i++)   { RecvBuffer[i] = 0; } 
 		length = CC1101RecPacket(RecvBuffer, &Chip_Addr, &RSSI);// 读取接收到的数据长度和数据内容
+		/* Set the CC1101_IRQ_EXTI_LINE enable */
+		EXTI_Config(CC1101_IRQ_EXTI_LINE, EXTI_Trigger_Falling, ENABLE);
 		// 打印数据
 		rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
 		printf("RSSI = %ddBm, length = %d, address = %d\n",rssi_dBm,length,Chip_Addr);
@@ -300,13 +303,19 @@ uint8_t	RF_Acknowledge(void)
 		}
 		printf("\r\n");		
 		if(length == 0)
-			{
-				index = 1;
-				Reply_PC(index);
-				return 1;
-			}
+		{
+			index = 1;
+			Reply_PC(index);
+			return 1;
+		}
+		else if(length == 1)
+		{
+			index = 12;
+			Reply_PC(index);
+			return 1;
+		}
 		else
-			{
+		{
 				if(RecvBuffer[0] == 0xAB && RecvBuffer[1] == 0xCD)
 				{
 					if(RecvBuffer[4] == 0xD0 && RecvBuffer[5] == 0x01)
@@ -587,6 +596,10 @@ void Reply_PC(uint8_t index)
 	else if(index == 3)
 	{
 		printf("RFID receive function order error\r\n");
+	}
+	else if(index == 12)
+	{
+		printf("RFID receive crc error\r\n");
 	}
 }
 

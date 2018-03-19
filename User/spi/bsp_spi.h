@@ -16,7 +16,6 @@
 #define __BSP_SPI_H_
 
 #include "stm32f4xx_conf.h"
-#include "./cc1101/cc1101.h"
 
 /**
   * @brief  CC1101 SPI Interface pins
@@ -57,6 +56,11 @@ you must offer the following functions for this module
 #define CC1101_IRQ_PIN                  GPIO_Pin_0                  /* PE.04 */
 #define CC1101_IRQ_GPIO_PORT            GPIOE                       /* GPIOE */
 #define CC1101_IRQ_GPIO_CLK             RCC_AHB1Periph_GPIOE
+#define CC1101_IRQ_EXTI_PORTSOURCE  		EXTI_PortSourceGPIOE
+#define CC1101_IRQ_EXTI_PINSOURCE    		EXTI_PinSource0
+#define CC1101_IRQ_EXTI_LINE         		EXTI_Line0
+#define CC1101_IRQ_EXTI_IRQ          		EXTI0_IRQn
+#define CC1101_IRQ_IRQHandler         	EXTI0_IRQHandler
 
 #define CC1101_GDO2_PIN                 GPIO_Pin_1                  /* PE.06 */
 #define CC1101_GDO2_GPIO_PORT           GPIOE                       /* GPIOE */
@@ -64,8 +68,8 @@ you must offer the following functions for this module
 #define CC1101_GDO2_EXTI_PORTSOURCE  		EXTI_PortSourceGPIOE
 #define CC1101_GDO2_EXTI_PINSOURCE    	EXTI_PinSource1
 #define CC1101_GDO2_EXTI_LINE         	EXTI_Line1
-#define CC1101_GDO2_EXTI_IRQ          	EXTI9_5_IRQn
-#define CC1101_GDO2_IRQHandler         	EXTI9_5_IRQHandler
+#define CC1101_GDO2_EXTI_IRQ          	EXTI1_IRQn
+#define CC1101_GDO2_IRQHandler         	EXTI1_IRQHandler
 
 #define CC1101_CSN_LOW()                GPIO_ResetBits(CC1101_SPI_CSN_GPIO_PORT,CC1101_SPI_CSN_PIN)
 
@@ -97,6 +101,8 @@ you must offer the following functions for this module
 #define LED_COM_OFF()      	GPIO_SetBits(LED_GPIO_PORT,LED_COM_PIN)
 #define LED_COM_TOG()      	GPIO_ToggleBits(LED_GPIO_PORT,LED_COM_PIN)
 
+void EXTI_Config(uint32_t EXTI_Line, EXTITrigger_TypeDef EXTI_Trigger, FunctionalState EXTI_LineCmd);
+void NVIC_Config(uint8_t NVIC_IRQChannel, uint8_t NVIC_IRQChannelSubPriority);
 void GPIO_Config(void);                // 初始化通用IO端口
 void SPI_Config(void);                 // 初始化SPI
 

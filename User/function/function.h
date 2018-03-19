@@ -3,6 +3,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
+#include "./cc1101/cc1101.h"
 #include "./usart/bsp_debug_usart.h"
 #include "./tim/bsp_basic_tim.h"
 #include "./spi/bsp_spi.h"
@@ -19,7 +20,7 @@
 #define ACK_LENGTH      254   	// 反馈数据包长度
 #define SEND_LENGTH     18			// 发送数据包长度
 #define RECV_LENGTH   	246			// 接收数据包长度
-#define RECV_TIMEOUT		2000  	// 接收等待2s
+#define RECV_TIMEOUT		3  			// 接收等待4s
 #define SEND_PACKAGE_NUM	80		// 发生数据包数
 /* Exported macro ------------------------------------------------------------*/
 extern __IO uint16_t	RecvWaitTime;  	// 接收等待时间
