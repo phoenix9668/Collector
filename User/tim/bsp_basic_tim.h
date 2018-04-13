@@ -10,6 +10,7 @@
 #define BASIC_TIM_IRQHandler        TIM6_DAC_IRQHandler
 
 void TIMx_Configuration(void);
+void TIM_Mode_Config(void);
 
 #endif /* __BASIC_TIM_H */
 

@@ -4,7 +4,7 @@
 #include "stm32f4xx.h"
 #include <stdio.h>
 
-#define PCCOMMEND_LENGTH		18
+#define PCCOMMEND_LENGTH		20
 
 //Òý½Å¶¨Òå
 /*******************************************************/

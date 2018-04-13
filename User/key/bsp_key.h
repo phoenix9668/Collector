@@ -5,9 +5,9 @@
 
 //Òý½Å¶¨Òå
 /*******************************************************/
-#define USER_KEY_PIN                  GPIO_Pin_0                 
-#define USER_KEY_GPIO_PORT            GPIOA                      
-#define USER_KEY_GPIO_CLK             RCC_AHB1Periph_GPIOA
+#define USER_KEY_PIN														GPIO_Pin_0                 
+#define USER_KEY_GPIO_PORT        		GPIOA                      
+#define USER_KEY_GPIO_CLK             	RCC_AHB1Periph_GPIOA
 
 /*******************************************************/
 

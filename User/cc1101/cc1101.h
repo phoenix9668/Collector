@@ -37,7 +37,7 @@ uint8_t CC1101ReadReg(uint8_t addr);
 uint8_t CC1101ReadStatus(uint8_t addr);
 
 /*Set the device as TX mode or RX mode*/
-void CC1101SetTRMode(TRMODE mode);
+void CC1101SetTRMode(TRMODE mode, FunctionalState EXTI_LineCmd);
 
 /*Write a command byte to the device*/
 void CC1101WriteCmd(uint8_t command);
