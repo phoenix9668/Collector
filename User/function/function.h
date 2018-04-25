@@ -17,9 +17,9 @@
 #define TX              0       // cc1101发送模式
 #define RX              1       // cc1101接收模式
 #define IDLE          	2       // cc1101空闲模式
-#define ACK_LENGTH      254   	// 反馈数据包长度
+#define ACK_LENGTH      27   		// 反馈数据包长度
 #define SEND_LENGTH     18			// 发送数据包长度
-#define RECV_LENGTH   	246			// 接收数据包长度
+#define RECV_LENGTH   	19			// 接收数据包长度
 #define RECV_TIMEOUT		3  			// 接收等待4s
 #define SEND_PACKAGE_NUM	80		// 发生数据包数
 /* Exported macro ------------------------------------------------------------*/

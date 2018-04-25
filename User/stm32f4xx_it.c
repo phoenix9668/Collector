@@ -178,7 +178,7 @@ void BASIC_TIM_IRQHandler(void)
 
 		LED_RUN_TOG();
 		TIM_ClearITPendingBit(BASIC_TIM, TIM_IT_Update);
-	}		 	
+	}
 }
 
 void CC1101_IRQ_IRQHandler(void)

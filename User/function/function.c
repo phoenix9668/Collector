@@ -38,8 +38,8 @@ extern void Delay(__IO uint32_t nCount);
 /* Private functions ---------------------------------------------------------*/
 
 /*===========================================================================
-* 函数 ：MCU_Initial() => 初始化CPU所有硬件                                 																											*
-* 说明 ：关于所有硬件的初始化操作，已经被建成C库，见bsp.c文件              	 														*
+* 函数 ：MCU_Initial() => 初始化CPU所有硬件                                	*
+* 说明 ：关于所有硬件的初始化操作，已经被建成C库，见bsp.c文件              	*
 ============================================================================*/
 void MCU_Initial(void)
 { 
@@ -55,10 +55,10 @@ void MCU_Initial(void)
 }
 
 /*===========================================================================
-* 函数 ：RF_Initial() => 初始化RF芯片                                       																																*
-* 输入 ：mode, =0,接收模式， else,发送模式                                  																												*
-* 说明 ：CC1101的操作，已经被建成C库，见CC1101.c文件， 提供SPI和CSN操作，									*
-         即可调用其内部所有函数用户无需再关心CC1101的寄存器操作问题。       													*
+* 函数 ：RF_Initial() => 初始化RF芯片                                      	*
+* 输入 ：mode, =0,接收模式， else,发送模式                                 	*
+* 说明 ：CC1101的操作，已经被建成C库，见CC1101.c文件， 提供SPI和CSN操作，		*
+         即可调用其内部所有函数用户无需再关心CC1101的寄存器操作问题。      	*
 ============================================================================*/
 void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 {
@@ -74,7 +74,7 @@ void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode)
 }
 
 /*===========================================================================
-* 函数: System_Initial() => 初始化系统所有外设                              																												*
+* 函数: System_Initial() => 初始化系统所有外设                             	*
 ============================================================================*/
 void System_Initial(void)
 {
@@ -106,7 +106,7 @@ void System_Initial(void)
 }
 
 /*===========================================================================
-* 函数 ：Function_Ctrl() => 功能控制码解析和流程分解                        																							* 
+* 函数 ：Function_Ctrl() => 功能控制码解析和流程分解                      	* 
 ============================================================================*/
 void Function_Ctrl(uint8_t *commend)
 {   
@@ -275,7 +275,7 @@ void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 }
 
 /*===========================================================================
-* 函数 ：RF_Acknowledge() => 无线数据接收应答                               													*
+* 函数 ：RF_Acknowledge() => 无线数据接收应答                              	*
 ============================================================================*/
 uint8_t	RF_Acknowledge(void)
 {
@@ -295,7 +295,7 @@ uint8_t	RF_Acknowledge(void)
 		// 打印数据
 		rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
 		printf("RSSI = %ddBm, length = %d, address = %d\n",rssi_dBm,length,Chip_Addr);
-		rssi_dBm = CC1101CalcRSSI_dBm(RecvBuffer[245]);
+		rssi_dBm = CC1101CalcRSSI_dBm(RecvBuffer[18]);
 		printf("RFID RSSI = %ddBm\n",rssi_dBm);
 		for(i=0; i<RECV_LENGTH; i++)
 		{
@@ -373,7 +373,7 @@ uint8_t	RF_Acknowledge(void)
 }
 
 /*===========================================================================
-* 函数 ：Reply_PC() => WIFI回复PC							                              																															*
+* 函数 ：Reply_PC() => WIFI回复PC							                             	*
 ============================================================================*/
 void Reply_PC(uint8_t index)
 {
@@ -392,14 +392,14 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[246] = RSSI;
-		AckBuffer[247] = rtc_datestructure.RTC_Year;
-		AckBuffer[248] = rtc_datestructure.RTC_Month;
-		AckBuffer[249] = rtc_datestructure.RTC_Date;
-		AckBuffer[250] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[251] = rtc_timestructure.RTC_Hours;
-		AckBuffer[252] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[253] = rtc_timestructure.RTC_Seconds;
+		AckBuffer[19] = RSSI;
+		AckBuffer[20] = rtc_datestructure.RTC_Year;
+		AckBuffer[21] = rtc_datestructure.RTC_Month;
+		AckBuffer[22] = rtc_datestructure.RTC_Date;
+		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[24] = rtc_timestructure.RTC_Hours;
+		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
 		
 		for(i=0; i<ACK_LENGTH; i++)
 		{
@@ -436,18 +436,19 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[246] = RSSI;
-		AckBuffer[247] = rtc_datestructure.RTC_Year;
-		AckBuffer[248] = rtc_datestructure.RTC_Month;
-		AckBuffer[249] = rtc_datestructure.RTC_Date;
-		AckBuffer[250] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[251] = rtc_timestructure.RTC_Hours;
-		AckBuffer[252] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[253] = rtc_timestructure.RTC_Seconds;
+		AckBuffer[19] = RSSI;
+		AckBuffer[20] = rtc_datestructure.RTC_Year;
+		AckBuffer[21] = rtc_datestructure.RTC_Month;
+		AckBuffer[22] = rtc_datestructure.RTC_Date;
+		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[24] = rtc_timestructure.RTC_Hours;
+		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);
 		}
+		printf("\n");
 	}
 	else if(index == 6)
 	{		
@@ -462,14 +463,14 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[246] = RSSI;
-		AckBuffer[247] = rtc_datestructure.RTC_Year;
-		AckBuffer[248] = rtc_datestructure.RTC_Month;
-		AckBuffer[249] = rtc_datestructure.RTC_Date;
-		AckBuffer[250] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[251] = rtc_timestructure.RTC_Hours;
-		AckBuffer[252] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[253] = rtc_timestructure.RTC_Seconds;
+		AckBuffer[19] = RSSI;
+		AckBuffer[20] = rtc_datestructure.RTC_Year;
+		AckBuffer[21] = rtc_datestructure.RTC_Month;
+		AckBuffer[22] = rtc_datestructure.RTC_Date;
+		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[24] = rtc_timestructure.RTC_Hours;
+		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);
@@ -489,18 +490,19 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[246] = RSSI;
-		AckBuffer[247] = rtc_datestructure.RTC_Year;
-		AckBuffer[248] = rtc_datestructure.RTC_Month;
-		AckBuffer[249] = rtc_datestructure.RTC_Date;
-		AckBuffer[250] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[251] = rtc_timestructure.RTC_Hours;
-		AckBuffer[252] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[253] = rtc_timestructure.RTC_Seconds;
+		AckBuffer[19] = RSSI;
+		AckBuffer[20] = rtc_datestructure.RTC_Year;
+		AckBuffer[21] = rtc_datestructure.RTC_Month;
+		AckBuffer[22] = rtc_datestructure.RTC_Date;
+		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[24] = rtc_timestructure.RTC_Hours;
+		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);
 		}
+		printf("\n");
 	}
 	else if(index == 8)
 	{
@@ -515,18 +517,19 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[246] = RSSI;
-		AckBuffer[247] = rtc_datestructure.RTC_Year;
-		AckBuffer[248] = rtc_datestructure.RTC_Month;
-		AckBuffer[249] = rtc_datestructure.RTC_Date;
-		AckBuffer[250] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[251] = rtc_timestructure.RTC_Hours;
-		AckBuffer[252] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[253] = rtc_timestructure.RTC_Seconds;
+		AckBuffer[19] = RSSI;
+		AckBuffer[20] = rtc_datestructure.RTC_Year;
+		AckBuffer[21] = rtc_datestructure.RTC_Month;
+		AckBuffer[22] = rtc_datestructure.RTC_Date;
+		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[24] = rtc_timestructure.RTC_Hours;
+		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
 		}
+		printf("\n");
 	}	
 	else if(index == 9)
 	{
@@ -541,18 +544,19 @@ void Reply_PC(uint8_t index)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
 		}
-		AckBuffer[246] = RSSI;
-		AckBuffer[247] = rtc_datestructure.RTC_Year;
-		AckBuffer[248] = rtc_datestructure.RTC_Month;
-		AckBuffer[249] = rtc_datestructure.RTC_Date;
-		AckBuffer[250] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[251] = rtc_timestructure.RTC_Hours;
-		AckBuffer[252] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[253] = rtc_timestructure.RTC_Seconds;
+		AckBuffer[19] = RSSI;
+		AckBuffer[20] = rtc_datestructure.RTC_Year;
+		AckBuffer[21] = rtc_datestructure.RTC_Month;
+		AckBuffer[22] = rtc_datestructure.RTC_Date;
+		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[24] = rtc_timestructure.RTC_Hours;
+		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
 		}
+		printf("\n");
 	}
 	else if(index == 10)
 	{
@@ -567,17 +571,17 @@ void Reply_PC(uint8_t index)
 		AckBuffer[7] = PCCommend[7];
 		AckBuffer[8] = PCCommend[8];
 		AckBuffer[9] = PCCommend[9];
-		for(i=0;i<51;i++)
+		for(i=0;i<10;i++)
 		{
 			AckBuffer[i+10] = 0;
 		}
-		AckBuffer[61] = rtc_datestructure.RTC_Year;
-		AckBuffer[62] = rtc_datestructure.RTC_Month;
-		AckBuffer[63] = rtc_datestructure.RTC_Date;
-		AckBuffer[64] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[65] = rtc_timestructure.RTC_Hours;
-		AckBuffer[66] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[67] = rtc_timestructure.RTC_Seconds;
+		AckBuffer[20] = rtc_datestructure.RTC_Year;
+		AckBuffer[21] = rtc_datestructure.RTC_Month;
+		AckBuffer[22] = rtc_datestructure.RTC_Date;
+		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+		AckBuffer[24] = rtc_timestructure.RTC_Hours;
+		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
 		for(i=0; i<ACK_LENGTH; i++)
 		{
 			printf("%x ",AckBuffer[i]);
@@ -604,7 +608,7 @@ void Reply_PC(uint8_t index)
 }
 
 /*===========================================================================
-* 函数 ：GetNandFlashAddr() => 获得NandFlash地址							                              																*
+* 函数 ：GetNandFlashAddr() => 获得NandFlash地址							            	*
 ============================================================================*/
 void GetNandFlashAddr(flashInfo* pFlshInfo)
 {
