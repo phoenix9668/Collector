@@ -188,10 +188,10 @@ void SPI_Config(void)
 uint8_t SPI_ExchangeByte(SPI_TypeDef* SPIx,uint8_t input)
 {
     SPI_SendData(SPIx,input);
-    //printf("spi send data:%x\n",input);
+//    printf("spi send data:%x\n",input);
 	while (RESET == SPI_GetFlagStatus(SPIx,SPI_FLAG_TXE));   // 等待数据传输完成	
 	while (RESET == SPI_GetFlagStatus(SPIx,SPI_FLAG_RXNE)){}; // 等待数据接收完成
-    //printf("spi receive data:%x\n",SPI_ReceiveData(SPIx));
+//    printf("spi receive data:%x\n",SPI_ReceiveData(SPIx));
 	return (SPI_ReceiveData(SPIx));
 }
 

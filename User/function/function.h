@@ -17,11 +17,12 @@
 #define TX              0       // cc1101发送模式
 #define RX              1       // cc1101接收模式
 #define IDLE          	2       // cc1101空闲模式
+#define RFID_SUM    		9       // RFID标签的总数
 #define ACK_LENGTH      27   		// 反馈数据包长度
 #define SEND_LENGTH     18			// 发送数据包长度
 #define RECV_LENGTH   	19			// 接收数据包长度
 #define RECV_TIMEOUT		3  			// 接收等待4s
-#define SEND_PACKAGE_NUM	80		// 发生数据包数
+#define SEND_PACKAGE_NUM	60		// 发生数据包数
 /* Exported macro ------------------------------------------------------------*/
 extern __IO uint16_t	RecvWaitTime;  	// 接收等待时间
 extern __IO uint8_t		RecvFlag;     	// =1接收等待时间结束，=0不处理

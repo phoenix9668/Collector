@@ -49,11 +49,11 @@ you must offer the following functions for this module
 3. CC1101_CSN_HIGH();                       // Pull up the CSN Line
 ===========================================================================*/
 // CC1101相关控制引脚定义， CSN(PB2), IRQ(PE0), GDO2(PE1) 
-#define CC1101_SPI_CSN_PIN              GPIO_Pin_2                  /* PE.02 */
-#define CC1101_SPI_CSN_GPIO_PORT        GPIOB                       /* GPIOE */
+#define CC1101_SPI_CSN_PIN              GPIO_Pin_2                  /* PB.02 */
+#define CC1101_SPI_CSN_GPIO_PORT        GPIOB                       /* GPIOB */
 #define CC1101_SPI_CSN_GPIO_CLK         RCC_AHB1Periph_GPIOB
 
-#define CC1101_IRQ_PIN                  GPIO_Pin_0                  /* PE.04 */
+#define CC1101_IRQ_PIN                  GPIO_Pin_0                  /* PE.00 */
 #define CC1101_IRQ_GPIO_PORT            GPIOE                       /* GPIOE */
 #define CC1101_IRQ_GPIO_CLK             RCC_AHB1Periph_GPIOE
 #define CC1101_IRQ_EXTI_PORTSOURCE  		EXTI_PortSourceGPIOE
@@ -62,7 +62,7 @@ you must offer the following functions for this module
 #define CC1101_IRQ_EXTI_IRQ          		EXTI0_IRQn
 #define CC1101_IRQ_IRQHandler         	EXTI0_IRQHandler
 
-#define CC1101_GDO2_PIN                 GPIO_Pin_1                  /* PE.06 */
+#define CC1101_GDO2_PIN                 GPIO_Pin_1                  /* PE.01 */
 #define CC1101_GDO2_GPIO_PORT           GPIOE                       /* GPIOE */
 #define CC1101_GDO2_GPIO_CLK            RCC_AHB1Periph_GPIOE
 #define CC1101_GDO2_EXTI_PORTSOURCE  		EXTI_PortSourceGPIOE

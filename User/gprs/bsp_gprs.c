@@ -24,7 +24,7 @@ void MOD_GPRS_Config(void)
     GPIO_InitTypeDef GPIO_InitStructure;
 	
     //开启GPIO外设时钟
-    RCC_AHB1PeriphClockCmd(MOD_RESET_CLK|MOD_RELOAD_CLK, ENABLE);
+    RCC_AHB1PeriphClockCmd(MOD_RESET_CLK|MOD_GPRS_CLK, ENABLE);
 	
     //配置MOD_RESET的GPIO引脚
     GPIO_InitStructure.GPIO_Pin = MOD_RESET_PIN;
@@ -34,12 +34,14 @@ void MOD_GPRS_Config(void)
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(MOD_RESET_PORT, &GPIO_InitStructure);
     
-    //配置MOD_RELOAD的GPIO引脚
-    GPIO_InitStructure.GPIO_Pin = MOD_RELOAD_PIN;
-    GPIO_Init(MOD_RELOAD_PORT, &GPIO_InitStructure);
+    //配置MOD_GPRS的GPIO引脚
+    GPIO_InitStructure.GPIO_Pin = MOD_GPRS_PIN;
+		GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+		GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+    GPIO_Init(MOD_GPRS_PORT, &GPIO_InitStructure);
 	
 		MOD_RESET_ON();
-		MOD_RELOAD_ON();
+		MOD_GPRS_ON();
 }
 
 /******************* END OF FILE ******************/

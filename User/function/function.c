@@ -26,6 +26,18 @@ flashInfo		flshInfo;
 NAND_IDTypeDef		NAND_ID;
 uint8_t	gBuff[300] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
 uint8_t	buff[300] = {0};
+static const uint8_t RFID_init[RFID_SUM][7]= 
+{
+  {0x35, 0x4D, 0x5A, 0x00, 0x00, 0x00, 0x01},
+  {0x36, 0x6D, 0x7A, 0x00, 0x00, 0x00, 0x02},
+  {0x37, 0x12, 0x34, 0x00, 0x00, 0x00, 0x03},
+  {0x38, 0x23, 0x45, 0x00, 0x00, 0x00, 0x04},
+  {0x39, 0x34, 0x56, 0x00, 0x00, 0x00, 0x05},
+  {0x40, 0x45, 0x67, 0x00, 0x00, 0x00, 0x06},
+  {0x41, 0x56, 0x78, 0x00, 0x00, 0x00, 0x07},
+  {0x42, 0x67, 0x89, 0x00, 0x00, 0x00, 0x08},
+  {0x43, 0x78, 0x9A, 0x00, 0x00, 0x00, 0x09},
+};
 
 extern uint8_t PCCommend[PCCOMMEND_LENGTH];	// 接收上位机命令数组
 extern __IO ITStatus RFReady;
@@ -151,7 +163,7 @@ void Function_Ctrl(uint8_t *commend)
 	else
 	{
 		printf("device number error\n");
-	}		
+	}
 }
 
 /*===========================================================================
@@ -159,43 +171,46 @@ void Function_Ctrl(uint8_t *commend)
 ============================================================================*/
 void Check_All_RFID(uint8_t *commend)
 {   	
-	uint32_t rfid;
-	rfid = ((uint32_t)(0xFF000000 & commend[6]<<24)+(uint32_t)(0x00FF0000 & commend[7]<<16)+(uint32_t)(0x0000FF00 & commend[8]<<8)+(uint32_t)(0x000000FF & commend[9]));
-	/* RFID coding is 1*/
-	RF_Initial(0x35, 0x4D5A, RX);     // 初始化无线芯片
-	RF_SendPacket(commend, rfid);
-	Delay(0xFFFF);
-	rfid = rfid + (uint32_t)1;
-	/* RFID coding is 2*/
-	RF_Initial(0x36, 0x6D7A, RX);     // 初始化无线芯片
-	RF_SendPacket(commend, rfid);
-	Delay(0xFFFF);
+	uint32_t rfid_init;
+	uint16_t syncword;
+	uint8_t i=0;
+	
+	for(i=0; i<RFID_SUM; i++)
+	{
+		syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
+		rfid_init = ((uint32_t)(0xFF000000 & RFID_init[i][3]<<24)+(uint32_t)(0x00FF0000 & RFID_init[i][4]<<16)+(uint32_t)(0x0000FF00 & RFID_init[i][5]<<8)+(uint32_t)(0x000000FF & RFID_init[i][6]));
+		RF_Initial(RFID_init[i][0], syncword, RX);
+		RF_SendPacket(commend, rfid_init);
+		Delay(0xFFFF);
+	}
 }
 
 /*===========================================================================
 * 函数 ：Check_Assign_RFID() => 上位机查询指定编号标签                    	* 
 ============================================================================*/
 void Check_Assign_RFID(uint8_t *commend)
-{   	
-	uint32_t rfid;
+{
+	uint32_t rfid,rfid_init;
+	uint16_t syncword;
+	uint8_t i=0,index=0;
+	
 	rfid = ((uint32_t)(0xFF000000 & commend[6]<<24)+(uint32_t)(0x00FF0000 & commend[7]<<16)+(uint32_t)(0x0000FF00 & commend[8]<<8)+(uint32_t)(0x000000FF & commend[9]));
-	switch(rfid)
+	
+	for(i=0; i<RFID_SUM; i++)
 	{
-		/* RFID coding is 1*/
-		case 0x1:
-			RF_Initial(0x35, 0x4D5A, RX);     // 初始化无线芯片
-			RF_SendPacket(commend, rfid);
-			break;
-		/* RFID coding is 2*/
-		case 0x2:
-			RF_Initial(0x36, 0x6D7A, RX);     // 初始化无线芯片
-			RF_SendPacket(commend, rfid);
-			break;
-		default:	
-			printf("RFID coding error\n");
-			break;
+		rfid_init = ((uint32_t)(0xFF000000 & RFID_init[i][3]<<24)+(uint32_t)(0x00FF0000 & RFID_init[i][4]<<16)+(uint32_t)(0x0000FF00 & RFID_init[i][5]<<8)+(uint32_t)(0x000000FF & RFID_init[i][6]));
+		if(rfid == rfid_init)
+		{
+			syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
+			RF_Initial(RFID_init[i][0], syncword, RX);
+			RF_SendPacket(commend, rfid_init);
+			index = 1;
+		}
 	}
-		
+	if(index == 0)
+	{
+		printf("RFID coding error\n");
+	}
 }
 
 /*===========================================================================
@@ -272,6 +287,7 @@ void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 	RecvWaitTime = RECV_TIMEOUT;
 	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvFlag == 0);
 	RecvWaitTime = 0;
+	RecvFlag == 0;
 }
 
 /*===========================================================================
@@ -305,12 +321,14 @@ uint8_t	RF_Acknowledge(void)
 		if(length == 0)
 		{
 			index = 1;
+			printf("index = %d\n",index);
 			Reply_PC(index);
 			return 1;
 		}
 		else if(length == 1)
 		{
 			index = 12;
+			printf("index = %d\n",index);
 			Reply_PC(index);
 			return 1;
 		}
@@ -321,42 +339,49 @@ uint8_t	RF_Acknowledge(void)
 					if(RecvBuffer[4] == 0xD0 && RecvBuffer[5] == 0x01)
 					{
 						index = 4;
+						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 4;
 					}
 					else if(RecvBuffer[4] == 0xD3 && RecvBuffer[5] == 0x01)
 					{
 						index = 5;
+						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 5;
 					}
 					else if(RecvBuffer[4] == 0xD4 && RecvBuffer[5] == 0x01)
 					{
 						index = 6;
+						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 6;
 					}
 					else if(RecvBuffer[4] == 0xD5 && RecvBuffer[5] == 0x01)
 					{
 						index = 7;
+						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 7;
 					}
 					else if(RecvBuffer[4] == 0x02 && RecvBuffer[5] == 0x02)
 					{
 						index = 8;
+						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 8;
 					}
 					else if(RecvBuffer[4] == 0x03 && RecvBuffer[5] == 0x03)
 					{
 						index = 9;
+						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 9;
 					}
 					else
 					{	
 						index = 3;
+						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 3;
 					}
@@ -364,6 +389,7 @@ uint8_t	RF_Acknowledge(void)
 				else
 				{	
 					index = 2;
+					printf("index = %d\n",index);
 					Reply_PC(index);
 					return 2;
 				}

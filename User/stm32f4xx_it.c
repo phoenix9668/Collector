@@ -171,11 +171,13 @@ void BASIC_TIM_IRQHandler(void)
 	{
 		if(RecvWaitTime != 0 && RecvWaitTime != 1)												// 数据接收计时
 				{	RecvWaitTime--;}
+		else if(RecvWaitTime == 0)
+				{	RecvFlag=0;}		
 		else if(RecvWaitTime == 1)
 				{	RecvFlag=1;}
-		else
-				{	RecvFlag=0;}
 
+//		printf("RecvFlag = %d\n",RecvFlag);
+//		printf("RecvWaitTime = %d\n",RecvWaitTime);
 		LED_RUN_TOG();
 		TIM_ClearITPendingBit(BASIC_TIM, TIM_IT_Update);
 	}
@@ -194,7 +196,6 @@ void CC1101_IRQ_IRQHandler(void)
 			RFReady = SET;
 			Delay(0xFFFF);
 		}
-
     /* Clear the EXTI line 1 pending bit */
 		EXTI_ClearITPendingBit(CC1101_IRQ_EXTI_LINE);     
 	}  
