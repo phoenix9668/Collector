@@ -375,7 +375,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F4XX</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\User;..\Libraries\CMSIS\Include;..\Libraries\CMSIS\Device\ST\STM32F4xx\Include</IncludePath>
+              <IncludePath>..\Libraries\STM32F4xx_StdPeriph_Driver\inc;..\User;..\Libraries\CMSIS\Include;..\Libraries\CMSIS\Device\ST\STM32F4xx\Include;..\User\ioLibrary_Driver-master\Ethernet\W5500;..\User\ioLibrary_Driver-master\Internet\DHCP;..\User\ioLibrary_Driver-master\Internet\DNS;..\User\ioLibrary_Driver-master\Ethernet;..\User\ioLibrary_Driver-master\spi;..\User\ioLibrary_Driver-master\Application\loopback</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -567,7 +567,44 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>DOC</GroupName>
+          <GroupName>Ethernet</GroupName>
+          <Files>
+            <File>
+              <FileName>socket.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\ioLibrary_Driver-master\Ethernet\socket.c</FilePath>
+            </File>
+            <File>
+              <FileName>wizchip_conf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\ioLibrary_Driver-master\Ethernet\wizchip_conf.c</FilePath>
+            </File>
+            <File>
+              <FileName>w5500.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\ioLibrary_Driver-master\Ethernet\W5500\w5500.c</FilePath>
+            </File>
+            <File>
+              <FileName>dhcp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\ioLibrary_Driver-master\Internet\DHCP\dhcp.c</FilePath>
+            </File>
+            <File>
+              <FileName>dns.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\ioLibrary_Driver-master\Internet\DNS\dns.c</FilePath>
+            </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\ioLibrary_Driver-master\spi\spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>loopback.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\ioLibrary_Driver-master\Application\loopback\loopback.c</FilePath>
+            </File>
+          </Files>
         </Group>
       </Groups>
     </Target>

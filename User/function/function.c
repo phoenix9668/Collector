@@ -22,8 +22,25 @@ RTC_DateTypeDef	rtc_datestructure;
 /* Private variables ---------------------------------------------------------*/
 uint8_t	Chip_Addr	= 0;								// cc1101地址
 uint8_t	RSSI = 0;											// RSSI值
-flashInfo		flshInfo;
-NAND_IDTypeDef		NAND_ID;
+
+wiz_NetInfo gWIZNETINFO = {{0x00,0x08,0xDC,0x00,0xAB,0xCD},///< Source Mac Address
+													{0xC0,0xA8,0x1,0x7B},///< Source IP Address
+													{0xFF,0xFF,0xFF,0x0},///< Subnet Mask
+													{0xC0,0xA8,0x1,0x1},///< Gateway IP Address
+													{0,0,0,0},///< DNS server IP Address
+													NETINFO_DHCP};///< 1 - Static, 2 - DHCP
+uint8_t buffer[2048];											//用于存放socket的通信数据
+uint8_t str3[22] = {'n','o',' ','t','h','i','s',' ','f','u','n','c','t','i','o','n',' ','n','o','w',0x0D,0x0A};
+uint8_t str4[22] = {'f','u','n','c','t','i','o','n',' ','o','r','d','e','r',' ','e','r','r','o','r',0x0D,0x0A};
+uint8_t str5[21] = {'d','e','v','i','c','e',' ','n','u','m','b','e','r',' ','e','r','r','o','r',0x0D,0x0A};
+uint8_t str6[19] = {'R','F','I','D',' ','c','o','d','i','n','g',' ','e','r','r','o','r',0x0D,0x0A};
+uint8_t str7[41] = {'r','e','c','e','i','v','e',' ','e','r','r','o','r',' ','o','r',' ','A','d','d','r','e','s','s',' ','F','i','l','t','e','r','i','n','g',' ','f','a','i','l',0x0D,0x0A};
+uint8_t str8[38] = {'R','F','I','D',' ','r','e','c','e','i','v','e',' ','p','a','c','k','a','g','e',' ','b','e','g','i','n','n','i','n','g',' ','e','r','r','o','r',0x0D,0x0A};	
+uint8_t str9[35] = {'R','F','I','D',' ','r','e','c','e','i','v','e',' ','f','u','n','c','t','i','o','n',' ','o','r','d','e','r',' ','e','r','r','o','r',0x0D,0x0A};	
+uint8_t str10[24] = {'R','F','I','D',' ','r','e','c','e','i','v','e',' ','c','r','c',' ','e','r','r','o','r',0x0D,0x0A};
+	
+flashInfo flshInfo;
+NAND_IDTypeDef NAND_ID;
 uint8_t	gBuff[300] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
 uint8_t	buff[300] = {0};
 static const uint8_t RFID_init[RFID_SUM][7]= 
@@ -62,8 +79,13 @@ void MCU_Initial(void)
     SPI_Config();          							// 初始化SPI
 		RTC_Config();											// 初始化RTC
 		MOD_GPRS_Config();				// 初始化GPRS
-		FSMC_GPIO_Config();			// 初始化FSMC接口
-		FSMC_NAND_Config();			// 初始化FSMC接口
+//		FSMC_GPIO_Config();			// 初始化FSMC接口
+//		FSMC_NAND_Config();			// 初始化FSMC接口
+    W5500_SPI_Config();				//Config SPI
+    Delay(0xFFFF);
+		W5500_SPI_cbfunc();
+		ChipParametersConfiguration();
+		NetworkParameterConfiguration();
 }
 
 /*===========================================================================
@@ -142,11 +164,21 @@ void Function_Ctrl(uint8_t *commend)
 										break;
 			/* 查询主控设备电源电量低标志、RTC电量低标志 */
 			case 0xA2A2:	
-										printf("no this function now\n");
+										#ifdef ETHERNET_ENABLE
+											Delay(0xffff);
+											send_tcpc(0,str3,22,gWIZNETINFO.gw,5000);			
+										#else
+											printf("no this function now\n");
+										#endif
 										break;
 			/* 查询标签电量、加速度过小，加速度过大标志 */
 			case 0xA3A3:	
-										printf("no this function now\n");
+										#ifdef ETHERNET_ENABLE
+											Delay(0xffff);
+											send_tcpc(0,str3,22,gWIZNETINFO.gw,5000);
+										#else
+											printf("no this function now\n");
+										#endif
 										break;
 			/* 上位机查询指定编号标签 */
 			case 0xA4A4:	
@@ -156,13 +188,24 @@ void Function_Ctrl(uint8_t *commend)
 			case 0xA5A5:	
 										Prog_Assign_RFID(commend);
 										break;
-			default:	printf("function order error\n");
+			default:			
+										#ifdef ETHERNET_ENABLE
+											Delay(0xffff);
+											send_tcpc(0,str4,22,gWIZNETINFO.gw,5000);			
+										#else
+											printf("function order error\n");
+										#endif
 										break;
 		}
 	}
 	else
 	{
-		printf("device number error\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,str5,21,gWIZNETINFO.gw,5000);
+		#else
+			printf("device number error\n");
+		#endif
 	}
 }
 
@@ -209,7 +252,12 @@ void Check_Assign_RFID(uint8_t *commend)
 	}
 	if(index == 0)
 	{
-		printf("RFID coding error\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,str6,19,gWIZNETINFO.gw,5000);
+		#else
+			printf("RFID coding error\n");
+		#endif
 	}
 }
 
@@ -426,28 +474,16 @@ void Reply_PC(uint8_t index)
 		AckBuffer[24] = rtc_timestructure.RTC_Hours;
 		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
 		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		
-		for(i=0; i<ACK_LENGTH; i++)
-		{
-			printf("%x ",AckBuffer[i]);
-//			USART_SendData(DEBUG_USART, AckBuffer[i]);
-		}
-		printf("\n");
-		
-//		for(i=0; i<ACK_LENGTH; i++)
-//		{	
-//			printf("%x ",RecvBuffer[i]);
-//		}
-//		printf("\n");
-//		for(i=0; i<ACK_CNT; i++)
-//		{
-//			ADC_ConvertedValueLocal[0] =(float)((((uint16_t)RecvBuffer[i*6+0]) + (0x0F00 & (((uint16_t)RecvBuffer[i*6+1])<<8)))*3.3/4096); 
-//			ADC_ConvertedValueLocal[1] =(float)((((uint16_t)RecvBuffer[i*6+2]) + (0x0F00 & (((uint16_t)RecvBuffer[i*6+3])<<8)))*3.3/4096); 
-//			ADC_ConvertedValueLocal[2] =(float)((((uint16_t)RecvBuffer[i*6+4]) + (0x0F00 & (((uint16_t)RecvBuffer[i*6+5])<<8)))*3.3/4096);  
-//			printf("The current ADC1 value = %f V \r\n", ADC_ConvertedValueLocal[0]); 
-//			printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[1]);
-//			printf("The current ADC2 value = %f V \r\n", ADC_ConvertedValueLocal[2]);
-//		}
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+		#else
+			for(i=0; i<ACK_LENGTH; i++)
+			{
+				printf("%x ",AckBuffer[i]);
+			}
+			printf("\n");
+		#endif
 	}
 	else if(index == 5)
 	{
@@ -470,11 +506,16 @@ void Reply_PC(uint8_t index)
 		AckBuffer[24] = rtc_timestructure.RTC_Hours;
 		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
 		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		for(i=0; i<ACK_LENGTH; i++)
-		{
-			printf("%x ",AckBuffer[i]);
-		}
-		printf("\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+		#else
+			for(i=0; i<ACK_LENGTH; i++)
+			{
+				printf("%x ",AckBuffer[i]);
+			}
+			printf("\n");
+		#endif
 	}
 	else if(index == 6)
 	{		
@@ -497,11 +538,16 @@ void Reply_PC(uint8_t index)
 		AckBuffer[24] = rtc_timestructure.RTC_Hours;
 		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
 		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		for(i=0; i<ACK_LENGTH; i++)
-		{
-			printf("%x ",AckBuffer[i]);
-		}
-		printf("\n");	
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+		#else
+			for(i=0; i<ACK_LENGTH; i++)
+			{
+				printf("%x ",AckBuffer[i]);
+			}
+			printf("\n");
+		#endif
 	}	
 	else if(index == 7)
 	{
@@ -524,11 +570,16 @@ void Reply_PC(uint8_t index)
 		AckBuffer[24] = rtc_timestructure.RTC_Hours;
 		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
 		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		for(i=0; i<ACK_LENGTH; i++)
-		{
-			printf("%x ",AckBuffer[i]);
-		}
-		printf("\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+		#else
+			for(i=0; i<ACK_LENGTH; i++)
+			{
+				printf("%x ",AckBuffer[i]);
+			}
+			printf("\n");
+		#endif
 	}
 	else if(index == 8)
 	{
@@ -551,11 +602,16 @@ void Reply_PC(uint8_t index)
 		AckBuffer[24] = rtc_timestructure.RTC_Hours;
 		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
 		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		for(i=0; i<ACK_LENGTH; i++)
-		{
-			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
-		}
-		printf("\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+		#else
+			for(i=0; i<ACK_LENGTH; i++)
+			{
+				printf("%x ",AckBuffer[i]);
+			}
+			printf("\n");
+		#endif
 	}	
 	else if(index == 9)
 	{
@@ -578,11 +634,16 @@ void Reply_PC(uint8_t index)
 		AckBuffer[24] = rtc_timestructure.RTC_Hours;
 		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
 		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		for(i=0; i<ACK_LENGTH; i++)
-		{
-			Usart_SendByte(DEBUG_USART, AckBuffer[i]);
-		}
-		printf("\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+		#else
+			for(i=0; i<ACK_LENGTH; i++)
+			{
+				printf("%x ",AckBuffer[i]);
+			}
+			printf("\n");
+		#endif
 	}
 	else if(index == 10)
 	{
@@ -608,28 +669,55 @@ void Reply_PC(uint8_t index)
 		AckBuffer[24] = rtc_timestructure.RTC_Hours;
 		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
 		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		for(i=0; i<ACK_LENGTH; i++)
-		{
-			printf("%x ",AckBuffer[i]);
-		}
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+		#else
+			for(i=0; i<ACK_LENGTH; i++)
+			{
+				printf("%x ",AckBuffer[i]);
+			}
+			printf("\n");
+		#endif
 		printf("The Date :  Y:20%0.2d - M:%0.2d - D:%0.2d - W:%0.2d\r\n", rtc_datestructure.RTC_Year,rtc_datestructure.RTC_Month, rtc_datestructure.RTC_Date,rtc_datestructure.RTC_WeekDay);
 		printf("The Time :  %0.2d:%0.2d:%0.2d \r\n\r\n", rtc_timestructure.RTC_Hours, rtc_timestructure.RTC_Minutes, rtc_timestructure.RTC_Seconds);
 	}
 	else if(index == 1)
 	{
-		printf("receive error or Address Filtering fail\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,str7,41,gWIZNETINFO.gw,5000);
+		#else
+			printf("receive error or Address Filtering fail\n");
+		#endif
 	}
 	else if(index == 2)
 	{
-		printf("RFID receive package beginning error\r\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,str8,38,gWIZNETINFO.gw,5000);
+		#else
+			printf("RFID receive package beginning error\r\n");
+		#endif
 	}
 	else if(index == 3)
 	{
-		printf("RFID receive function order error\r\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,str9,35,gWIZNETINFO.gw,5000);
+		#else
+			printf("RFID receive function order error\r\n");
+		#endif
 	}
 	else if(index == 12)
 	{
-		printf("RFID receive crc error\r\n");
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,str10,24,gWIZNETINFO.gw,5000);
+		#else
+			printf("RFID receive crc error\r\n");
+		#endif
+		
 	}
 }
 
@@ -641,6 +729,58 @@ void GetNandFlashAddr(flashInfo* pFlshInfo)
 	pFlshInfo->blockNo = 10;
 	pFlshInfo->pageNo = 0;
 	pFlshInfo->pageAddr = 0;
+}
+
+
+/*===========================================================================
+* 函数 ：network_init() => 以太网初始化							            						*
+============================================================================*/
+
+//初始化芯片参数
+void ChipParametersConfiguration(void)
+{
+  uint8_t tmp;
+  uint8_t memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
+  //WIZCHIP SOCKET缓存区初始化
+  if(ctlwizchip(CW_INIT_WIZCHIP,(void*)memsize) == -1){
+		#ifdef ETHERNET_ENABLE
+		printf("WIZCHIP Initialized fail.\r\n");
+		#endif
+		while(1);
+  }
+
+  //PHY物理层连接状态检查
+  do{
+    if(ctlwizchip(CW_GET_PHYLINK, (void*)&tmp) == -1){
+			#ifdef ETHERNET_ENABLE
+			printf("Unknown PHY Link stauts.\r\n");
+			#endif	
+    }
+  }while(tmp == PHY_LINK_OFF);
+}
+
+/**
+  * @brief  Intialize the network information to be used in WIZCHIP
+  * @retval None
+  */
+void NetworkParameterConfiguration(void)
+{
+	uint8_t tmpstr[6];
+	ctlnetwork(CN_SET_NETINFO, (void*)&gWIZNETINFO);
+	ctlnetwork(CN_GET_NETINFO, (void*)&gWIZNETINFO);
+ 
+	// Display Network Information
+	ctlwizchip(CW_GET_ID,(void*)tmpstr);
+	#ifdef ETHERNET_ENABLE
+	printf("\r\n=== %s NET CONF ===\r\n",(char*)tmpstr);
+	printf("MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",gWIZNETINFO.mac[0],gWIZNETINFO.mac[1],gWIZNETINFO.mac[2],
+          gWIZNETINFO.mac[3],gWIZNETINFO.mac[4],gWIZNETINFO.mac[5]);
+	printf("SIP: %d.%d.%d.%d\r\n", gWIZNETINFO.ip[0],gWIZNETINFO.ip[1],gWIZNETINFO.ip[2],gWIZNETINFO.ip[3]);
+	printf("GAR: %d.%d.%d.%d\r\n", gWIZNETINFO.gw[0],gWIZNETINFO.gw[1],gWIZNETINFO.gw[2],gWIZNETINFO.gw[3]);
+	printf("SUB: %d.%d.%d.%d\r\n", gWIZNETINFO.sn[0],gWIZNETINFO.sn[1],gWIZNETINFO.sn[2],gWIZNETINFO.sn[3]);
+	printf("DNS: %d.%d.%d.%d\r\n", gWIZNETINFO.dns[0],gWIZNETINFO.dns[1],gWIZNETINFO.dns[2],gWIZNETINFO.dns[3]);
+	printf("======================\r\n");
+	#endif
 }
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

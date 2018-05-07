@@ -11,6 +11,13 @@
 #include "./fsmc/bsp_fsmc.h" 
 #include "./rtc/bsp_rtc.h"
 #include "./gprs/bsp_gprs.h"
+#include "wizchip_conf.h"
+#include "loopback.h"
+#include "socket.h"
+#include "w5500.h"
+#include "spi.h"
+
+#define	ETHERNET_ENABLE
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
@@ -39,6 +46,8 @@ void RF_SendPacket(uint8_t *commend, uint32_t rfid);
 uint8_t	RF_Acknowledge(void);
 void Reply_PC(uint8_t index);
 void GetNandFlashAddr(flashInfo* pFlshInfo);
+void ChipParametersConfiguration(void);
+void NetworkParameterConfiguration(void);
 
 #endif /* __FUNCTION_H */
 

@@ -16,8 +16,11 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+uint8_t str1[16] = {'s','t','a','r','t',' ','t','r','a','n','s','f','e','r',0x0D,0x0A};
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern wiz_NetInfo gWIZNETINFO;
+extern uint8_t buffer[2048];
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -28,30 +31,45 @@
 ============================================================================*/
 int main(void)
 {
-	Delay(0xfffff);
+	Delay(0xffffff);
 	System_Initial();
-	Show_Message();
+	#ifdef UART_DEBUG
+		Show_Message();
+	#endif
 	
 	while(1)
 	{
 		for (i=0; i<PCCOMMEND_LENGTH; i++) // clear array
-		{PCCommend[i] = 0;}
-		/* 等待串口接收数据完毕 */
-		Usart_RecArray(DEBUG_USART, PCCommend);
-		for(i=0; i<PCCOMMEND_LENGTH; i++)// for test
-		{	
-			printf("%x ",PCCommend[i]);
-		}
-		printf("\n");
+			{PCCommend[i] = 0;}
+		#ifdef ETHERNET_ENABLE
+			loopback_tcpc(0,PCCommend,gWIZNETINFO.gw,5000);
+		#else
+			Usart_RecArray(DEBUG_USART, PCCommend);/* 等待串口接收数据完毕 */
+		#endif
+		#ifdef UART_DEBUG
+			for(i=0; i<PCCOMMEND_LENGTH; i++)// for test
+			{
+				printf("%x ",PCCommend[i]);
+			}
+			printf("\n");
+		#endif
 		if(PCCommend[0] == 0xAB && PCCommend[1] == 0xCD)//begin index
 		{
-			Usart_SendString(DEBUG_USART,"start transfer\n");
+			 
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,str1,16,gWIZNETINFO.gw,5000);
+			#else
+				Usart_SendString(DEBUG_USART,"start transfer\n");
+			#endif
 			LED_STA_ON();
 			Function_Ctrl(PCCommend);
 		}
 		else
 		{
-			Usart_SendString(DEBUG_USART,"package beginning error\n");
+			#ifdef UART_DEBUG
+//			Usart_SendString(DEBUG_USART,"package beginning error\n");
+			#endif
 			LED_STA_OFF();
 		}
 
@@ -70,6 +88,7 @@ void Delay(__IO uint32_t nCount)
   }
 }
 
+#ifdef UART_DEBUG
 /**
   * @brief  打印指令输入提示信息
   * @param  无
@@ -84,6 +103,7 @@ static void Show_Message(void)
 	printf(" PS: green led light when system in transfer mode\n");    
 	printf("     orange led light when system in receive mode\n");
 }
+#endif
 
 #ifdef  USE_FULL_ASSERT
 

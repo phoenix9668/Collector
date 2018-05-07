@@ -4,6 +4,7 @@
 #include "stm32f4xx.h"
 #include <stdio.h>
 
+//#define	UART_DEBUG
 #define PCCOMMEND_LENGTH		20
 
 //Òý½Å¶¨Òå
