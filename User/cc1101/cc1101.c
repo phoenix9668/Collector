@@ -11,7 +11,7 @@
   ******************************************************************************
   */ 
 #include "./cc1101/cc1101.h"
-#include "./usart/bsp_debug_usart.h"
+#include "./usart/bsp_com_usart.h"
 
 //10, 7, 5, 0, -10, -15, -20, -30,dbm output power
 uint8_t PaTabel[]={0xc0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};

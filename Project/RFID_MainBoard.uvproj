@@ -540,11 +540,6 @@
               <FilePath>..\User\tim\bsp_basic_tim.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_debug_usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\usart\bsp_debug_usart.c</FilePath>
-            </File>
-            <File>
               <FileName>function.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\function\function.c</FilePath>
@@ -563,6 +558,11 @@
               <FileName>bsp_gprs.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\gprs\bsp_gprs.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_com_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\usart\bsp_com_usart.c</FilePath>
             </File>
           </Files>
         </Group>

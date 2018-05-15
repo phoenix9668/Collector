@@ -72,20 +72,25 @@ extern void Delay(__IO uint32_t nCount);
 ============================================================================*/
 void MCU_Initial(void)
 { 
-    GPIO_Config();         					// 初始化GPIO
-		Debug_USART_Config();  // 初始化串口
+    GPIO_Config();         			// 初始化GPIO
+		COM1_DMA_Config();
+		COM1_USART_Config();  			// 初始化串口
+		COM2_USART_Config();
+		MOD_USART_Config();
     Key_GPIO_Config();      		// 初始化按键
     TIMx_Configuration();   		// 初始化定时器6，0.5s 一个事件
-    SPI_Config();          							// 初始化SPI
-		RTC_Config();											// 初始化RTC
+    SPI_Config();          			// 初始化SPI
+		RTC_Config();								// 初始化RTC
 		MOD_GPRS_Config();				// 初始化GPRS
 //		FSMC_GPIO_Config();			// 初始化FSMC接口
 //		FSMC_NAND_Config();			// 初始化FSMC接口
-    W5500_SPI_Config();				//Config SPI
-    Delay(0xFFFF);
-		W5500_SPI_cbfunc();
-		ChipParametersConfiguration();
-		NetworkParameterConfiguration();
+		#ifdef ETHERNET_ENABLE
+			W5500_SPI_Config();				//Config SPI
+			Delay(0xFFFF);
+			W5500_SPI_cbfunc();
+			ChipParametersConfiguration();
+			NetworkParameterConfiguration();
+		#endif
 }
 
 /*===========================================================================
@@ -329,7 +334,7 @@ void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 //		Delay(0xFFFFF);								// 计算得到平均130ms发送一次数据
 	}
 	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
-	Usart_SendString(DEBUG_USART,"Transmit OK\n");
+	Usart_SendString(MOD_USART,"Transmit OK\n");
 	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
 //	RF_Initial(addr, sync, RX);
 	RecvWaitTime = RECV_TIMEOUT;
@@ -743,7 +748,7 @@ void ChipParametersConfiguration(void)
   uint8_t memsize[2][8] = {{2,2,2,2,2,2,2,2},{2,2,2,2,2,2,2,2}};
   //WIZCHIP SOCKET缓存区初始化
   if(ctlwizchip(CW_INIT_WIZCHIP,(void*)memsize) == -1){
-		#ifdef ETHERNET_ENABLE
+		#ifdef UART_DEBUG
 		printf("WIZCHIP Initialized fail.\r\n");
 		#endif
 		while(1);
@@ -752,7 +757,7 @@ void ChipParametersConfiguration(void)
   //PHY物理层连接状态检查
   do{
     if(ctlwizchip(CW_GET_PHYLINK, (void*)&tmp) == -1){
-			#ifdef ETHERNET_ENABLE
+			#ifdef UART_DEBUG
 			printf("Unknown PHY Link stauts.\r\n");
 			#endif	
     }
@@ -771,7 +776,7 @@ void NetworkParameterConfiguration(void)
  
 	// Display Network Information
 	ctlwizchip(CW_GET_ID,(void*)tmpstr);
-	#ifdef ETHERNET_ENABLE
+	#ifdef UART_DEBUG
 	printf("\r\n=== %s NET CONF ===\r\n",(char*)tmpstr);
 	printf("MAC: %02X:%02X:%02X:%02X:%02X:%02X\r\n",gWIZNETINFO.mac[0],gWIZNETINFO.mac[1],gWIZNETINFO.mac[2],
           gWIZNETINFO.mac[3],gWIZNETINFO.mac[4],gWIZNETINFO.mac[5]);

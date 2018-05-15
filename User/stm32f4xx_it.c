@@ -155,13 +155,107 @@ void SysTick_Handler(void)
   * @param  None
   * @retval None
   */
-void DEBUG_USART_IRQHandler(void)
+void COM1_USART_IRQHandler(void)
 {
   uint8_t ucTemp;
-	if(USART_GetITStatus(DEBUG_USART,USART_IT_RXNE)!=RESET)
+	if(USART_GetITStatus(COM1_USART,USART_IT_RXNE)!=RESET)
 	{		
-		ucTemp = USART_ReceiveData(DEBUG_USART);
-		USART_SendData(DEBUG_USART,ucTemp);
+		ucTemp = USART_ReceiveData(COM1_USART);
+		USART_SendData(COM1_USART,ucTemp);
+	}
+}
+
+/*
+void drv_gsm_tx(uint8_t *data,uint16_t size)
+{
+    //等待空闲
+    while (Flag_Tx_Gsm_Busy);
+    Flag_Tx_Gsm_Busy = 1;
+    //设置传输数据长度
+    DMA_SetCurrDataCounter(USART5_TX_DMA_STREAM,size);
+    //打开DMA,开始发送
+    DMA_Cmd(USART5_TX_DMA_STREAM,ENABLE);
+}
+
+void USART5_DMA_TX_IRQHandler(void)  
+{
+	printf("oh my god");
+	if(DMA_GetITStatus(USART5_TX_DMA_STREAM,DMA_IT_TCIF7) != RESET)   
+	{
+		//清除标志位
+		DMA_ClearFlag(USART5_TX_DMA_STREAM,DMA_FLAG_TCIF7);  
+		//关闭DMA
+		DMA_Cmd(USART5_TX_DMA_STREAM,DISABLE);  
+		//打开发送完成中断，发送最后两个字节
+		USART_ITConfig(COM1_USART,USART_IT_TC,ENABLE);  
+	}
+}
+  
+void COM1_USART_IRQHandler(void)
+{
+	uint16_t len;
+	uint8_t i = 0;
+
+	//发送完成中断处理
+	if(USART_GetITStatus(COM1_USART, USART_IT_TC) != RESET)  
+	{
+		//关闭发送完成中断
+		USART_ITConfig(COM1_USART,USART_IT_TC,DISABLE);  
+		//发送完成
+		Flag_Tx_Gsm_Busy = 0;
+	}
+      
+	//接收完成中断处理
+	len = drv_gsm_deal_irq_rx_end(aRxBuffer);
+	if (len != 0)
+	{
+		printf("len = %d",len);
+		for(i = 0; i < len; i++)
+		{
+			printf("%d ",aRxBuffer[i]);
+		}
+	}
+}
+
+uint8_t drv_gsm_deal_irq_rx_end(uint8_t *buf)
+{
+	uint16_t len = 0;  
+      
+	//接收完成中断
+	if(USART_GetITStatus(COM1_USART, USART_IT_IDLE) != RESET)  
+	{
+		COM1_USART->SR;  
+		COM1_USART->DR; //清USART_IT_IDLE标志
+		//关闭DMA  
+		DMA_Cmd(USART5_RX_DMA_STREAM,DISABLE);  
+		//清除标志位
+		DMA_ClearFlag(USART5_RX_DMA_STREAM,DMA_FLAG_TCIF5);  
+          
+		//获得接收帧帧长
+		len = RX_LEN_GSM - DMA_GetCurrDataCounter(USART5_RX_DMA_STREAM);
+		//设置传输数据长度
+		DMA_SetCurrDataCounter(USART5_RX_DMA_STREAM,RX_LEN_GSM);  
+		//打开DMA  
+		DMA_Cmd(USART5_RX_DMA_STREAM,ENABLE);  
+  
+		return len;
+	}
+	return 0;  
+}
+*/
+
+/**
+  * @brief  This function handles PPP interrupt request.
+  * @param  None
+  * @retval None
+  */
+void COM2_USART_IRQHandler(void)
+{
+  uint8_t ucTemp;
+	if(USART_GetITStatus(COM2_USART,USART_IT_RXNE)!=RESET)
+	{		
+		ucTemp = USART_ReceiveData(COM2_USART);
+		USART_SendData(COM2_USART,ucTemp);
 	}
 }
 
@@ -176,8 +270,8 @@ void BASIC_TIM_IRQHandler(void)
 		else if(RecvWaitTime == 1)
 				{	RecvFlag=1;}
 
-//		printf("RecvFlag = %d\n",RecvFlag);
-//		printf("RecvWaitTime = %d\n",RecvWaitTime);
+		printf("RecvFlag = %d\n",RecvFlag);
+		printf("RecvWaitTime = %d\n",RecvWaitTime);
 		LED_RUN_TOG();
 		TIM_ClearITPendingBit(BASIC_TIM, TIM_IT_Update);
 	}

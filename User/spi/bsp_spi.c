@@ -13,7 +13,7 @@
   */ 
 
 #include "./spi/bsp_spi.h"
-#include "./usart/bsp_debug_usart.h"
+#include "./usart/bsp_com_usart.h"
 
 /**
   * @brief  EXTI_Config function

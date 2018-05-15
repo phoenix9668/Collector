@@ -11,7 +11,7 @@
   ******************************************************************************
   */ 
 #include "./rtc/bsp_rtc.h"
-#include "./usart/bsp_debug_usart.h"
+#include "./usart/bsp_com_usart.h"
 
 /**
   * @brief  设置时间和日期

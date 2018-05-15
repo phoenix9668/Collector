@@ -44,7 +44,7 @@ int main(void)
 		#ifdef ETHERNET_ENABLE
 			loopback_tcpc(0,PCCommend,gWIZNETINFO.gw,5000);
 		#else
-			Usart_RecArray(DEBUG_USART, PCCommend);/* 等待串口接收数据完毕 */
+			Usart_RecArray(MOD_USART, PCCommend);/* 等待串口接收数据完毕 */
 		#endif
 		#ifdef UART_DEBUG
 			for(i=0; i<PCCOMMEND_LENGTH; i++)// for test
@@ -60,7 +60,7 @@ int main(void)
 				Delay(0xffff);
 				send_tcpc(0,str1,16,gWIZNETINFO.gw,5000);
 			#else
-				Usart_SendString(DEBUG_USART,"start transfer\n");
+				Usart_SendString(MOD_USART,"start transfer\n");
 			#endif
 			LED_STA_ON();
 			Function_Ctrl(PCCommend);
@@ -97,7 +97,7 @@ void Delay(__IO uint32_t nCount)
 static void Show_Message(void)
 {   
 	printf("\r\n CC1101 chip transfer performance test program \n");
-	printf(" using USART3,configuration:%d 8-N-1 \n",DEBUG_USART_BAUDRATE);
+	printf(" using USART3,configuration:%d 8-N-1 \n",MOD_USART_BAUDRATE);
 	printf(" you need press USER button when you want transfer data\n");
 	printf(" if choose transfer,the data must not exceed 60 bytes!!\n");
 	printf(" PS: green led light when system in transfer mode\n");    

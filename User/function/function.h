@@ -4,7 +4,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx.h"
 #include "./cc1101/cc1101.h"
-#include "./usart/bsp_debug_usart.h"
+#include "./usart/bsp_com_usart.h"
 #include "./tim/bsp_basic_tim.h"
 #include "./spi/bsp_spi.h"
 #include "./key/bsp_key.h"
@@ -17,7 +17,7 @@
 #include "w5500.h"
 #include "spi.h"
 
-#define	ETHERNET_ENABLE
+//#define	ETHERNET_ENABLE
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
