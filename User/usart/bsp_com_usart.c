@@ -307,7 +307,7 @@ uint32_t Usart_RecWord(USART_TypeDef *pUSARTx)
 void Usart_RecArray(USART_TypeDef *pUSARTx, uint8_t *arr)
 {
 	unsigned int k;
-  for(k=0;k<PCCOMMEND_LENGTH;k++)
+  for(k=0;k<PCCOMMAND_LENGTH;k++)
   {
 			*(arr+k) = Usart_RecByte(pUSARTx);
 			if(k>1)

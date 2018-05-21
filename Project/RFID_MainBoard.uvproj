@@ -564,6 +564,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\usart\bsp_com_usart.c</FilePath>
             </File>
+            <File>
+              <FileName>bsp_fram.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\fram\bsp_fram.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

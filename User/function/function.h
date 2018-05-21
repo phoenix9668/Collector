@@ -7,6 +7,7 @@
 #include "./usart/bsp_com_usart.h"
 #include "./tim/bsp_basic_tim.h"
 #include "./spi/bsp_spi.h"
+#include "./fram/bsp_fram.h"
 #include "./key/bsp_key.h"
 #include "./fsmc/bsp_fsmc.h" 
 #include "./rtc/bsp_rtc.h"
@@ -28,26 +29,31 @@
 #define ACK_LENGTH      27   		// 反馈数据包长度
 #define SEND_LENGTH     18			// 发送数据包长度
 #define RECV_LENGTH   	19			// 接收数据包长度
-#define RECV_TIMEOUT		3  			// 接收等待4s
-#define SEND_PACKAGE_NUM	60		// 发生数据包数
+#define RECV_TIMEOUT		44000000  			// 接收等待13s
+#define SEND_PACKAGE_NUM	200		// 发生数据包数
+#define FRAM_DATA_LENGTH 7			// 存储fram数据buffer
 /* Exported macro ------------------------------------------------------------*/
-extern __IO uint16_t	RecvWaitTime;  	// 接收等待时间
+extern __IO uint32_t	RecvWaitTime;  	// 接收等待时间
 extern __IO uint8_t		RecvFlag;     	// =1接收等待时间结束，=0不处理
 
 /* Exported functions ------------------------------------------------------- */
 void MCU_Initial(void);
 void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode);
 void System_Initial(void);
-void Function_Ctrl(uint8_t *commend);
-void Check_Assign_RFID(uint8_t *commend);
-void Check_All_RFID(uint8_t *commend);
-void Prog_Assign_RFID(uint8_t *commend);
-void RF_SendPacket(uint8_t *commend, uint32_t rfid);
+void Function_Ctrl(uint8_t *command);
+void Check_Assign_RFID(uint8_t *command);
+void Check_All_RFID(uint8_t *command);
+void Prog_Assign_RFID(uint8_t *command);
+void Clear_All_RFID(uint8_t *command);
+void RF_SendPacket(uint8_t *command);
+void RF_SendClearPacket(uint8_t *command);
 uint8_t	RF_Acknowledge(void);
 void Reply_PC(uint8_t index);
 void GetNandFlashAddr(flashInfo* pFlshInfo);
 void ChipParametersConfiguration(void);
 void NetworkParameterConfiguration(void);
+void FRAM_Ctrl(uint8_t *command);
+void Init_ID(void);
 
 #endif /* __FUNCTION_H */
 

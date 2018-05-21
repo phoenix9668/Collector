@@ -161,6 +161,13 @@ void SPI_Config(void)
     
     /* Set SPI_CSN Pin High */
     CC1101_CSN_HIGH();
+		
+		/* Set FRAM_SPI_CSN Pin */
+    GPIO_InitStructure.GPIO_Pin = FRAM_SPI_CSN_PIN;
+    GPIO_Init(CC1101_SPI_CSN_GPIO_PORT, &GPIO_InitStructure);
+    
+    /* Set FRAM_SPI_CSN Pin High */
+    FRAM_CSN_HIGH();
     
     /* SPI configuration -------------------------------------------------------*/
     SPI_I2S_DeInit(CC1101_SPI);
@@ -193,6 +200,22 @@ uint8_t SPI_ExchangeByte(SPI_TypeDef* SPIx,uint8_t input)
 	while (RESET == SPI_GetFlagStatus(SPIx,SPI_FLAG_RXNE)){}; // 等待数据接收完成
 //    printf("spi receive data:%x\n",SPI_ReceiveData(SPIx));
 	return (SPI_ReceiveData(SPIx));
+}
+
+// Function for sending and receiving data through SPI
+void SpiFunction(SPI_TypeDef* SPIx, uint8_t OutputBuff[], uint8_t InputBuff[], uint16_t OutNoOfBytes, uint16_t InNoOfBytes)
+{
+	uint16_t i;
+
+	for(i=0;i<OutNoOfBytes;i++)
+	{
+    SPI_ExchangeByte(SPIx, OutputBuff[i]);					// Send data
+	}
+   
+	for(i=0;i<InNoOfBytes;i++)
+	{
+		InputBuff[i] = SPI_ExchangeByte(SPIx, 0xFF);		// Receive data
+	}
 }
 
 /******************* END OF FILE ******************/

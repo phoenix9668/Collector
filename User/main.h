@@ -45,7 +45,7 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 uint8_t i;
-uint8_t PCCommend[PCCOMMEND_LENGTH] = {0};	// 接收上位机命令数组
+uint8_t PCCommand[PCCOMMAND_LENGTH] = {0};	// 接收上位机命令数组
 /* Exported functions ------------------------------------------------------- */
 void Delay(__IO uint32_t nCount);
 static void Show_Message(void);

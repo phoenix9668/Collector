@@ -20,6 +20,7 @@ RTC_TimeTypeDef	rtc_timestructure;
 RTC_DateTypeDef	rtc_datestructure;
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+uint8_t index;
 uint8_t	Chip_Addr	= 0;								// cc1101地址
 uint8_t	RSSI = 0;											// RSSI值
 
@@ -38,25 +39,27 @@ uint8_t str7[41] = {'r','e','c','e','i','v','e',' ','e','r','r','o','r',' ','o',
 uint8_t str8[38] = {'R','F','I','D',' ','r','e','c','e','i','v','e',' ','p','a','c','k','a','g','e',' ','b','e','g','i','n','n','i','n','g',' ','e','r','r','o','r',0x0D,0x0A};	
 uint8_t str9[35] = {'R','F','I','D',' ','r','e','c','e','i','v','e',' ','f','u','n','c','t','i','o','n',' ','o','r','d','e','r',' ','e','r','r','o','r',0x0D,0x0A};	
 uint8_t str10[24] = {'R','F','I','D',' ','r','e','c','e','i','v','e',' ','c','r','c',' ','e','r','r','o','r',0x0D,0x0A};
-	
+
 flashInfo flshInfo;
 NAND_IDTypeDef NAND_ID;
 uint8_t	gBuff[300] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
 uint8_t	buff[300] = {0};
-static const uint8_t RFID_init[RFID_SUM][7]= 
-{
-  {0x35, 0x4D, 0x5A, 0x00, 0x00, 0x00, 0x01},
-  {0x36, 0x6D, 0x7A, 0x00, 0x00, 0x00, 0x02},
-  {0x37, 0x12, 0x34, 0x00, 0x00, 0x00, 0x03},
-  {0x38, 0x23, 0x45, 0x00, 0x00, 0x00, 0x04},
-  {0x39, 0x34, 0x56, 0x00, 0x00, 0x00, 0x05},
-  {0x40, 0x45, 0x67, 0x00, 0x00, 0x00, 0x06},
-  {0x41, 0x56, 0x78, 0x00, 0x00, 0x00, 0x07},
-  {0x42, 0x67, 0x89, 0x00, 0x00, 0x00, 0x08},
-  {0x43, 0x78, 0x9A, 0x00, 0x00, 0x00, 0x09},
-};
-
-extern uint8_t PCCommend[PCCOMMEND_LENGTH];	// 接收上位机命令数组
+uint8_t RFID_init[RFID_SUM][7] = {0}; 
+//{
+//  {0x35, 0x4D, 0x5A, 0x00, 0x00, 0x00, 0x01},
+//  {0x36, 0x6D, 0x7A, 0x00, 0x00, 0x00, 0x02},
+//  {0x37, 0x12, 0x34, 0x00, 0x00, 0x00, 0x03},
+//  {0x38, 0x23, 0x45, 0x00, 0x00, 0x00, 0x04},
+//  {0x39, 0x34, 0x56, 0x00, 0x00, 0x00, 0x05},
+//  {0x40, 0x45, 0x67, 0x00, 0x00, 0x00, 0x06},
+//  {0x41, 0x56, 0x78, 0x00, 0x00, 0x00, 0x07},
+//  {0x42, 0x67, 0x89, 0x00, 0x00, 0x00, 0x08},
+//  {0x43, 0x78, 0x9A, 0x00, 0x00, 0x00, 0x09},
+//};
+uint8_t MBID_byte1;										//main_board设备编号
+uint8_t MBID_byte2;										//main_board设备编号
+uint8_t FRAM_Data[FRAM_DATA_LENGTH];
+extern uint8_t PCCommand[PCCOMMAND_LENGTH];	// 接收上位机命令数组
 extern __IO ITStatus RFReady;
 uint8_t SendBuffer[SEND_LENGTH] = {0};// 发送数据包
 uint8_t RecvBuffer[RECV_LENGTH] = {0};// 接收数据包
@@ -71,9 +74,9 @@ extern void Delay(__IO uint32_t nCount);
 * 说明 ：关于所有硬件的初始化操作，已经被建成C库，见bsp.c文件              	*
 ============================================================================*/
 void MCU_Initial(void)
-{ 
+{
     GPIO_Config();         			// 初始化GPIO
-		COM1_DMA_Config();
+//		COM1_DMA_Config();
 		COM1_USART_Config();  			// 初始化串口
 		COM2_USART_Config();
 		MOD_USART_Config();
@@ -90,6 +93,7 @@ void MCU_Initial(void)
 			W5500_SPI_cbfunc();
 			ChipParametersConfiguration();
 			NetworkParameterConfiguration();
+			LED_COM_ON();
 		#endif
 }
 
@@ -121,6 +125,7 @@ void System_Initial(void)
 //		uint32_t flshStatus;
     MCU_Initial();      // 初始化CPU所有硬件
 		RTC_Config_Check();      // 检查RTC，判断是否需要重新配置
+		Init_ID();										// 读取设备编号和RFID编号
     RF_Initial(0x5, 0xD391, RX);     // 初始化无线芯片,空闲模式
 //		RTC_TimeAndDate_Show();
 	
@@ -147,19 +152,19 @@ void System_Initial(void)
 /*===========================================================================
 * 函数 ：Function_Ctrl() => 功能控制码解析和流程分解                      	* 
 ============================================================================*/
-void Function_Ctrl(uint8_t *commend)
-{   
-	if(commend[2] == 0x00 && commend[3] == 0x00)//判断设备编号
+void Function_Ctrl(uint8_t *command)
+{
+	if(command[2] == MBID_byte1 && command[3] == MBID_byte2)//判断设备编号
 	{
-		switch(((uint16_t)(0xFF00 & commend[4]<<8)+(uint16_t)(0x00FF & commend[5])))
+		switch(((uint16_t)(0xFF00 & command[4]<<8)+(uint16_t)(0x00FF & command[5])))
 		{
 			/* 上位批量查询标签数据 */
 			case 0xA0A0:	
-										Check_All_RFID(commend);
+										Check_All_RFID(command);
 										break;
 			/* 上位发生时间同步数据 */
 			case 0xA101:	
-										RTC_TimeAndDate_Reset(commend[10],  commend[11],  commend[12],  commend[13],  commend[14],  commend[15],  commend[16]);
+										RTC_TimeAndDate_Reset(command[10],  command[11],  command[12],  command[13],  command[14],  command[15],  command[16]);
 										RTC_Config_Check();      // 检查RTC，判断是否需要重新配置
 										Reply_PC(10);
 										break;
@@ -171,7 +176,7 @@ void Function_Ctrl(uint8_t *commend)
 			case 0xA2A2:	
 										#ifdef ETHERNET_ENABLE
 											Delay(0xffff);
-											send_tcpc(0,str3,22,gWIZNETINFO.gw,5000);			
+											send_tcpc(0,str3,22,gWIZNETINFO.gw,5000);
 										#else
 											printf("no this function now\n");
 										#endif
@@ -187,11 +192,15 @@ void Function_Ctrl(uint8_t *commend)
 										break;
 			/* 上位机查询指定编号标签 */
 			case 0xA4A4:	
-										Check_Assign_RFID(commend);
+										Check_Assign_RFID(command);
 										break;
 			/* 上位机编程标签地址码、同步码、RFID码 */
 			case 0xA5A5:	
-										Prog_Assign_RFID(commend);
+										Prog_Assign_RFID(command);
+										break;
+			/* 上位机批量清零标签计步数据 */
+			case 0xA6A6:	
+										Clear_All_RFID(command);
 										break;
 			default:			
 										#ifdef ETHERNET_ENABLE
@@ -217,18 +226,20 @@ void Function_Ctrl(uint8_t *commend)
 /*===========================================================================
 * 函数 Check_All_RFID() => 上位机查询所有编号标签                     			* 
 ============================================================================*/
-void Check_All_RFID(uint8_t *commend)
-{   	
-	uint32_t rfid_init;
+void Check_All_RFID(uint8_t *command)
+{
 	uint16_t syncword;
 	uint8_t i=0;
 	
 	for(i=0; i<RFID_SUM; i++)
 	{
 		syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
-		rfid_init = ((uint32_t)(0xFF000000 & RFID_init[i][3]<<24)+(uint32_t)(0x00FF0000 & RFID_init[i][4]<<16)+(uint32_t)(0x0000FF00 & RFID_init[i][5]<<8)+(uint32_t)(0x000000FF & RFID_init[i][6]));
+		command[6] = RFID_init[i][3];
+		command[7] = RFID_init[i][4];
+		command[8] = RFID_init[i][5];
+		command[9] = RFID_init[i][6];
 		RF_Initial(RFID_init[i][0], syncword, RX);
-		RF_SendPacket(commend, rfid_init);
+		RF_SendPacket(command);
 		Delay(0xFFFF);
 	}
 }
@@ -236,13 +247,13 @@ void Check_All_RFID(uint8_t *commend)
 /*===========================================================================
 * 函数 ：Check_Assign_RFID() => 上位机查询指定编号标签                    	* 
 ============================================================================*/
-void Check_Assign_RFID(uint8_t *commend)
+void Check_Assign_RFID(uint8_t *command)
 {
 	uint32_t rfid,rfid_init;
 	uint16_t syncword;
-	uint8_t i=0,index=0;
+	uint8_t i=0,err=0;
 	
-	rfid = ((uint32_t)(0xFF000000 & commend[6]<<24)+(uint32_t)(0x00FF0000 & commend[7]<<16)+(uint32_t)(0x0000FF00 & commend[8]<<8)+(uint32_t)(0x000000FF & commend[9]));
+	rfid = ((uint32_t)(0xFF000000 & command[6]<<24)+(uint32_t)(0x00FF0000 & command[7]<<16)+(uint32_t)(0x0000FF00 & command[8]<<8)+(uint32_t)(0x000000FF & command[9]));
 	
 	for(i=0; i<RFID_SUM; i++)
 	{
@@ -251,11 +262,11 @@ void Check_Assign_RFID(uint8_t *commend)
 		{
 			syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
 			RF_Initial(RFID_init[i][0], syncword, RX);
-			RF_SendPacket(commend, rfid_init);
-			index = 1;
+			RF_SendPacket(command);
+			err = 1;
 		}
 	}
-	if(index == 0)
+	if(err == 0)
 	{
 		#ifdef ETHERNET_ENABLE
 			Delay(0xffff);
@@ -267,12 +278,33 @@ void Check_Assign_RFID(uint8_t *commend)
 }
 
 /*===========================================================================
-* 函数 ：Prog_Assign_RFID() => 上位机编程标签地址码、同步码、RFID码       	* 
+* 函数 :Prog_Assign_RFID() => 上位机编程标签地址码、同步码、RFID码       	* 
 ============================================================================*/
-void Prog_Assign_RFID(uint8_t *commend)
-{   	
+void Prog_Assign_RFID(uint8_t *command)
+{
 	RF_Initial(0x20, 0x2020, RX);     // 初始化无线芯片
-	RF_SendPacket(commend, 0x20202020);
+	RF_SendPacket(command);
+}
+
+/*===========================================================================
+* 函数 :Clear_All_RFID() => 上位机查询所有编号标签                     			* 
+============================================================================*/
+void Clear_All_RFID(uint8_t *command)
+{
+	uint16_t syncword;
+	uint8_t i=0;
+	
+	for(i=0; i<RFID_SUM; i++)
+	{
+		syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
+		command[6] = RFID_init[i][3];
+		command[7] = RFID_init[i][4];
+		command[8] = RFID_init[i][5];
+		command[9] = RFID_init[i][6];
+		RF_Initial(RFID_init[i][0], syncword, RX);
+		RF_SendClearPacket(command);
+		Delay(0xFFFF);
+	}
 }
 
 /*===========================================================================
@@ -280,51 +312,51 @@ void Prog_Assign_RFID(uint8_t *commend)
 * 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                    	*
 * 输出 ：0，发送失败；else，发送成功                                        *
 ============================================================================*/
-void RF_SendPacket(uint8_t *commend, uint32_t rfid)
+void RF_SendPacket(uint8_t *command)
 {
-	uint8_t i=0;
+	uint16_t i=0;
 	
 	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
 	
 	for (i=0; i<SEND_LENGTH; i++) // clear array
 		{SendBuffer[i] = 0;}
 	
-	if(commend[4] == 0xA0 && commend[5] == 0xA0)
+	if(command[4] == 0xA0 && command[5] == 0xA0)
 	{
 		SendBuffer[0] = 0xAB;
 		SendBuffer[1] = 0xCD;
-		SendBuffer[2] = commend[2];
-		SendBuffer[3] = commend[3];
+		SendBuffer[2] = command[2];
+		SendBuffer[3] = command[3];
 		SendBuffer[4] = 0xC0;
 		SendBuffer[5] = 0xC0;
-		SendBuffer[6] = (uint8_t)(0xff & rfid>>24);
-		SendBuffer[7] = (uint8_t)(0xff & rfid>>16);
-		SendBuffer[8] = (uint8_t)(0xff & rfid>>8);
-		SendBuffer[9] = (uint8_t)(0xff & rfid);
+		SendBuffer[6] = command[6];
+		SendBuffer[7] = command[7];
+		SendBuffer[8] = command[8];
+		SendBuffer[9] = command[9];
 	}
-	else if(commend[4] == 0xA4 && commend[5] == 0xA4)
+	else if(command[4] == 0xA4 && command[5] == 0xA4)
 	{
 		SendBuffer[0] = 0xAB;
 		SendBuffer[1] = 0xCD;
-		SendBuffer[2] = commend[2];
-		SendBuffer[3] = commend[3];
+		SendBuffer[2] = command[2];
+		SendBuffer[3] = command[3];
 		SendBuffer[4] = 0xC4;
 		SendBuffer[5] = 0xC4;
-		SendBuffer[6] = commend[6];
-		SendBuffer[7] = commend[7];
-		SendBuffer[8] = commend[8];
-		SendBuffer[9] = commend[9];
+		SendBuffer[6] = command[6];
+		SendBuffer[7] = command[7];
+		SendBuffer[8] = command[8];
+		SendBuffer[9] = command[9];
 	}
-	else if(commend[4] == 0xA5 && commend[5] == 0xA5)
+	else if(command[4] == 0xA5 && command[5] == 0xA5)
 	{
 		SendBuffer[0] = 0xAB;
 		SendBuffer[1] = 0xCD;
-		SendBuffer[2] = commend[2];
-		SendBuffer[3] = commend[3];
+		SendBuffer[2] = command[2];
+		SendBuffer[3] = command[3];
 		SendBuffer[4] = 0xC5;
 		SendBuffer[5] = 0xC5;
 		for (i=6; i<SEND_LENGTH; i++) // clear array
-		{SendBuffer[i] = commend[i];}
+		{SendBuffer[i] = command[i];}
 	}
 
 	for(i=0; i<SEND_PACKAGE_NUM; i++)
@@ -335,12 +367,72 @@ void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 	}
 	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
 	Usart_SendString(MOD_USART,"Transmit OK\n");
-	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
 //	RF_Initial(addr, sync, RX);
 	RecvWaitTime = RECV_TIMEOUT;
-	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvFlag == 0);
-	RecvWaitTime = 0;
-	RecvFlag == 0;
+	while(RecvWaitTime != 0)//(RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && 
+	{
+		RF_Acknowledge();
+		RecvWaitTime--;
+	}
+	if(index == 4 || index == 6)
+	{
+		if(RecvBuffer[10] != 0 || RecvBuffer[11] != 0 || RecvBuffer[12] != 0 || RecvBuffer[13] != 0)
+		{
+			CC1101SetTRMode(RX_MODE, DISABLE);
+			RF_SendClearPacket(RecvBuffer);
+		}
+		else
+		{
+			Usart_SendString(MOD_USART,"step equal zero\n");
+		}
+	}
+	index = 0;
+	Usart_SendString(MOD_USART,"Transmit Complete\n");
+	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
+}
+
+/*===========================================================================
+* 函数 : RF_SendClearPacket() => 无线发送清零命令函数                     	*
+* 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                    	*
+* 输出 ：0，发送失败；else，发送成功                                        *
+============================================================================*/
+void RF_SendClearPacket(uint8_t *command)
+{
+	uint16_t i=0;
+
+	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
+	
+	for (i=0; i<SEND_LENGTH; i++) // clear array
+		{SendBuffer[i] = 0;}
+	
+	SendBuffer[0] = 0xAB;
+	SendBuffer[1] = 0xCD;
+	SendBuffer[2] = command[2];
+	SendBuffer[3] = command[3];
+	SendBuffer[4] = 0xC6;
+	SendBuffer[5] = 0xC6;
+	SendBuffer[6] = command[6];
+	SendBuffer[7] = command[7];
+	SendBuffer[8] = command[8];
+	SendBuffer[9] = command[9];
+
+	for(i=0; i<SEND_PACKAGE_NUM; i++)
+	{
+		CC1101SendPacket(SendBuffer, SEND_LENGTH, ADDRESS_CHECK);    // 发送数据
+		Delay(0xFFFF);									// 计算得到平均27ms发送一次数据
+//		Delay(0xFFFFF);								// 计算得到平均130ms发送一次数据
+	}
+	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
+	Usart_SendString(MOD_USART,"Clear Command Transmit OK\n");
+//	RF_Initial(addr, sync, RX);
+	RecvWaitTime = RECV_TIMEOUT;
+	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvWaitTime != 0)//
+	{
+//		RF_Acknowledge();
+		RecvWaitTime--;
+	}
+	Usart_SendString(MOD_USART,"Clear Complete\n");
+	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
 }
 
 /*===========================================================================
@@ -349,7 +441,6 @@ void RF_SendPacket(uint8_t *commend, uint32_t rfid)
 uint8_t	RF_Acknowledge(void)
 {
 	uint8_t i=0, length=0;
-	uint8_t index;
 	int16_t rssi_dBm;	
 	
 	if(RFReady == SET)         // 检测无线模块是否产生接收中断 
@@ -370,18 +461,16 @@ uint8_t	RF_Acknowledge(void)
 		{
 			printf("%x ",RecvBuffer[i]);
 		}
-		printf("\r\n");		
+		printf("\r\n");
 		if(length == 0)
 		{
 			index = 1;
-			printf("index = %d\n",index);
 			Reply_PC(index);
 			return 1;
 		}
 		else if(length == 1)
 		{
 			index = 12;
-			printf("index = %d\n",index);
 			Reply_PC(index);
 			return 1;
 		}
@@ -392,49 +481,42 @@ uint8_t	RF_Acknowledge(void)
 					if(RecvBuffer[4] == 0xD0 && RecvBuffer[5] == 0x01)
 					{
 						index = 4;
-						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 4;
 					}
 					else if(RecvBuffer[4] == 0xD3 && RecvBuffer[5] == 0x01)
 					{
 						index = 5;
-						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 5;
 					}
 					else if(RecvBuffer[4] == 0xD4 && RecvBuffer[5] == 0x01)
 					{
 						index = 6;
-						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 6;
 					}
 					else if(RecvBuffer[4] == 0xD5 && RecvBuffer[5] == 0x01)
 					{
 						index = 7;
-						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 7;
 					}
-					else if(RecvBuffer[4] == 0x02 && RecvBuffer[5] == 0x02)
+					else if(RecvBuffer[4] == 0xD6 && RecvBuffer[5] == 0x01)
 					{
 						index = 8;
-						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 8;
 					}
 					else if(RecvBuffer[4] == 0x03 && RecvBuffer[5] == 0x03)
 					{
 						index = 9;
-						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 9;
 					}
 					else
-					{	
+					{
 						index = 3;
-						printf("index = %d\n",index);
 						Reply_PC(index);
 						return 3;
 					}
@@ -442,7 +524,6 @@ uint8_t	RF_Acknowledge(void)
 				else
 				{	
 					index = 2;
-					printf("index = %d\n",index);
 					Reply_PC(index);
 					return 2;
 				}
@@ -593,8 +674,8 @@ void Reply_PC(uint8_t index)
 		AckBuffer[1] = 0xCD;
 		AckBuffer[2] = RecvBuffer[2];
 		AckBuffer[3] = RecvBuffer[2];
-		AckBuffer[4] = 0x02;
-		AckBuffer[5] = 0x02;
+		AckBuffer[4] = 0xB6;
+		AckBuffer[5] = 0x01;
 		for(i=0;i<ACK_LENGTH-14;i++)
 		{
 			AckBuffer[i+6] = RecvBuffer[i+6];
@@ -655,14 +736,14 @@ void Reply_PC(uint8_t index)
 		RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
 		AckBuffer[0] = 0xAB;
 		AckBuffer[1] = 0xCD;
-		AckBuffer[2] = PCCommend[2];
-		AckBuffer[3] = PCCommend[3];
+		AckBuffer[2] = PCCommand[2];
+		AckBuffer[3] = PCCommand[3];
 		AckBuffer[4] = 0xB1;
-		AckBuffer[5] = PCCommend[5];
-		AckBuffer[6] = PCCommend[6];
-		AckBuffer[7] = PCCommend[7];
-		AckBuffer[8] = PCCommend[8];
-		AckBuffer[9] = PCCommend[9];
+		AckBuffer[5] = PCCommand[5];
+		AckBuffer[6] = PCCommand[6];
+		AckBuffer[7] = PCCommand[7];
+		AckBuffer[8] = PCCommand[8];
+		AckBuffer[9] = PCCommand[9];
 		for(i=0;i<10;i++)
 		{
 			AckBuffer[i+10] = 0;
@@ -751,7 +832,10 @@ void ChipParametersConfiguration(void)
 		#ifdef UART_DEBUG
 		printf("WIZCHIP Initialized fail.\r\n");
 		#endif
-		while(1);
+		while(1)
+		{
+			LED_COM_OFF();
+		}
   }
 
   //PHY物理层连接状态检查
@@ -760,6 +844,7 @@ void ChipParametersConfiguration(void)
 			#ifdef UART_DEBUG
 			printf("Unknown PHY Link stauts.\r\n");
 			#endif	
+			LED_COM_OFF();
     }
   }while(tmp == PHY_LINK_OFF);
 }
@@ -788,4 +873,93 @@ void NetworkParameterConfiguration(void)
 	#endif
 }
 
+/*===========================================================================
+* 函数 ：FRAM_Ctrl() => 读写FRAM函数          															* 
+============================================================================*/
+void FRAM_Ctrl(uint8_t *command)
+{
+	uint8_t i;
+	uint16_t address;
+	
+	address = (uint16_t)(0xFF00 & command[2]<<8)+(uint16_t)(0x00FF & command[3]);
+	for(i = 0; i < FRAM_DATA_LENGTH; i++)
+	{
+		FRAM_Data[i] = command[i+5];
+	}
+	if(command[4] == 0x01)//写
+	{
+		FM25L256WriteEnable();
+		FM25L256Write(address, FRAM_DATA_LENGTH, FRAM_Data);
+		Usart_SendString(MOD_USART,"Write Complete\n");
+	}
+	else if(command[4] == 0x02)//读
+	{
+		FM25L256Read(address, FRAM_DATA_LENGTH, FRAM_Data);
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,FRAM_Data,FRAM_DATA_LENGTH,gWIZNETINFO.gw,5000);
+		#else
+			for(i = 0; i < FRAM_DATA_LENGTH; i++)
+			{
+				printf("%x ",FRAM_Data[i]);
+			}
+			printf("\n");
+			Usart_SendString(MOD_USART,"Read Complete\n");
+		#endif
+	}
+}
+
+void Init_ID(void)
+{
+	uint8_t i,j;
+	uint16_t address=0;
+	#ifdef ETHERNET_ENABLE	
+		uint8_t SendTemp[1];
+	#endif
+	
+	FM25L256Read(0, FRAM_DATA_LENGTH, FRAM_Data);
+	MBID_byte1 = FRAM_Data[0];
+	MBID_byte2 = FRAM_Data[1];
+	
+	for(i = 0; i < RFID_SUM+1; i++)
+	{
+		address = FRAM_DATA_LENGTH*(i+1);
+		FM25L256Read(address, FRAM_DATA_LENGTH, FRAM_Data);
+		for(j = 0; j < FRAM_DATA_LENGTH; j++)
+		{
+			RFID_init[i][j] = FRAM_Data[j];
+		}
+	}
+	
+	#ifdef ETHERNET_ENABLE
+		Delay(0xffff);
+		SendTemp[0] = MBID_byte1;
+		send_tcpc(0,SendTemp,1,gWIZNETINFO.gw,5000);
+	#else
+		printf("%x ",MBID_byte1);
+	#endif
+	#ifdef ETHERNET_ENABLE
+		Delay(0xffff);
+		SendTemp[0] = MBID_byte2;
+		send_tcpc(0,SendTemp,1,gWIZNETINFO.gw,5000);
+	#else
+		printf("%x ",MBID_byte2);
+	#endif
+		printf("\n");
+	for(i = 0; i < RFID_SUM; i++)
+	{
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,FRAM_Data,FRAM_DATA_LENGTH,gWIZNETINFO.gw,5000);
+		#else
+			for(j = 0; j < FRAM_DATA_LENGTH; j++)
+			{
+				printf("%x ",RFID_init[i][j]);
+			}
+			printf("\n");
+		#endif
+	}
+}
+	
+	
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

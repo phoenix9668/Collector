@@ -17,10 +17,12 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 uint8_t str1[16] = {'s','t','a','r','t',' ','t','r','a','n','s','f','e','r',0x0D,0x0A};
+uint8_t str2[15] = {'f','r','a','m',' ','t','r','a','n','s','f','e','r',0x0D,0x0A};
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern wiz_NetInfo gWIZNETINFO;
 extern uint8_t buffer[2048];
+extern uint8_t FRAM_Data[FRAM_DATA_LENGTH];
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -39,23 +41,22 @@ int main(void)
 	
 	while(1)
 	{
-		for (i=0; i<PCCOMMEND_LENGTH; i++) // clear array
-			{PCCommend[i] = 0;}
+		for (i=0; i<PCCOMMAND_LENGTH; i++) // clear array
+			{PCCommand[i] = 0;}
 		#ifdef ETHERNET_ENABLE
-			loopback_tcpc(0,PCCommend,gWIZNETINFO.gw,5000);
+			loopback_tcpc(0,PCCommand,gWIZNETINFO.gw,5000);
 		#else
-			Usart_RecArray(MOD_USART, PCCommend);/* 等待串口接收数据完毕 */
+			Usart_RecArray(MOD_USART, PCCommand);/* 等待串口接收数据完毕 */
 		#endif
 		#ifdef UART_DEBUG
-			for(i=0; i<PCCOMMEND_LENGTH; i++)// for test
-			{
-				printf("%x ",PCCommend[i]);
-			}
-			printf("\n");
+//			for(i=0; i<PCCOMMAND_LENGTH; i++)// for test
+//			{
+//				printf("%x ",PCCommand[i]);
+//			}
+//			printf("\n");
 		#endif
-		if(PCCommend[0] == 0xAB && PCCommend[1] == 0xCD)//begin index
+		if(PCCommand[0] == 0xAB && PCCommand[1] == 0xCD)//begin index
 		{
-			 
 			#ifdef ETHERNET_ENABLE
 				Delay(0xffff);
 				send_tcpc(0,str1,16,gWIZNETINFO.gw,5000);
@@ -63,7 +64,20 @@ int main(void)
 				Usart_SendString(MOD_USART,"start transfer\n");
 			#endif
 			LED_STA_ON();
-			Function_Ctrl(PCCommend);
+			Function_Ctrl(PCCommand);
+			LED_STA_OFF();
+		}
+		else if(PCCommand[0] == 0xE5 && PCCommand[1] == 0x5E)
+		{
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,str2,15,gWIZNETINFO.gw,5000);
+			#else
+				Usart_SendString(MOD_USART,"fram transfer\n");
+			#endif
+			LED_STA_ON();
+			FRAM_Ctrl(PCCommand);
+			LED_STA_OFF();
 		}
 		else
 		{
@@ -95,13 +109,14 @@ void Delay(__IO uint32_t nCount)
   * @retval 无
   */
 static void Show_Message(void)
-{   
-	printf("\r\n CC1101 chip transfer performance test program \n");
-	printf(" using USART3,configuration:%d 8-N-1 \n",MOD_USART_BAUDRATE);
-	printf(" you need press USER button when you want transfer data\n");
-	printf(" if choose transfer,the data must not exceed 60 bytes!!\n");
-	printf(" PS: green led light when system in transfer mode\n");    
-	printf("     orange led light when system in receive mode\n");
+{
+	uint16_t MBID;
+	
+	printf("\r\nmain program running\n");
+	printf("using USART3,configuration:%d 8-N-1\n",MOD_USART_BAUDRATE);
+	FM25L256Read(0x0, 7, FRAM_Data);
+	MBID = (uint16_t)(0xFF00 & FRAM_Data[0]<<8)+(uint16_t)(0x00FF & FRAM_Data[1]);
+	printf("Main_Board ID:%x\n",MBID);
 }
 #endif
 

@@ -57,7 +57,7 @@ void RTC_TimeAndDate_Reset(uint8_t year , uint8_t month, uint8_t date, uint8_t w
 	RTC_TimeStructure.RTC_Seconds = seconds;
 	if (RTC_SetTime(RTC_Format_BINorBCD, &RTC_TimeStructure) == ERROR)
 	{
-		printf("RTC SetTime configure error \r\n");
+		printf("RTC SetTime configure error\r\n");
 	}
 	RTC_WriteBackupRegister(RTC_BKP_DRX, RTC_BKP_DATA);
 	
@@ -68,7 +68,7 @@ void RTC_TimeAndDate_Reset(uint8_t year , uint8_t month, uint8_t date, uint8_t w
 	RTC_DateStructure.RTC_Year = year;
 	if (RTC_SetDate(RTC_Format_BINorBCD, &RTC_DateStructure) == ERROR)
 	{
-		printf("RTC SetDate configure error \r\n");
+		printf("RTC SetDate configure error\r\n");
 	}
 	RTC_WriteBackupRegister(RTC_BKP_DRX, RTC_BKP_DATA);
 }
@@ -106,13 +106,13 @@ void RTC_TimeAndDate_Show(void)
   	if(Rtctmp != RTC_TimeStructure.RTC_Seconds)
     {
 			// 打印日期
-      printf("The Date :  Y:20%0.2d - M:%0.2d - D:%0.2d - W:%0.2d\r\n", 
+      printf("The Date:Y:20%0.2d - M:%0.2d - D:%0.2d - W:%0.2d\r\n", 
 			RTC_DateStructure.RTC_Year,
 			RTC_DateStructure.RTC_Month, 
 			RTC_DateStructure.RTC_Date,
 			RTC_DateStructure.RTC_WeekDay);
 			// 打印时间
-      printf("The Time :  %0.2d:%0.2d:%0.2d \r\n\r\n", 
+      printf("The Time:%0.2d:%0.2d:%0.2d\r\n", 
 			RTC_TimeStructure.RTC_Hours, 
 			RTC_TimeStructure.RTC_Minutes, 
 			RTC_TimeStructure.RTC_Seconds);
@@ -177,7 +177,7 @@ void RTC_Config(void)
 	/* 用RTC_InitStructure的内容初始化RTC寄存器 */
 	if (RTC_Init(&RTC_InitStructure) == ERROR)
 	{
-		printf("RTC configure error \r\n");
+		printf("RTC configure error\r\n");
 	}
 }
 

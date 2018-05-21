@@ -80,6 +80,18 @@ you must offer the following functions for this module
 #define CC1101_GDO2_READ()             	GPIO_ReadInputDataBit(CC1101_GDO2_GPIO_PORT,CC1101_GDO2_PIN)
 
 /**
+  * @brief  FM25L256 SPI Interface pins
+  */
+#define FRAM_SPI_CSN_PIN     						GPIO_Pin_12               	/* PB.12 */
+#define FRAM_SPI_CSN_GPIO_PORT        	GPIOB                       /* GPIOB */
+#define FRAM_SPI_CSN_GPIO_CLK         	RCC_AHB1Periph_GPIOB
+
+#define FRAM_CSN_LOW()                	GPIO_ResetBits(FRAM_SPI_CSN_GPIO_PORT,FRAM_SPI_CSN_PIN)
+
+#define FRAM_CSN_HIGH()               	GPIO_SetBits(FRAM_SPI_CSN_GPIO_PORT,FRAM_SPI_CSN_PIN)
+
+
+/**
   * @brief  LED Interface pins
   */
 #define LED_RUN_PIN     		GPIO_Pin_4
@@ -107,6 +119,7 @@ void GPIO_Config(void);                // 初始化通用IO端口
 void SPI_Config(void);                 // 初始化SPI
 
 uint8_t SPI_ExchangeByte(SPI_TypeDef* SPIx,uint8_t input);  // 通过SPI进行数据交换 
+void SpiFunction(SPI_TypeDef* SPIx, uint8_t OutputBuff[], uint8_t InputBuff[], uint16_t OutNoOfBytes, uint16_t InNoOfBytes);
 
 #endif //_BSP_SPI_H_
 

@@ -263,15 +263,15 @@ void BASIC_TIM_IRQHandler(void)
 {
 	if (TIM_GetITStatus(BASIC_TIM, TIM_IT_Update) != RESET ) 
 	{
-		if(RecvWaitTime != 0 && RecvWaitTime != 1)												// 数据接收计时
-				{	RecvWaitTime--;}
-		else if(RecvWaitTime == 0)
-				{	RecvFlag=0;}		
-		else if(RecvWaitTime == 1)
-				{	RecvFlag=1;}
+//		if(RecvWaitTime != 0 && RecvWaitTime != 1)												// 数据接收计时
+//				{	RecvWaitTime--;}
+//		else if(RecvWaitTime == 0)
+//				{	RecvFlag=0;}		
+//		else if(RecvWaitTime == 1)
+//				{	RecvFlag=1;}
 
-		printf("RecvFlag = %d\n",RecvFlag);
-		printf("RecvWaitTime = %d\n",RecvWaitTime);
+//		printf("RecvFlag = %d\n",RecvFlag);
+//		printf("RecvWaitTime = %d\n",RecvWaitTime);
 		LED_RUN_TOG();
 		TIM_ClearITPendingBit(BASIC_TIM, TIM_IT_Update);
 	}
