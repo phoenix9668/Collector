@@ -33,9 +33,7 @@
 #define MOD_RESET_ON()    		GPIO_SetBits(MOD_RESET_PORT,MOD_RESET_PIN)
 #define MOD_RESET_TOG()   		GPIO_ToggleBits(MOD_RESET_PORT,MOD_RESET_PIN)
 
-#define MOD_GPRS_OFF()  			GPIO_ResetBits(MOD_GPRS_PORT,MOD_GPRS_PIN)        
-#define MOD_GPRS_ON()   			GPIO_SetBits(MOD_GPRS_PORT,MOD_GPRS_PIN)
-#define MOD_GPRS_TOG()   			GPIO_ToggleBits(MOD_GPRS_PORT,MOD_GPRS_PIN)
+#define MOD_GPRS_READ()  			GPIO_ReadInputDataBit(MOD_GPRS_PORT,MOD_GPRS_PIN)
 
 //´®¿Ú¶¨Òå
 /*******************************************************/

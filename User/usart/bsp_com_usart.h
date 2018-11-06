@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #define	UART_DEBUG
-#define PCCOMMAND_LENGTH		20
+#define PCCOMMAND_LENGTH		21
 #define BUFFERSIZE	100	/* Transmit buffer size */
 
 //COM1Òý½Å¶¨Òå

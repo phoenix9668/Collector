@@ -131,6 +131,66 @@ static const uint8_t CC1101InitData[30][2]=
 
 };
 
+// Sync word qualifier mode = 30/32 sync word bits detected 
+// CRC autoflush = false 
+// Channel spacing = 199.951172 
+// Data format = Normal mode 
+// Data rate = 2.39897
+// RX filter BW = 58.035714
+// PA ramping = false 
+// Preamble count = 4 
+// Whitening = ture 
+// Address config = Address check and 0 (0x00) and 255 (0xFF) broadcast
+// Carrier frequency = 432.999817
+// Device address = 5 
+// TX power = 10 
+// Manchester enable = ture 
+// CRC enable = true 
+// Deviation = 5.157471
+// Packet length mode = Variable packet length mode. Packet length configured by the first byte after sync word 
+// Packet length = 255 
+// Modulation format = GFSK
+// Base frequency = 432.999817
+// Modulated = true 
+// Channel number = 0 
+// PA table 
+//#define PA_TABLE {0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x00}
+
+//static const uint8_t CC1101InitData[30][2]= 
+//{
+//  {CC1101_IOCFG0,      0x06},
+//  {CC1101_FIFOTHR,     0x4E},
+//	{CC1101_PKTLEN,			 0xFF},
+//	{CC1101_PKTCTRL1,    0x07},
+//  {CC1101_PKTCTRL0,    0x45},
+//  {CC1101_CHANNR,      0x00},
+//  {CC1101_FSCTRL1,     0x06},
+//  {CC1101_FREQ2,       0x10},
+//  {CC1101_FREQ1,       0xA7},
+//  {CC1101_FREQ0,       0x62},
+//  {CC1101_MDMCFG4,     0xF6},
+//  {CC1101_MDMCFG3,     0x83},
+//  {CC1101_MDMCFG2,     0x9B},
+//  {CC1101_DEVIATN,     0x15},
+//	{CC1101_MCSM1,       0x3C},
+//  {CC1101_MCSM0,       0x18},
+//  {CC1101_FOCCFG,      0x16},
+//	{CC1101_BSCFG,			 0x6C},
+//	{CC1101_AGCCTRL2,    0x03},
+//	{CC1101_AGCCTRL1,    0x40},
+//	{CC1101_AGCCTRL0,  	 0x91},
+//  {CC1101_WORCTRL,     0xFB},
+//	{CC1101_FREND1,      0x56},
+//  {CC1101_FSCAL3,      0xE9},
+//  {CC1101_FSCAL2,      0x2A},
+//  {CC1101_FSCAL1,      0x00},
+//  {CC1101_FSCAL0,      0x1F},
+//  {CC1101_TEST2,       0x81},
+//  {CC1101_TEST1,       0x35},
+//	{CC1101_TEST0,       0x09},
+
+//};
+
 /*
 ================================================================================
 Function : CC1101WORInit()

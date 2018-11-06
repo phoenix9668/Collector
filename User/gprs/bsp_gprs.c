@@ -41,7 +41,6 @@ void MOD_GPRS_Config(void)
     GPIO_Init(MOD_GPRS_PORT, &GPIO_InitStructure);
 	
 		MOD_RESET_ON();
-		MOD_GPRS_ON();
 }
 
  /**

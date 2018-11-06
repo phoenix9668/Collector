@@ -49,11 +49,11 @@ int main(void)
 			Usart_RecArray(MOD_USART, PCCommand);/* 等待串口接收数据完毕 */
 		#endif
 		#ifdef UART_DEBUG
-//			for(i=0; i<PCCOMMAND_LENGTH; i++)// for test
-//			{
-//				printf("%x ",PCCommand[i]);
-//			}
-//			printf("\n");
+			for(i=0; i<PCCOMMAND_LENGTH; i++)// for test
+			{
+				printf("%x ",PCCommand[i]);
+			}
+			printf("\n");
 		#endif
 		if(PCCommand[0] == 0xAB && PCCommand[1] == 0xCD)//begin index
 		{
