@@ -43,6 +43,7 @@ void System_Initial(void);
 void Function_Ctrl(uint8_t *command);
 void Check_Assign_RFID(uint8_t *command);
 void Check_All_RFID(uint8_t *command);
+void Check_Assign_Section_RFID(uint8_t *command);
 void Prog_Assign_RFID(uint8_t *command);
 void Clear_All_RFID(uint8_t *command);
 void RF_ProgPacket(uint8_t *command);

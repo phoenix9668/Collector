@@ -162,7 +162,7 @@ void Function_Ctrl(uint8_t *command)
 										Reply_PC(10);
 										break;
 			/* 查询主控设备电源电量低标志、RTC电量低标志 */
-			case 0xA2A2:	
+			case 0xA2A2:
 										#ifdef ETHERNET_ENABLE
 											Delay(0xffff);
 											send_tcpc(0,str3,22,gWIZNETINFO.gw,5000);
@@ -171,7 +171,7 @@ void Function_Ctrl(uint8_t *command)
 										#endif
 										break;
 			/* 查询标签电量、加速度过小，加速度过大标志 */
-			case 0xA3A3:	
+			case 0xA3A3:
 										#ifdef ETHERNET_ENABLE
 											Delay(0xffff);
 											send_tcpc(0,str3,22,gWIZNETINFO.gw,5000);
@@ -180,15 +180,19 @@ void Function_Ctrl(uint8_t *command)
 										#endif
 										break;
 			/* 上位机查询指定编号标签 */
-			case 0xA4A4:	
+			case 0xA4A4:
 										Check_Assign_RFID(command);
 										break;
+			/* 上位机查询指定段内编号标签 */
+			case 0xA401:
+										Check_Assign_Section_RFID(command);
+										break;
 			/* 上位机编程标签地址码、同步码、RFID码 */
-			case 0xA5A5:	
+			case 0xA5A5:
 										Prog_Assign_RFID(command);
 										break;
 			/* 上位机批量清零标签计步数据 */
-			case 0xA6A6:	
+			case 0xA6A6:
 										Clear_All_RFID(command);
 										break;
 			default:			
@@ -231,6 +235,7 @@ void Check_All_RFID(uint8_t *command)
 		RF_SendPacket(command);
 		Delay(0xFFFF);
 	}
+	Usart_SendString(MOD_USART,"All Finish\n");
 }
 
 /*===========================================================================
@@ -264,6 +269,30 @@ void Check_Assign_RFID(uint8_t *command)
 			printf("RFID coding error\n");
 		#endif
 	}
+}
+
+/*===========================================================================
+* 函数 Check_Assign_Section_RFID() => 上位机查询指定段内编号标签           	* 
+============================================================================*/
+void Check_Assign_Section_RFID(uint8_t *command)
+{
+	uint16_t syncword;
+	uint16_t i=0;
+	uint16_t j=(uint16_t)(0xFF00 & command[6]<<8)+(uint16_t)(0x00FF & command[7])-1;
+	uint16_t s=(uint16_t)(0xFF00 & command[8]<<8)+(uint16_t)(0x00FF & command[9])-1;
+	
+	for(i=j; i<=s; i++)
+	{
+		syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
+		command[6] = RFID_init[i][3];
+		command[7] = RFID_init[i][4];
+		command[8] = RFID_init[i][5];
+		command[9] = RFID_init[i][6];
+		RF_Initial(RFID_init[i][0], syncword, RX);
+		RF_SendPacket(command);
+		Delay(0xFFFF);
+	}
+	Usart_SendString(MOD_USART,"All Finish\n");
 }
 
 /*===========================================================================
@@ -364,7 +393,7 @@ void RF_SendPacket(uint8_t *command)
 		SendBuffer[8] = command[8];
 		SendBuffer[9] = command[9];
 	}
-	else if(command[4] == 0xA4 && command[5] == 0xA4)
+	else if(command[4] == 0xA4 && (command[5] == 0xA4 || command[5] == 0x01))
 	{
 		SendBuffer[0] = 0xAB;
 		SendBuffer[1] = 0xCD;
