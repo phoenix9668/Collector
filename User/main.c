@@ -20,6 +20,7 @@ uint8_t str1[16] = {'s','t','a','r','t',' ','t','r','a','n','s','f','e','r',0x0D
 uint8_t str2[15] = {'f','r','a','m',' ','t','r','a','n','s','f','e','r',0x0D,0x0A};
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern uint32_t TimingDelay;
 extern wiz_NetInfo gWIZNETINFO;
 extern uint8_t buffer[2048];
 extern uint8_t FRAM_Data[FRAM_DATA_LENGTH];
@@ -33,15 +34,28 @@ extern uint8_t FRAM_Data[FRAM_DATA_LENGTH];
 ============================================================================*/
 int main(void)
 {
-	Delay(0xffffff);
+	Delay(0xFFFFFF);
 	System_Initial();
 	#ifdef UART_DEBUG
 		Show_Message();
 	#endif
+	if (SysTick_Config(SystemCoreClock / 1000))
+  { 
+    /* Capture error */ 
+		Usart_SendString(MOD_USART,"SysTick_Config Error\n");
+    while (1);
+  }
+	/* TIM6 configure 40ms*/
+//	TIMx_Configuration();
+	/* Check if the system has resumed from WWDG reset */
+	WWDGRST_Clear();
+	/* WWDG configuration */
+	WWDG_Config();
+	TimingDelay = 40;
 	
 	while(1)
 	{
-		for (i=0; i<PCCOMMAND_LENGTH; i++) // clear array
+		for (i=0; i<PCCOMMAND_LENGTH; i++) //clear array
 			{PCCommand[i] = 0;}
 		#ifdef ETHERNET_ENABLE
 			loopback_tcpc(0,PCCommand,gWIZNETINFO.gw,5000);
@@ -49,7 +63,7 @@ int main(void)
 			Usart_RecArray(MOD_USART, PCCommand);/* 等待串口接收数据完毕 */
 		#endif
 		#ifdef UART_DEBUG
-			for(i=0; i<PCCOMMAND_LENGTH; i++)// for test
+			for(i=0; i<PCCOMMAND_LENGTH; i++)//for test
 			{
 				printf("%x ",PCCommand[i]);
 			}
@@ -58,7 +72,7 @@ int main(void)
 		if(PCCommand[0] == 0xAB && PCCommand[1] == 0xCD)//begin index
 		{
 			#ifdef ETHERNET_ENABLE
-				Delay(0xffff);
+				Delay(0xFFFF);
 				send_tcpc(0,str1,16,gWIZNETINFO.gw,5000);
 			#else
 				Usart_SendString(MOD_USART,"start transfer\n");
@@ -70,7 +84,7 @@ int main(void)
 		else if(PCCommand[0] == 0xE5 && PCCommand[1] == 0x5E)
 		{
 			#ifdef ETHERNET_ENABLE
-				Delay(0xffff);
+				Delay(0xFFFF);
 				send_tcpc(0,str2,15,gWIZNETINFO.gw,5000);
 			#else
 				Usart_SendString(MOD_USART,"fram transfer\n");
@@ -81,9 +95,6 @@ int main(void)
 		}
 		else
 		{
-			#ifdef UART_DEBUG
-//			Usart_SendString(DEBUG_USART,"package beginning error\n");
-			#endif
 			LED_STA_OFF();
 		}
 

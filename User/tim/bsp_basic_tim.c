@@ -49,6 +49,7 @@ static void TIMx_NVIC_Configuration(void)
  * TIM_RepetitionCounter TIMx,x[1,8]才有(高级定时器)
  *-----------------------------------------------------------------------------
  */
+//40ms
 void TIM_Mode_Config(void)
 {
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
@@ -64,7 +65,7 @@ void TIM_Mode_Config(void)
 	//				PCLK1 = HCLK / 4 
 	//				=> TIMxCLK=HCLK/2=SystemCoreClock/2=84MHz
 	// 设定定时器频率为=TIMxCLK/(TIM_Prescaler+1)=10000Hz
-	TIM_TimeBaseStructure.TIM_Prescaler = 8400-1;	
+	TIM_TimeBaseStructure.TIM_Prescaler = 336-1;	
 	
 	// 初始化定时器TIMx, x[2,3,4,5]
 	TIM_TimeBaseInit(BASIC_TIM, &TIM_TimeBaseStructure);

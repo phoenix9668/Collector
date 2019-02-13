@@ -17,6 +17,7 @@
 #include "socket.h"
 #include "w5500.h"
 #include "spi.h"
+#include "./wwdg/bsp_wwdg.h"
 
 //#define	ETHERNET_ENABLE
 
@@ -29,14 +30,12 @@
 #define ACK_LENGTH      27   		// 反馈数据包长度
 #define SEND_LENGTH     18			// 发送数据包长度
 #define RECV_LENGTH   	19			// 接收数据包长度
-#define RECV_TIMEOUT		50000000  			// 接收等待13s
+#define RECV_TIMEOUT		30000000  			// 接收等待13s
 #define SEND_PACKAGE_NUM	200		// 发生数据包数
 #define FRAM_DATA_LENGTH	7			// 存储fram数据buffer
 /* Exported macro ------------------------------------------------------------*/
-extern __IO uint32_t	RecvWaitTime;  	// 接收等待时间
-extern __IO uint8_t		RecvFlag;     	// =1接收等待时间结束，=0不处理
-
 /* Exported functions ------------------------------------------------------- */
+void TimingDelay_Decrement(void);
 void MCU_Initial(void);
 void RF_Initial(uint8_t addr, uint16_t sync, uint8_t mode);
 void System_Initial(void);
@@ -45,7 +44,7 @@ void Check_Assign_RFID(uint8_t *command);
 void Check_All_RFID(uint8_t *command);
 void Check_Assign_Section_RFID(uint8_t *command);
 void Prog_Assign_RFID(uint8_t *command);
-void Clear_All_RFID(uint8_t *command);
+void Clear_Assign_RFID(uint8_t *command);
 void RF_ProgPacket(uint8_t *command);
 void RF_SendPacket(uint8_t *command);
 void RF_SendClearPacket(uint8_t *command);

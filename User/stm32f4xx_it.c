@@ -30,14 +30,16 @@
   */
 
 /* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+/* Private macro -------------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
 __IO ITStatus RFReady = RESET;
+uint8_t wwdg_flag = 0;
+extern uint32_t TimingDelay;
 extern __IO FlagStatus TxRxState;
 extern __IO uint8_t cnt_i,cnt_k,cnt_j;
 extern uint8_t SendBuffer[SEND_LENGTH];
 extern uint8_t RecvBuffer[RECV_LENGTH];
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 extern void Delay(__IO uint32_t nCount);
 /* Private functions ---------------------------------------------------------*/
@@ -141,6 +143,22 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
+	if(wwdg_flag == 0 || wwdg_flag == 1)
+	{
+		TimingDelay_Decrement();
+		if(TimingDelay == 1)
+		{
+			LED_RUN_TOG();
+			WWDG_Refresh();
+			wwdg_flag = 1;
+			TimingDelay = 35;
+		}
+	}
+	else if(wwdg_flag == 2)
+	{
+		TimingDelay_Decrement();
+	}
+
 }
 
 /******************************************************************************/
@@ -259,23 +277,18 @@ void COM2_USART_IRQHandler(void)
 	}
 }
 
+/*
 void BASIC_TIM_IRQHandler(void)
 {
 	if (TIM_GetITStatus(BASIC_TIM, TIM_IT_Update) != RESET ) 
 	{
-//		if(RecvWaitTime != 0 && RecvWaitTime != 1)												// 数据接收计时
-//				{	RecvWaitTime--;}
-//		else if(RecvWaitTime == 0)
-//				{	RecvFlag=0;}		
-//		else if(RecvWaitTime == 1)
-//				{	RecvFlag=1;}
-
-//		printf("RecvFlag = %d\n",RecvFlag);
-//		printf("RecvWaitTime = %d\n",RecvWaitTime);
 		LED_RUN_TOG();
+		WWDG_Refresh();
+		wwdg_flag = 1;
 		TIM_ClearITPendingBit(BASIC_TIM, TIM_IT_Update);
 	}
 }
+*/
 
 void CC1101_IRQ_IRQHandler(void)
 {

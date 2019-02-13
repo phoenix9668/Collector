@@ -20,9 +20,13 @@ RTC_TimeTypeDef	rtc_timestructure;
 RTC_DateTypeDef	rtc_datestructure;
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+extern uint8_t wwdg_flag;
+uint32_t TimingDelay;
+static __IO uint32_t RecvWaitTime = 0;		//接收等待时间
+static __IO uint8_t RecvFlag = 0; 				//=1接收等待时间结束，=0不处理
 uint8_t index;
-uint8_t	Chip_Addr	= 0;								// cc1101地址
-uint8_t	RSSI = 0;											// RSSI值
+uint8_t	Chip_Addr	= 0;			// cc1101地址
+uint8_t	RSSI = 0;						// RSSI值
 
 wiz_NetInfo gWIZNETINFO = {{0x00,0x08,0xDC,0x00,0xAB,0xCD},///< Source Mac Address
 													{0xC0,0xA8,0x1,0x7B},///< Source IP Address
@@ -44,6 +48,7 @@ flashInfo flshInfo;
 NAND_IDTypeDef NAND_ID;
 uint8_t	gBuff[300] = {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z'};
 uint8_t	buff[300] = {0};
+
 uint8_t RFID_init[RFID_SUM][7] = {0}; 
 uint8_t MBID_byte1;										//main_board设备编号
 uint8_t MBID_byte2;										//main_board设备编号
@@ -58,6 +63,19 @@ float ADC_ConvertedValueLocal[3];			// 用于保存转化计算后的电压值
 extern void Delay(__IO uint32_t nCount);
 /* Private functions ---------------------------------------------------------*/
 
+
+/**
+  * @brief  Decrements the TimingDelay variable.
+  * @param  None
+  * @retval None
+  */
+void TimingDelay_Decrement(void)
+{
+  if (TimingDelay != 0)
+  { 
+    TimingDelay--;
+  }
+}
 /*===========================================================================
 * 函数 ：MCU_Initial() => 初始化CPU所有硬件                                	*
 * 说明 ：关于所有硬件的初始化操作，已经被建成C库，见bsp.c文件              	*
@@ -70,7 +88,6 @@ void MCU_Initial(void)
 		COM2_USART_Config();
 		MOD_USART_Config();
     Key_GPIO_Config();      		// 初始化按键
-    TIMx_Configuration();   		// 初始化定时器6，0.5s 一个事件
     SPI_Config();          			// 初始化SPI
 		RTC_Config();								// 初始化RTC
 		MOD_GPRS_Config();				// 初始化GPRS
@@ -191,9 +208,9 @@ void Function_Ctrl(uint8_t *command)
 			case 0xA5A5:
 										Prog_Assign_RFID(command);
 										break;
-			/* 上位机批量清零标签计步数据 */
+			/* 上位机清零指定标签计步数据 */
 			case 0xA6A6:
-										Clear_All_RFID(command);
+										Clear_Assign_RFID(command);
 										break;
 			default:			
 										#ifdef ETHERNET_ENABLE
@@ -232,8 +249,10 @@ void Check_All_RFID(uint8_t *command)
 		command[8] = RFID_init[i][5];
 		command[9] = RFID_init[i][6];
 		RF_Initial(RFID_init[i][0], syncword, RX);
+		wwdg_flag = 0;
 		RF_SendPacket(command);
 		Delay(0xFFFF);
+		printf("scaning:%d\n",i);
 	}
 	Usart_SendString(MOD_USART,"All Finish\n");
 }
@@ -256,6 +275,7 @@ void Check_Assign_RFID(uint8_t *command)
 		{
 			syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
 			RF_Initial(RFID_init[i][0], syncword, RX);
+			wwdg_flag = 0;
 			RF_SendPacket(command);
 			err = 1;
 		}
@@ -281,22 +301,32 @@ void Check_Assign_Section_RFID(uint8_t *command)
 	uint16_t j=(uint16_t)(0xFF00 & command[6]<<8)+(uint16_t)(0x00FF & command[7])-1;
 	uint16_t s=(uint16_t)(0xFF00 & command[8]<<8)+(uint16_t)(0x00FF & command[9])-1;
 	
-	for(i=j; i<=s; i++)
+	if(j<=200 && s<=200)
 	{
-		syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
-		command[6] = RFID_init[i][3];
-		command[7] = RFID_init[i][4];
-		command[8] = RFID_init[i][5];
-		command[9] = RFID_init[i][6];
-		RF_Initial(RFID_init[i][0], syncword, RX);
-		RF_SendPacket(command);
-		Delay(0xFFFF);
+		for(i=j; i<=s; i++)
+		{
+			syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
+			command[6] = RFID_init[i][3];
+			command[7] = RFID_init[i][4];
+			command[8] = RFID_init[i][5];
+			command[9] = RFID_init[i][6];
+			RF_Initial(RFID_init[i][0], syncword, RX);
+			wwdg_flag = 0;
+			RF_SendPacket(command);
+			Delay(0xFFFF);
+			printf("scaning:%d\n",i);
+		}
+		Usart_SendString(MOD_USART,"All Finish\n");
 	}
-	Usart_SendString(MOD_USART,"All Finish\n");
+	else
+	{
+		Usart_SendString(MOD_USART,"Exceeding Threshold 200\n");
+	}
+
 }
 
 /*===========================================================================
-* 函数 :Prog_Assign_RFID() => 上位机编程标签地址码、同步码、RFID码       	* 
+* 函数 :Prog_Assign_RFID() => 上位机编程标签地址码、同步码、RFID码       		* 
 ============================================================================*/
 void Prog_Assign_RFID(uint8_t *command)
 {
@@ -305,23 +335,36 @@ void Prog_Assign_RFID(uint8_t *command)
 }
 
 /*===========================================================================
-* 函数 :Clear_All_RFID() => 上位机查询所有编号标签                     			* 
+* 函数 :Clear_Assign_RFID() => 上位机清零指定标签计步数据                 	* 
 ============================================================================*/
-void Clear_All_RFID(uint8_t *command)
+void Clear_Assign_RFID(uint8_t *command)
 {
+	uint32_t rfid,rfid_init;
 	uint16_t syncword;
-	uint8_t i=0;
+	uint8_t i=0,err=0;
+	
+	rfid = ((uint32_t)(0xFF000000 & command[6]<<24)+(uint32_t)(0x00FF0000 & command[7]<<16)+(uint32_t)(0x0000FF00 & command[8]<<8)+(uint32_t)(0x000000FF & command[9]));
 	
 	for(i=0; i<RFID_SUM; i++)
 	{
-		syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
-		command[6] = RFID_init[i][3];
-		command[7] = RFID_init[i][4];
-		command[8] = RFID_init[i][5];
-		command[9] = RFID_init[i][6];
-		RF_Initial(RFID_init[i][0], syncword, RX);
-		RF_SendClearPacket(command);
-		Delay(0xFFFF);
+		rfid_init = ((uint32_t)(0xFF000000 & RFID_init[i][3]<<24)+(uint32_t)(0x00FF0000 & RFID_init[i][4]<<16)+(uint32_t)(0x0000FF00 & RFID_init[i][5]<<8)+(uint32_t)(0x000000FF & RFID_init[i][6]));
+		if(rfid == rfid_init)
+		{
+			syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
+			RF_Initial(RFID_init[i][0], syncword, RX);
+			wwdg_flag = 0;
+			RF_SendClearPacket(command);
+			err = 1;
+		}
+	}
+	if(err == 0)
+	{
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,str6,19,gWIZNETINFO.gw,5000);
+		#else
+			printf("RFID coding error\n");
+		#endif
 	}
 }
 
@@ -334,7 +377,9 @@ void RF_ProgPacket(uint8_t *command)
 {
 	uint16_t i=0;
 	
-	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
+	while(wwdg_flag == 0){}
+	wwdg_flag = 3;
+//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
 	
 	for (i=0; i<SEND_LENGTH; i++) // clear array
 		{SendBuffer[i] = 0;}
@@ -351,19 +396,36 @@ void RF_ProgPacket(uint8_t *command)
 	for(i=0; i<SEND_PACKAGE_NUM; i++)
 	{
 		CC1101SendPacket(SendBuffer, SEND_LENGTH, ADDRESS_CHECK);    // 发送数据
-		Delay(0xFFFF);									// 计算得到平均27ms发送一次数据
-//		Delay(0xFFFFF);								// 计算得到平均130ms发送一次数据
+		Delay(0xFFFF);									// 计算得到平均14.4ms发送一次数据
+		if(i%2)
+		{
+			WWDG_Refresh();
+		}
 	}
+	wwdg_flag = 2;
 	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
 	Usart_SendString(MOD_USART,"Transmit OK\n");
-//	RF_Initial(addr, sync, RX);
 	RecvWaitTime = RECV_TIMEOUT;
 	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvWaitTime != 0)
 	{
 		RecvWaitTime--;
+		if(TimingDelay == 0)
+		{
+			TimingDelay = 35;
+		}
+		else if(TimingDelay == 1)
+		{
+			WWDG_Refresh();
+			TimingDelay = 0;
+		}
 	}
 	Usart_SendString(MOD_USART,"Prog Complete\n");
-	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
+	//等待喂狗时间到来
+	while(TimingDelay != 0){}
+	WWDG_Refresh();
+	TimingDelay = 35;
+	wwdg_flag = 1;
+//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
 }
 
 /*===========================================================================
@@ -375,7 +437,10 @@ void RF_SendPacket(uint8_t *command)
 {
 	uint16_t i=0;
 	
-	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
+	while(wwdg_flag == 0){}
+	wwdg_flag = 3;
+	
+//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
 	
 	for (i=0; i<SEND_LENGTH; i++) // clear array
 		{SendBuffer[i] = 0;}
@@ -421,34 +486,120 @@ void RF_SendPacket(uint8_t *command)
 	for(i=0; i<SEND_PACKAGE_NUM; i++)
 	{
 		CC1101SendPacket(SendBuffer, SEND_LENGTH, ADDRESS_CHECK);    // 发送数据
-		Delay(0xFFFF);									// 计算得到平均27ms发送一次数据
-//		Delay(0xFFFFF);								// 计算得到平均130ms发送一次数据
+		Delay(0xFFFF);									// 计算得到平均14.4ms发送一次数据
+		if(i%2)
+		{
+			WWDG_Refresh();
+		}
 	}
+	wwdg_flag = 2;
 	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
 	Usart_SendString(MOD_USART,"Transmit OK\n");
-//	RF_Initial(addr, sync, RX);
 	RecvWaitTime = RECV_TIMEOUT;
-	while(RecvWaitTime != 0)//(RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && 
+	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvWaitTime != 0)
 	{
-		RF_Acknowledge();
 		RecvWaitTime--;
-	}
-	if(index == 4 || index == 6)
-	{
-		if(RecvBuffer[10] != 0 || RecvBuffer[11] != 0 || RecvBuffer[12] != 0 || RecvBuffer[13] != 0)
+		if(TimingDelay == 0)
 		{
-			CC1101SetTRMode(RX_MODE, DISABLE);
-			RF_SendClearPacket(RecvBuffer);
+			TimingDelay = 35;
 		}
-		else
+		else if(TimingDelay == 1)
 		{
-			Usart_SendString(MOD_USART,"step equal zero\n");
+			WWDG_Refresh();
+			TimingDelay = 0;
 		}
 	}
-	index = 0;
+	printf("TimingDelay5 = %d\n",TimingDelay);
 	Usart_SendString(MOD_USART,"Transmit Complete\n");
-	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
+	//等待喂狗时间到来
+	while(TimingDelay != 0){}
+	WWDG_Refresh();
+	TimingDelay = 35;
+	wwdg_flag = 1;
+//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
 }
+
+/*===========================================================================
+* 函数 : RF_SendPacket() => 无线发送数据函数                            		*
+* 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                    	*
+* 输出 ：0，发送失败；else，发送成功                                        *
+============================================================================*/
+//void RF_SendPacket(uint8_t *command)
+//{
+//	uint16_t i=0;
+//	
+//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
+//	
+//	for (i=0; i<SEND_LENGTH; i++) // clear array
+//		{SendBuffer[i] = 0;}
+//	
+//	if(command[4] == 0xA0 && command[5] == 0xA0)
+//	{
+//		SendBuffer[0] = 0xAB;
+//		SendBuffer[1] = 0xCD;
+//		SendBuffer[2] = command[2];
+//		SendBuffer[3] = command[3];
+//		SendBuffer[4] = 0xC0;
+//		SendBuffer[5] = 0xC0;
+//		SendBuffer[6] = command[6];
+//		SendBuffer[7] = command[7];
+//		SendBuffer[8] = command[8];
+//		SendBuffer[9] = command[9];
+//	}
+//	else if(command[4] == 0xA4 && (command[5] == 0xA4 || command[5] == 0x01))
+//	{
+//		SendBuffer[0] = 0xAB;
+//		SendBuffer[1] = 0xCD;
+//		SendBuffer[2] = command[2];
+//		SendBuffer[3] = command[3];
+//		SendBuffer[4] = 0xC4;
+//		SendBuffer[5] = 0xC4;
+//		SendBuffer[6] = command[6];
+//		SendBuffer[7] = command[7];
+//		SendBuffer[8] = command[8];
+//		SendBuffer[9] = command[9];
+//	}
+//	else if(command[4] == 0xA5 && command[5] == 0xA5)
+//	{
+//		SendBuffer[0] = 0xAB;
+//		SendBuffer[1] = 0xCD;
+//		SendBuffer[2] = command[2];
+//		SendBuffer[3] = command[3];
+//		SendBuffer[4] = 0xC5;
+//		SendBuffer[5] = 0xC5;
+//		for (i=6; i<SEND_LENGTH; i++) // clear array
+//		{SendBuffer[i] = command[i];}
+//	}
+
+//	for(i=0; i<SEND_PACKAGE_NUM; i++)
+//	{
+//		CC1101SendPacket(SendBuffer, SEND_LENGTH, ADDRESS_CHECK);    // 发送数据
+//		Delay(0xFFFF);									// 计算得到平均14.4ms发送一次数据
+//	}
+//	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
+//	Usart_SendString(MOD_USART,"Transmit OK\n");
+//	RecvWaitTime = RECV_TIMEOUT;
+//	while(RecvWaitTime != 0)//(RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && 
+//	{
+//		RF_Acknowledge();
+//		RecvWaitTime--;
+//	}
+//	if(index == 4 || index == 6)
+//	{
+//		if(RecvBuffer[10] != 0 || RecvBuffer[11] != 0 || RecvBuffer[12] != 0 || RecvBuffer[13] != 0)
+//		{
+//			CC1101SetTRMode(RX_MODE, DISABLE);
+//			RF_SendClearPacket(RecvBuffer);
+//		}
+//		else
+//		{
+//			Usart_SendString(MOD_USART,"step equal zero\n");
+//		}
+//	}
+//	index = 0;
+//	Usart_SendString(MOD_USART,"Transmit Complete\n");
+//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
+//}
 
 /*===========================================================================
 * 函数 : RF_SendClearPacket() => 无线发送清零命令函数                     	*
@@ -459,7 +610,9 @@ void RF_SendClearPacket(uint8_t *command)
 {
 	uint16_t i=0;
 
-	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
+	while(wwdg_flag == 0){}
+	wwdg_flag = 3;
+//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
 	
 	for (i=0; i<SEND_LENGTH; i++) // clear array
 		{SendBuffer[i] = 0;}
@@ -478,20 +631,36 @@ void RF_SendClearPacket(uint8_t *command)
 	for(i=0; i<SEND_PACKAGE_NUM; i++)
 	{
 		CC1101SendPacket(SendBuffer, SEND_LENGTH, ADDRESS_CHECK);    // 发送数据
-		Delay(0xFFFF);									// 计算得到平均27ms发送一次数据
-//		Delay(0xFFFFF);								// 计算得到平均130ms发送一次数据
+		Delay(0xFFFF);									// 计算得到平均14.4ms发送一次数据
+		if(i%2)
+		{
+			WWDG_Refresh();
+		}
 	}
+	wwdg_flag = 2;
 	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
 	Usart_SendString(MOD_USART,"Clear Command Transmit OK\n");
-//	RF_Initial(addr, sync, RX);
 	RecvWaitTime = RECV_TIMEOUT;
-	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvWaitTime != 0)//
+	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvWaitTime != 0)
 	{
-//		RF_Acknowledge();
 		RecvWaitTime--;
+		if(TimingDelay == 0)
+		{
+			TimingDelay = 35;
+		}
+		else if(TimingDelay == 1)
+		{
+			WWDG_Refresh();
+			TimingDelay = 0;
+		}
 	}
 	Usart_SendString(MOD_USART,"Clear Complete\n");
-	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
+	//等待喂狗时间到来
+	while(TimingDelay != 0){}
+	WWDG_Refresh();
+	TimingDelay = 35;
+	wwdg_flag = 1;
+//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
 }
 
 /*===========================================================================
@@ -502,16 +671,23 @@ uint8_t	RF_Acknowledge(void)
 	uint8_t i=0, length=0;
 	int16_t rssi_dBm;	
 	
-	if(RFReady == SET)         // 检测无线模块是否产生接收中断 
+	if(RFReady == SET)         //检测无线模块是否产生接收中断 
 	{
+		printf("TimingDelay6 = %d\n",TimingDelay);
 		/* Reset transmission flag */
 		RFReady = RESET;
 		/* clear array */
 		for (i=0; i<RECV_LENGTH; i++)   { RecvBuffer[i] = 0; } 
-		length = CC1101RecPacket(RecvBuffer, &Chip_Addr, &RSSI);// 读取接收到的数据长度和数据内容
+		length = CC1101RecPacket(RecvBuffer, &Chip_Addr, &RSSI);//读取接收到的数据长度和数据内容
 		/* Set the CC1101_IRQ_EXTI_LINE enable */
 		EXTI_Config(CC1101_IRQ_EXTI_LINE, EXTI_Trigger_Falling, ENABLE);
-		// 打印数据
+		
+		//等待喂狗时间到来
+		while(TimingDelay != 0){}
+		WWDG_Refresh();
+		TimingDelay = 35;
+		
+		//打印数据
 		rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
 		printf("RSSI = %ddBm, length = %d, address = %d\n",rssi_dBm,length,Chip_Addr);
 		rssi_dBm = CC1101CalcRSSI_dBm(RecvBuffer[18]);
