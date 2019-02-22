@@ -13,7 +13,8 @@
   */ 
 	
 #include "./gprs/bsp_gprs.h"
-
+#include "./usart/bsp_com_usart.h"
+extern void Delay(__IO uint32_t nCount);
 /**
   * @brief  MOD_GPRS_Config function
   * @param  None
@@ -40,7 +41,11 @@ void MOD_GPRS_Config(void)
 		GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
     GPIO_Init(MOD_GPRS_PORT, &GPIO_InitStructure);
 	
+		MOD_RESET_OFF();
+		Delay(0xFFFFFFF);
 		MOD_RESET_ON();
+		Delay(0x2FFFFFFF);
+		printf("GPRS Module Reset Complete\n");
 }
 
  /**

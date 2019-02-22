@@ -34,7 +34,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 __IO ITStatus RFReady = RESET;
-uint8_t wwdg_flag = 0;
+uint8_t wwdg_flag;
 extern uint32_t TimingDelay;
 extern __IO FlagStatus TxRxState;
 extern __IO uint8_t cnt_i,cnt_k,cnt_j;
@@ -146,7 +146,7 @@ void SysTick_Handler(void)
 	if(wwdg_flag == 0 || wwdg_flag == 1)
 	{
 		TimingDelay_Decrement();
-		if(TimingDelay == 1)
+		if(TimingDelay == 0)
 		{
 			LED_RUN_TOG();
 			WWDG_Refresh();
@@ -158,6 +158,7 @@ void SysTick_Handler(void)
 	{
 		TimingDelay_Decrement();
 	}
+	GPRSTiming_Decrement();
 
 }
 

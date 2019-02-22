@@ -22,6 +22,7 @@ RTC_DateTypeDef	rtc_datestructure;
 /* Private variables ---------------------------------------------------------*/
 extern uint8_t wwdg_flag;
 uint32_t TimingDelay;
+uint32_t GPRSTiming;
 static __IO uint32_t RecvWaitTime = 0;		//接收等待时间
 static __IO uint8_t RecvFlag = 0; 				//=1接收等待时间结束，=0不处理
 uint8_t index;
@@ -57,7 +58,7 @@ extern uint8_t PCCommand[PCCOMMAND_LENGTH];	// 接收上位机命令数组
 extern __IO ITStatus RFReady;
 uint8_t SendBuffer[SEND_LENGTH] = {0};// 发送数据包
 uint8_t RecvBuffer[RECV_LENGTH] = {0};// 接收数据包
-uint8_t AckBuffer[ACK_LENGTH] = {0};	// 应答数据包
+uint8_t AckBuffer[ACK_LLENGTH] = {0};	// 应答数据包
 float ADC_ConvertedValueLocal[3];			// 用于保存转化计算后的电压值
 /* Private function prototypes -----------------------------------------------*/
 extern void Delay(__IO uint32_t nCount);
@@ -75,6 +76,37 @@ void TimingDelay_Decrement(void)
   { 
     TimingDelay--;
   }
+}
+
+/**
+  * @brief  Decrements the GPRSTiming variable,Reset GPRS module.
+  * @param  None
+  * @retval None
+  */
+{
+	if (GPRSTiming == 0)
+	{
+		GPRSTiming = 86400000;//24hours
+		MOD_RESET_ON();
+	}
+	else if (GPRSTiming == 86340000)
+	{
+		GPRSTiming--;
+		printf("GPRS Module Reset Complete\n");
+	}
+  else if (GPRSTiming == 5000)
+  {
+    GPRSTiming--;
+		MOD_RESET_OFF();
+  }
+	else if (GPRSTiming < 5000)
+	{
+		GPRSTiming--;
+	}
+	else
+	{
+		GPRSTiming--;
+	}
 }
 /*===========================================================================
 * 函数 ：MCU_Initial() => 初始化CPU所有硬件                                	*
@@ -129,6 +161,7 @@ void System_Initial(void)
 {
 //		uint16_t i;
 //		uint32_t flshStatus;
+		wwdg_flag = 0;
     MCU_Initial();      // 初始化CPU所有硬件
 		Init_ID();					// 读取设备编号和RFID编号
     RF_Initial(0x5, 0xD391, RX);     // 初始化无线芯片,空闲模式
@@ -168,33 +201,23 @@ void Function_Ctrl(uint8_t *command)
 			case 0xA0A0:	
 										Check_All_RFID(command);
 										break;
-			/* 上位发生时间同步数据 */
+			/* 上位发送时间同步数据 */
 			case 0xA101:	
 										RTC_TimeAndDate_Reset(command[10],  command[11],  command[12],  command[13],  command[14],  command[15],  command[16]);
 										RTC_Config_Check();      // 检查RTC，判断是否需要重新配置
-										Reply_PC(10);
+										Reply_PC(0x0B);
 										break;
 			/* 读取同步数据 */
 			case 0xA102:
-										Reply_PC(10);
+										Reply_PC(0x0B);
 										break;
-			/* 查询主控设备电源电量低标志、RTC电量低标志 */
+			/* 清除指定标签电源电量标志（2.8V电量低标志） */
 			case 0xA2A2:
-										#ifdef ETHERNET_ENABLE
-											Delay(0xffff);
-											send_tcpc(0,str3,22,gWIZNETINFO.gw,5000);
-										#else
-											printf("no this function now\n");
-										#endif
+										Cfg_Assign_RFID(command);
 										break;
-			/* 查询标签电量、加速度过小，加速度过大标志 */
+			/* 上位配置标签ADXL362参数 */
 			case 0xA3A3:
-										#ifdef ETHERNET_ENABLE
-											Delay(0xffff);
-											send_tcpc(0,str3,22,gWIZNETINFO.gw,5000);
-										#else
-											printf("no this function now\n");
-										#endif
+										Cfg_Assign_RFID(command);
 										break;
 			/* 上位机查询指定编号标签 */
 			case 0xA4A4:
@@ -212,6 +235,10 @@ void Function_Ctrl(uint8_t *command)
 			case 0xA6A6:
 										Clear_Assign_RFID(command);
 										break;
+			/* 上位机清零指定段内标签计步数据 */
+			case 0xA601:
+										Clear_Assign_Section_RFID(command);
+										break;			
 			default:			
 										#ifdef ETHERNET_ENABLE
 											Delay(0xffff);
@@ -249,12 +276,44 @@ void Check_All_RFID(uint8_t *command)
 		command[8] = RFID_init[i][5];
 		command[9] = RFID_init[i][6];
 		RF_Initial(RFID_init[i][0], syncword, RX);
-		wwdg_flag = 0;
 		RF_SendPacket(command);
 		Delay(0xFFFF);
 		printf("scaning:%d\n",i);
 	}
 	Usart_SendString(MOD_USART,"All Finish\n");
+}
+
+/*===========================================================================
+* 函数 ：Cfg_Assign_RFID() => 上位配置标签ADXL362参数                    	  * 
+============================================================================*/
+void Cfg_Assign_RFID(uint8_t *command)
+{
+	uint32_t rfid,rfid_init;
+	uint16_t syncword;
+	uint8_t i=0,err=0;
+	
+	rfid = ((uint32_t)(0xFF000000 & command[6]<<24)+(uint32_t)(0x00FF0000 & command[7]<<16)+(uint32_t)(0x0000FF00 & command[8]<<8)+(uint32_t)(0x000000FF & command[9]));
+	
+	for(i=0; i<RFID_SUM; i++)
+	{
+		rfid_init = ((uint32_t)(0xFF000000 & RFID_init[i][3]<<24)+(uint32_t)(0x00FF0000 & RFID_init[i][4]<<16)+(uint32_t)(0x0000FF00 & RFID_init[i][5]<<8)+(uint32_t)(0x000000FF & RFID_init[i][6]));
+		if(rfid == rfid_init)
+		{
+			syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
+			RF_Initial(RFID_init[i][0], syncword, RX);
+			RF_ProgPacket(command);
+			err = 1;
+		}
+	}
+	if(err == 0)
+	{
+		#ifdef ETHERNET_ENABLE
+			Delay(0xffff);
+			send_tcpc(0,str6,19,gWIZNETINFO.gw,5000);
+		#else
+			printf("RFID coding error\n");
+		#endif
+	}
 }
 
 /*===========================================================================
@@ -275,7 +334,6 @@ void Check_Assign_RFID(uint8_t *command)
 		{
 			syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
 			RF_Initial(RFID_init[i][0], syncword, RX);
-			wwdg_flag = 0;
 			RF_SendPacket(command);
 			err = 1;
 		}
@@ -311,7 +369,6 @@ void Check_Assign_Section_RFID(uint8_t *command)
 			command[8] = RFID_init[i][5];
 			command[9] = RFID_init[i][6];
 			RF_Initial(RFID_init[i][0], syncword, RX);
-			wwdg_flag = 0;
 			RF_SendPacket(command);
 			Delay(0xFFFF);
 			printf("scaning:%d\n",i);
@@ -352,7 +409,6 @@ void Clear_Assign_RFID(uint8_t *command)
 		{
 			syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
 			RF_Initial(RFID_init[i][0], syncword, RX);
-			wwdg_flag = 0;
 			RF_SendClearPacket(command);
 			err = 1;
 		}
@@ -369,6 +425,38 @@ void Clear_Assign_RFID(uint8_t *command)
 }
 
 /*===========================================================================
+* 函数 Clear_Assign_Section_RFID() => 上位机清零指定段内标签计步数据        * 
+============================================================================*/
+void Clear_Assign_Section_RFID(uint8_t *command)
+{
+	uint16_t syncword;
+	uint16_t i=0;
+	uint16_t j=(uint16_t)(0xFF00 & command[6]<<8)+(uint16_t)(0x00FF & command[7])-1;
+	uint16_t s=(uint16_t)(0xFF00 & command[8]<<8)+(uint16_t)(0x00FF & command[9])-1;
+	
+	if(j<=200 && s<=200)
+	{
+		for(i=j; i<=s; i++)
+		{
+			syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
+			command[6] = RFID_init[i][3];
+			command[7] = RFID_init[i][4];
+			command[8] = RFID_init[i][5];
+			command[9] = RFID_init[i][6];
+			RF_Initial(RFID_init[i][0], syncword, RX);
+			RF_SendClearPacket(command);
+			Delay(0xFFFF);
+			printf("scaning:%d\n",i);
+		}
+		Usart_SendString(MOD_USART,"All Finish\n");
+	}
+	else
+	{
+		Usart_SendString(MOD_USART,"Exceeding Threshold 200\n");
+	}
+}
+
+/*===========================================================================
 * 函数 : RF_ProgPacket() => 无线发送数据函数                            		*
 * 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                    	*
 * 输出 ：0，发送失败；else，发送成功                                        *
@@ -377,13 +465,38 @@ void RF_ProgPacket(uint8_t *command)
 {
 	uint16_t i=0;
 	
+	wwdg_flag = 0;
 	while(wwdg_flag == 0){}
 	wwdg_flag = 3;
 //	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
 	
 	for (i=0; i<SEND_LENGTH; i++) // clear array
 		{SendBuffer[i] = 0;}
-	
+
+	if(command[4] == 0xA2 && command[5] == 0xA2)
+	{	
+		SendBuffer[0] = 0xAB;
+		SendBuffer[1] = 0xCD;
+		SendBuffer[2] = command[2];
+		SendBuffer[3] = command[3];
+		SendBuffer[4] = 0xC2;
+		SendBuffer[5] = 0xC2;
+		for (i=6; i<SEND_LENGTH; i++) // clear array
+		{SendBuffer[i] = command[i];}
+	}	
+	else if(command[4] == 0xA3 && command[5] == 0xA3)
+	{	
+		SendBuffer[0] = 0xAB;
+		SendBuffer[1] = 0xCD;
+		SendBuffer[2] = command[2];
+		SendBuffer[3] = command[3];
+		SendBuffer[4] = 0xC3;
+		SendBuffer[5] = 0xC3;
+		for (i=6; i<SEND_LENGTH; i++) // clear array
+		{SendBuffer[i] = command[i];}
+	}
+	else if(command[4] == 0xA5 && command[5] == 0xA5)
+	{
 		SendBuffer[0] = 0xAB;
 		SendBuffer[1] = 0xCD;
 		SendBuffer[2] = command[2];
@@ -392,6 +505,7 @@ void RF_ProgPacket(uint8_t *command)
 		SendBuffer[5] = 0xC5;
 		for (i=6; i<SEND_LENGTH; i++) // clear array
 		{SendBuffer[i] = command[i];}
+	}
 
 	for(i=0; i<SEND_PACKAGE_NUM; i++)
 	{
@@ -406,17 +520,13 @@ void RF_ProgPacket(uint8_t *command)
 	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
 	Usart_SendString(MOD_USART,"Transmit OK\n");
 	RecvWaitTime = RECV_TIMEOUT;
-	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvWaitTime != 0)
+	while((RF_Acknowledge() == 0x0 || RF_Acknowledge() == 0x01) && RecvWaitTime != 0)
 	{
 		RecvWaitTime--;
 		if(TimingDelay == 0)
 		{
-			TimingDelay = 35;
-		}
-		else if(TimingDelay == 1)
-		{
 			WWDG_Refresh();
-			TimingDelay = 0;
+			TimingDelay = 25;
 		}
 	}
 	Usart_SendString(MOD_USART,"Prog Complete\n");
@@ -437,9 +547,9 @@ void RF_SendPacket(uint8_t *command)
 {
 	uint16_t i=0;
 	
+	wwdg_flag = 0;
 	while(wwdg_flag == 0){}
 	wwdg_flag = 3;
-	
 //	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
 	
 	for (i=0; i<SEND_LENGTH; i++) // clear array
@@ -471,17 +581,6 @@ void RF_SendPacket(uint8_t *command)
 		SendBuffer[8] = command[8];
 		SendBuffer[9] = command[9];
 	}
-	else if(command[4] == 0xA5 && command[5] == 0xA5)
-	{
-		SendBuffer[0] = 0xAB;
-		SendBuffer[1] = 0xCD;
-		SendBuffer[2] = command[2];
-		SendBuffer[3] = command[3];
-		SendBuffer[4] = 0xC5;
-		SendBuffer[5] = 0xC5;
-		for (i=6; i<SEND_LENGTH; i++) // clear array
-		{SendBuffer[i] = command[i];}
-	}
 
 	for(i=0; i<SEND_PACKAGE_NUM; i++)
 	{
@@ -496,20 +595,15 @@ void RF_SendPacket(uint8_t *command)
 	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
 	Usart_SendString(MOD_USART,"Transmit OK\n");
 	RecvWaitTime = RECV_TIMEOUT;
-	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvWaitTime != 0)
+	while((RF_Acknowledge() == 0x0 || RF_Acknowledge() == 0x01) && RecvWaitTime != 0)
 	{
 		RecvWaitTime--;
 		if(TimingDelay == 0)
 		{
-			TimingDelay = 35;
-		}
-		else if(TimingDelay == 1)
-		{
 			WWDG_Refresh();
-			TimingDelay = 0;
+			TimingDelay = 25;
 		}
 	}
-	printf("TimingDelay5 = %d\n",TimingDelay);
 	Usart_SendString(MOD_USART,"Transmit Complete\n");
 	//等待喂狗时间到来
 	while(TimingDelay != 0){}
@@ -520,88 +614,6 @@ void RF_SendPacket(uint8_t *command)
 }
 
 /*===========================================================================
-* 函数 : RF_SendPacket() => 无线发送数据函数                            		*
-* 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                    	*
-* 输出 ：0，发送失败；else，发送成功                                        *
-============================================================================*/
-//void RF_SendPacket(uint8_t *command)
-//{
-//	uint16_t i=0;
-//	
-//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
-//	
-//	for (i=0; i<SEND_LENGTH; i++) // clear array
-//		{SendBuffer[i] = 0;}
-//	
-//	if(command[4] == 0xA0 && command[5] == 0xA0)
-//	{
-//		SendBuffer[0] = 0xAB;
-//		SendBuffer[1] = 0xCD;
-//		SendBuffer[2] = command[2];
-//		SendBuffer[3] = command[3];
-//		SendBuffer[4] = 0xC0;
-//		SendBuffer[5] = 0xC0;
-//		SendBuffer[6] = command[6];
-//		SendBuffer[7] = command[7];
-//		SendBuffer[8] = command[8];
-//		SendBuffer[9] = command[9];
-//	}
-//	else if(command[4] == 0xA4 && (command[5] == 0xA4 || command[5] == 0x01))
-//	{
-//		SendBuffer[0] = 0xAB;
-//		SendBuffer[1] = 0xCD;
-//		SendBuffer[2] = command[2];
-//		SendBuffer[3] = command[3];
-//		SendBuffer[4] = 0xC4;
-//		SendBuffer[5] = 0xC4;
-//		SendBuffer[6] = command[6];
-//		SendBuffer[7] = command[7];
-//		SendBuffer[8] = command[8];
-//		SendBuffer[9] = command[9];
-//	}
-//	else if(command[4] == 0xA5 && command[5] == 0xA5)
-//	{
-//		SendBuffer[0] = 0xAB;
-//		SendBuffer[1] = 0xCD;
-//		SendBuffer[2] = command[2];
-//		SendBuffer[3] = command[3];
-//		SendBuffer[4] = 0xC5;
-//		SendBuffer[5] = 0xC5;
-//		for (i=6; i<SEND_LENGTH; i++) // clear array
-//		{SendBuffer[i] = command[i];}
-//	}
-
-//	for(i=0; i<SEND_PACKAGE_NUM; i++)
-//	{
-//		CC1101SendPacket(SendBuffer, SEND_LENGTH, ADDRESS_CHECK);    // 发送数据
-//		Delay(0xFFFF);									// 计算得到平均14.4ms发送一次数据
-//	}
-//	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
-//	Usart_SendString(MOD_USART,"Transmit OK\n");
-//	RecvWaitTime = RECV_TIMEOUT;
-//	while(RecvWaitTime != 0)//(RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && 
-//	{
-//		RF_Acknowledge();
-//		RecvWaitTime--;
-//	}
-//	if(index == 4 || index == 6)
-//	{
-//		if(RecvBuffer[10] != 0 || RecvBuffer[11] != 0 || RecvBuffer[12] != 0 || RecvBuffer[13] != 0)
-//		{
-//			CC1101SetTRMode(RX_MODE, DISABLE);
-//			RF_SendClearPacket(RecvBuffer);
-//		}
-//		else
-//		{
-//			Usart_SendString(MOD_USART,"step equal zero\n");
-//		}
-//	}
-//	index = 0;
-//	Usart_SendString(MOD_USART,"Transmit Complete\n");
-//	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,ENABLE);	// 开启定时器中断
-//}
-
-/*===========================================================================
 * 函数 : RF_SendClearPacket() => 无线发送清零命令函数                     	*
 * 输入 ：Sendbuffer指向待发送的数据，length发送数据长度                    	*
 * 输出 ：0，发送失败；else，发送成功                                        *
@@ -610,6 +622,7 @@ void RF_SendClearPacket(uint8_t *command)
 {
 	uint16_t i=0;
 
+	wwdg_flag = 0;
 	while(wwdg_flag == 0){}
 	wwdg_flag = 3;
 //	TIM_ITConfig(BASIC_TIM,TIM_IT_Update,DISABLE);// 关闭定时器中断
@@ -641,17 +654,13 @@ void RF_SendClearPacket(uint8_t *command)
 	CC1101SetTRMode(RX_MODE, ENABLE);       	// 进入接收模式，等待应答
 	Usart_SendString(MOD_USART,"Clear Command Transmit OK\n");
 	RecvWaitTime = RECV_TIMEOUT;
-	while((RF_Acknowledge() == 0 || RF_Acknowledge() == 1) && RecvWaitTime != 0)
+	while((RF_Acknowledge() == 0x0 || RF_Acknowledge() == 0x01) && RecvWaitTime != 0)
 	{
 		RecvWaitTime--;
 		if(TimingDelay == 0)
 		{
-			TimingDelay = 35;
-		}
-		else if(TimingDelay == 1)
-		{
 			WWDG_Refresh();
-			TimingDelay = 0;
+			TimingDelay = 25;
 		}
 	}
 	Usart_SendString(MOD_USART,"Clear Complete\n");
@@ -673,7 +682,6 @@ uint8_t	RF_Acknowledge(void)
 	
 	if(RFReady == SET)         //检测无线模块是否产生接收中断 
 	{
-		printf("TimingDelay6 = %d\n",TimingDelay);
 		/* Reset transmission flag */
 		RFReady = RESET;
 		/* clear array */
@@ -690,7 +698,7 @@ uint8_t	RF_Acknowledge(void)
 		//打印数据
 		rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
 		printf("RSSI = %ddBm, length = %d, address = %d\n",rssi_dBm,length,Chip_Addr);
-		rssi_dBm = CC1101CalcRSSI_dBm(RecvBuffer[18]);
+		rssi_dBm = CC1101CalcRSSI_dBm(RecvBuffer[60]);
 		printf("RFID RSSI = %ddBm\n",rssi_dBm);
 		for(i=0; i<RECV_LENGTH; i++)
 		{
@@ -699,15 +707,15 @@ uint8_t	RF_Acknowledge(void)
 		printf("\r\n");
 		if(length == 0)
 		{
-			index = 1;
+			index = 0x01;
 			Reply_PC(index);
-			return 1;
+			return 0x01;
 		}
 		else if(length == 1)
 		{
-			index = 12;
+			index = 0x0C;
 			Reply_PC(index);
-			return 1;
+			return 0x01;
 		}
 		else
 		{
@@ -715,56 +723,62 @@ uint8_t	RF_Acknowledge(void)
 				{
 					if(RecvBuffer[4] == 0xD0 && RecvBuffer[5] == 0x01)
 					{
-						index = 4;
+						index = 0x04;
 						Reply_PC(index);
-						return 4;
+						return 0x04;
+					}
+					else if(RecvBuffer[4] == 0xD2 && RecvBuffer[5] == 0x01)
+					{
+						index = 0x05;
+						Reply_PC(index);
+						return 0x05;
 					}
 					else if(RecvBuffer[4] == 0xD3 && RecvBuffer[5] == 0x01)
 					{
-						index = 5;
+						index = 0x06;
 						Reply_PC(index);
-						return 5;
+						return 0x06;
 					}
 					else if(RecvBuffer[4] == 0xD4 && RecvBuffer[5] == 0x01)
 					{
-						index = 6;
+						index = 0x07;
 						Reply_PC(index);
-						return 6;
+						return 0x07;
 					}
 					else if(RecvBuffer[4] == 0xD5 && RecvBuffer[5] == 0x01)
 					{
-						index = 7;
+						index = 0x08;
 						Reply_PC(index);
-						return 7;
+						return 0x08;
 					}
 					else if(RecvBuffer[4] == 0xD6 && RecvBuffer[5] == 0x01)
 					{
-						index = 8;
+						index = 0x09;
 						Reply_PC(index);
-						return 8;
+						return 0x09;
 					}
-					else if(RecvBuffer[4] == 0x03 && RecvBuffer[5] == 0x03)
+					else if((RecvBuffer[4] == 0x01 && RecvBuffer[5] == 0x01) || (RecvBuffer[4] == 0x02 && RecvBuffer[5] == 0x02) || (RecvBuffer[4] == 0x03 && RecvBuffer[5] == 0x03))
 					{
-						index = 9;
+						index = 0x0A;
 						Reply_PC(index);
-						return 9;
+						return 0x0A;
 					}
 					else
 					{
-						index = 3;
+						index = 0x03;
 						Reply_PC(index);
-						return 3;
+						return 0x03;
 					}
 				}
 				else
 				{	
-					index = 2;
+					index = 0x02;
 					Reply_PC(index);
-					return 2;
+					return 0x02;
 				}
 			}
 	}
-	else	{	return 0;}
+	else	{	return 0x00;}
 }
 
 /*===========================================================================
@@ -772,273 +786,296 @@ uint8_t	RF_Acknowledge(void)
 ============================================================================*/
 void Reply_PC(uint8_t index)
 {
-	uint8_t i=0;	
+	uint8_t i=0;
 		
-	if(index == 4)
+	switch(index)
 	{
-		RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
-		AckBuffer[0] = 0xAB;
-		AckBuffer[1] = 0xCD;
-		AckBuffer[2] = RecvBuffer[2];
-		AckBuffer[3] = RecvBuffer[3];
-		AckBuffer[4] = 0xB0;
-		AckBuffer[5] = 0x01;
-		for(i=0;i<ACK_LENGTH-14;i++)
-		{
-			AckBuffer[i+6] = RecvBuffer[i+6];
-		}
-		AckBuffer[19] = RSSI;
-		AckBuffer[20] = rtc_datestructure.RTC_Year;
-		AckBuffer[21] = rtc_datestructure.RTC_Month;
-		AckBuffer[22] = rtc_datestructure.RTC_Date;
-		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[24] = rtc_timestructure.RTC_Hours;
-		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
-		#else
-			for(i=0; i<ACK_LENGTH; i++)
+		case 0x04:
+			RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
+			AckBuffer[0] = 0xAB;
+			AckBuffer[1] = 0xCD;
+			AckBuffer[2] = RecvBuffer[2];
+			AckBuffer[3] = RecvBuffer[3];
+			AckBuffer[4] = 0xB0;
+			AckBuffer[5] = 0x01;
+			for(i=0;i<ACK_LLENGTH-14;i++)
 			{
-				printf("%x ",AckBuffer[i]);
+				AckBuffer[i+6] = RecvBuffer[i+6];
 			}
-			printf("\n");
-		#endif
-	}
-	else if(index == 5)
-	{
-		RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
-		AckBuffer[0] = 0xAB;
-		AckBuffer[1] = 0xCD;
-		AckBuffer[2] = RecvBuffer[2];
-		AckBuffer[3] = RecvBuffer[3];
-		AckBuffer[4] = 0xB3;
-		AckBuffer[5] = 0x01;
-		for(i=0;i<ACK_LENGTH-14;i++)
-		{
-			AckBuffer[i+6] = RecvBuffer[i+6];
-		}
-		AckBuffer[19] = RSSI;
-		AckBuffer[20] = rtc_datestructure.RTC_Year;
-		AckBuffer[21] = rtc_datestructure.RTC_Month;
-		AckBuffer[22] = rtc_datestructure.RTC_Date;
-		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[24] = rtc_timestructure.RTC_Hours;
-		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
-		#else
-			for(i=0; i<ACK_LENGTH; i++)
+			AckBuffer[61] = RSSI;
+			AckBuffer[62] = rtc_datestructure.RTC_Year;
+			AckBuffer[63] = rtc_datestructure.RTC_Month;
+			AckBuffer[64] = rtc_datestructure.RTC_Date;
+			AckBuffer[65] = rtc_datestructure.RTC_WeekDay;
+			AckBuffer[66] = rtc_timestructure.RTC_Hours;
+			AckBuffer[67] = rtc_timestructure.RTC_Minutes;
+			AckBuffer[68] = rtc_timestructure.RTC_Seconds;
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+			#else
+				for(i=0; i<ACK_LLENGTH; i++)
+				{
+					printf("%x ",AckBuffer[i]);
+				}
+				printf("\n");
+			#endif
+			break;
+		case 0x05:
+			RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
+			AckBuffer[0] = 0xAB;
+			AckBuffer[1] = 0xCD;
+			AckBuffer[2] = RecvBuffer[2];
+			AckBuffer[3] = RecvBuffer[3];
+			AckBuffer[4] = 0xB2;
+			AckBuffer[5] = 0x01;
+			for(i=0;i<ACK_SLENGTH-14;i++)
 			{
-				printf("%x ",AckBuffer[i]);
+				AckBuffer[i+6] = RecvBuffer[i+6];
 			}
-			printf("\n");
-		#endif
-	}
-	else if(index == 6)
-	{		
-		RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
-		AckBuffer[0] = 0xAB;
-		AckBuffer[1] = 0xCD;
-		AckBuffer[2] = RecvBuffer[2];
-		AckBuffer[3] = RecvBuffer[3];
-		AckBuffer[4] = 0xB4;
-		AckBuffer[5] = 0x01;
-		for(i=0;i<ACK_LENGTH-14;i++)
-		{
-			AckBuffer[i+6] = RecvBuffer[i+6];
-		}
-		AckBuffer[19] = RSSI;
-		AckBuffer[20] = rtc_datestructure.RTC_Year;
-		AckBuffer[21] = rtc_datestructure.RTC_Month;
-		AckBuffer[22] = rtc_datestructure.RTC_Date;
-		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[24] = rtc_timestructure.RTC_Hours;
-		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
-		#else
-			for(i=0; i<ACK_LENGTH; i++)
+			AckBuffer[19] = RSSI;
+			AckBuffer[20] = rtc_datestructure.RTC_Year;
+			AckBuffer[21] = rtc_datestructure.RTC_Month;
+			AckBuffer[22] = rtc_datestructure.RTC_Date;
+			AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+			AckBuffer[24] = rtc_timestructure.RTC_Hours;
+			AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+			AckBuffer[26] = rtc_timestructure.RTC_Seconds;
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+			#else
+				for(i=0; i<ACK_SLENGTH; i++)
+				{
+					printf("%x ",AckBuffer[i]);
+				}
+				printf("\n");
+			#endif
+			break;
+		case 0x06:
+			RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
+			AckBuffer[0] = 0xAB;
+			AckBuffer[1] = 0xCD;
+			AckBuffer[2] = RecvBuffer[2];
+			AckBuffer[3] = RecvBuffer[3];
+			AckBuffer[4] = 0xB3;
+			AckBuffer[5] = 0x01;
+			for(i=0;i<ACK_SLENGTH-14;i++)
 			{
-				printf("%x ",AckBuffer[i]);
+				AckBuffer[i+6] = RecvBuffer[i+6];
 			}
-			printf("\n");
-		#endif
-	}	
-	else if(index == 7)
-	{
-		RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
-		AckBuffer[0] = 0xAB;
-		AckBuffer[1] = 0xCD;
-		AckBuffer[2] = RecvBuffer[2];
-		AckBuffer[3] = RecvBuffer[3];
-		AckBuffer[4] = 0xB5;
-		AckBuffer[5] = 0x01;
-		for(i=0;i<ACK_LENGTH-14;i++)
-		{
-			AckBuffer[i+6] = RecvBuffer[i+6];
-		}
-		AckBuffer[19] = RSSI;
-		AckBuffer[20] = rtc_datestructure.RTC_Year;
-		AckBuffer[21] = rtc_datestructure.RTC_Month;
-		AckBuffer[22] = rtc_datestructure.RTC_Date;
-		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[24] = rtc_timestructure.RTC_Hours;
-		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
-		#else
-			for(i=0; i<ACK_LENGTH; i++)
+			AckBuffer[19] = RSSI;
+			AckBuffer[20] = rtc_datestructure.RTC_Year;
+			AckBuffer[21] = rtc_datestructure.RTC_Month;
+			AckBuffer[22] = rtc_datestructure.RTC_Date;
+			AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+			AckBuffer[24] = rtc_timestructure.RTC_Hours;
+			AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+			AckBuffer[26] = rtc_timestructure.RTC_Seconds;
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+			#else
+				for(i=0; i<ACK_SLENGTH; i++)
+				{
+					printf("%x ",AckBuffer[i]);
+				}
+				printf("\n");
+			#endif
+			break;
+		case 0x07:
+			RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
+			AckBuffer[0] = 0xAB;
+			AckBuffer[1] = 0xCD;
+			AckBuffer[2] = RecvBuffer[2];
+			AckBuffer[3] = RecvBuffer[3];
+			AckBuffer[4] = 0xB4;
+			AckBuffer[5] = 0x01;
+			for(i=0;i<ACK_LLENGTH-14;i++)
 			{
-				printf("%x ",AckBuffer[i]);
+				AckBuffer[i+6] = RecvBuffer[i+6];
 			}
-			printf("\n");
-		#endif
-	}
-	else if(index == 8)
-	{
-		RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
-		AckBuffer[0] = 0xAB;
-		AckBuffer[1] = 0xCD;
-		AckBuffer[2] = RecvBuffer[2];
-		AckBuffer[3] = RecvBuffer[3];
-		AckBuffer[4] = 0xB6;
-		AckBuffer[5] = 0x01;
-		for(i=0;i<ACK_LENGTH-14;i++)
-		{
-			AckBuffer[i+6] = RecvBuffer[i+6];
-		}
-		AckBuffer[19] = RSSI;
-		AckBuffer[20] = rtc_datestructure.RTC_Year;
-		AckBuffer[21] = rtc_datestructure.RTC_Month;
-		AckBuffer[22] = rtc_datestructure.RTC_Date;
-		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[24] = rtc_timestructure.RTC_Hours;
-		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
-		#else
-			for(i=0; i<ACK_LENGTH; i++)
+			AckBuffer[61] = RSSI;
+			AckBuffer[62] = rtc_datestructure.RTC_Year;
+			AckBuffer[63] = rtc_datestructure.RTC_Month;
+			AckBuffer[64] = rtc_datestructure.RTC_Date;
+			AckBuffer[65] = rtc_datestructure.RTC_WeekDay;
+			AckBuffer[66] = rtc_timestructure.RTC_Hours;
+			AckBuffer[67] = rtc_timestructure.RTC_Minutes;
+			AckBuffer[68] = rtc_timestructure.RTC_Seconds;
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+			#else
+				for(i=0; i<ACK_LLENGTH; i++)
+				{
+					printf("%x ",AckBuffer[i]);
+				}
+				printf("\n");
+			#endif
+			break;
+		case 0x08:
+			RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
+			AckBuffer[0] = 0xAB;
+			AckBuffer[1] = 0xCD;
+			AckBuffer[2] = RecvBuffer[2];
+			AckBuffer[3] = RecvBuffer[3];
+			AckBuffer[4] = 0xB5;
+			AckBuffer[5] = 0x01;
+			for(i=0;i<ACK_SLENGTH-14;i++)
 			{
-				printf("%x ",AckBuffer[i]);
+				AckBuffer[i+6] = RecvBuffer[i+6];
 			}
-			printf("\n");
-		#endif
-	}	
-	else if(index == 9)
-	{
-		RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
-		AckBuffer[0] = 0xAB;
-		AckBuffer[1] = 0xCD;
-		AckBuffer[2] = RecvBuffer[2];
-		AckBuffer[3] = RecvBuffer[2];
-		AckBuffer[4] = 0x03;
-		AckBuffer[5] = 0x03;
-		for(i=0;i<ACK_LENGTH-14;i++)
-		{
-			AckBuffer[i+6] = RecvBuffer[i+6];
-		}
-		AckBuffer[19] = RSSI;
-		AckBuffer[20] = rtc_datestructure.RTC_Year;
-		AckBuffer[21] = rtc_datestructure.RTC_Month;
-		AckBuffer[22] = rtc_datestructure.RTC_Date;
-		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[24] = rtc_timestructure.RTC_Hours;
-		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
-		#else
-			for(i=0; i<ACK_LENGTH; i++)
+			AckBuffer[19] = RSSI;
+			AckBuffer[20] = rtc_datestructure.RTC_Year;
+			AckBuffer[21] = rtc_datestructure.RTC_Month;
+			AckBuffer[22] = rtc_datestructure.RTC_Date;
+			AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+			AckBuffer[24] = rtc_timestructure.RTC_Hours;
+			AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+			AckBuffer[26] = rtc_timestructure.RTC_Seconds;
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+			#else
+				for(i=0; i<ACK_SLENGTH; i++)
+				{
+					printf("%x ",AckBuffer[i]);
+				}
+				printf("\n");
+			#endif
+			break;
+		case 0x09:
+			RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
+			AckBuffer[0] = 0xAB;
+			AckBuffer[1] = 0xCD;
+			AckBuffer[2] = RecvBuffer[2];
+			AckBuffer[3] = RecvBuffer[3];
+			AckBuffer[4] = 0xB6;
+			AckBuffer[5] = 0x01;
+			for(i=0;i<ACK_SLENGTH-14;i++)
 			{
-				printf("%x ",AckBuffer[i]);
+				AckBuffer[i+6] = RecvBuffer[i+6];
 			}
-			printf("\n");
-		#endif
-	}
-	else if(index == 10)
-	{
-		RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
-		AckBuffer[0] = 0xAB;
-		AckBuffer[1] = 0xCD;
-		AckBuffer[2] = PCCommand[2];
-		AckBuffer[3] = PCCommand[3];
-		AckBuffer[4] = 0xB1;
-		AckBuffer[5] = PCCommand[5];
-		AckBuffer[6] = PCCommand[6];
-		AckBuffer[7] = PCCommand[7];
-		AckBuffer[8] = PCCommand[8];
-		AckBuffer[9] = PCCommand[9];
-		for(i=0;i<10;i++)
-		{
-			AckBuffer[i+10] = 0;
-		}
-		AckBuffer[20] = rtc_datestructure.RTC_Year;
-		AckBuffer[21] = rtc_datestructure.RTC_Month;
-		AckBuffer[22] = rtc_datestructure.RTC_Date;
-		AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
-		AckBuffer[24] = rtc_timestructure.RTC_Hours;
-		AckBuffer[25] = rtc_timestructure.RTC_Minutes;
-		AckBuffer[26] = rtc_timestructure.RTC_Seconds;
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
-		#else
-			for(i=0; i<ACK_LENGTH; i++)
+			AckBuffer[19] = RSSI;
+			AckBuffer[20] = rtc_datestructure.RTC_Year;
+			AckBuffer[21] = rtc_datestructure.RTC_Month;
+			AckBuffer[22] = rtc_datestructure.RTC_Date;
+			AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+			AckBuffer[24] = rtc_timestructure.RTC_Hours;
+			AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+			AckBuffer[26] = rtc_timestructure.RTC_Seconds;
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+			#else
+				for(i=0; i<ACK_SLENGTH; i++)
+				{
+					printf("%x ",AckBuffer[i]);
+				}
+				printf("\n");
+			#endif
+			break;
+		case 0x0A:
+			RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
+			AckBuffer[0] = 0xAB;
+			AckBuffer[1] = 0xCD;
+			AckBuffer[2] = RecvBuffer[2];
+			AckBuffer[3] = RecvBuffer[3];
+			AckBuffer[4] = 0xB7;
+			AckBuffer[5] = 0x01;
+			for(i=0;i<ACK_SLENGTH-14;i++)
 			{
-				printf("%x ",AckBuffer[i]);
+				AckBuffer[i+6] = RecvBuffer[i+6];
 			}
-			printf("\n");
-		#endif
-		printf("The Date :  Y:20%0.2d - M:%0.2d - D:%0.2d - W:%0.2d\r\n", rtc_datestructure.RTC_Year,rtc_datestructure.RTC_Month, rtc_datestructure.RTC_Date,rtc_datestructure.RTC_WeekDay);
-		printf("The Time :  %0.2d:%0.2d:%0.2d \r\n\r\n", rtc_timestructure.RTC_Hours, rtc_timestructure.RTC_Minutes, rtc_timestructure.RTC_Seconds);
-	}
-	else if(index == 1)
-	{
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,str7,41,gWIZNETINFO.gw,5000);
-		#else
-			printf("receive error or Address Filtering fail\n");
-		#endif
-	}
-	else if(index == 2)
-	{
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,str8,38,gWIZNETINFO.gw,5000);
-		#else
-			printf("RFID receive package beginning error\r\n");
-		#endif
-	}
-	else if(index == 3)
-	{
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,str9,35,gWIZNETINFO.gw,5000);
-		#else
-			printf("RFID receive function order error\r\n");
-		#endif
-	}
-	else if(index == 12)
-	{
-		#ifdef ETHERNET_ENABLE
-			Delay(0xffff);
-			send_tcpc(0,str10,24,gWIZNETINFO.gw,5000);
-		#else
-			printf("RFID receive crc error\r\n");
-		#endif
-		
+			AckBuffer[19] = RSSI;
+			AckBuffer[20] = rtc_datestructure.RTC_Year;
+			AckBuffer[21] = rtc_datestructure.RTC_Month;
+			AckBuffer[22] = rtc_datestructure.RTC_Date;
+			AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+			AckBuffer[24] = rtc_timestructure.RTC_Hours;
+			AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+			AckBuffer[26] = rtc_timestructure.RTC_Seconds;
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+			#else
+				for(i=0; i<ACK_SLENGTH; i++)
+				{
+					printf("%x ",AckBuffer[i]);
+				}
+				printf("\n");
+			#endif
+			break;
+		case 0x0B:
+			RTC_TimeAndDate_Access(&rtc_timestructure, &rtc_datestructure);
+			AckBuffer[0] = 0xAB;
+			AckBuffer[1] = 0xCD;
+			AckBuffer[2] = PCCommand[2];
+			AckBuffer[3] = PCCommand[3];
+			AckBuffer[4] = 0xB1;
+			AckBuffer[5] = PCCommand[5];
+			AckBuffer[6] = PCCommand[6];
+			AckBuffer[7] = PCCommand[7];
+			AckBuffer[8] = PCCommand[8];
+			AckBuffer[9] = PCCommand[9];
+			for(i=0;i<10;i++)
+			{
+				AckBuffer[i+10] = 0;
+			}
+			AckBuffer[20] = rtc_datestructure.RTC_Year;
+			AckBuffer[21] = rtc_datestructure.RTC_Month;
+			AckBuffer[22] = rtc_datestructure.RTC_Date;
+			AckBuffer[23] = rtc_datestructure.RTC_WeekDay;
+			AckBuffer[24] = rtc_timestructure.RTC_Hours;
+			AckBuffer[25] = rtc_timestructure.RTC_Minutes;
+			AckBuffer[26] = rtc_timestructure.RTC_Seconds;
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,AckBuffer,ACK_LENGTH,gWIZNETINFO.gw,5000);
+			#else
+				for(i=0; i<ACK_SLENGTH; i++)
+				{
+					printf("%x ",AckBuffer[i]);
+				}
+				printf("\n");
+			#endif
+			printf("The Date :  Y:20%0.2d - M:%0.2d - D:%0.2d - W:%0.2d\r\n", rtc_datestructure.RTC_Year,rtc_datestructure.RTC_Month, rtc_datestructure.RTC_Date,rtc_datestructure.RTC_WeekDay);
+			printf("The Time :  %0.2d:%0.2d:%0.2d \r\n\r\n", rtc_timestructure.RTC_Hours, rtc_timestructure.RTC_Minutes, rtc_timestructure.RTC_Seconds);
+			break;
+		case 0x01:
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,str7,41,gWIZNETINFO.gw,5000);
+			#else
+				printf("receive error or Address Filtering fail\n");
+			#endif
+			break;
+		case 0x02:
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,str8,38,gWIZNETINFO.gw,5000);
+			#else
+				printf("RFID receive package beginning error\r\n");
+			#endif
+			break;
+		case 0x03:
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,str9,35,gWIZNETINFO.gw,5000);
+			#else
+				printf("RFID receive function order error\r\n");
+			#endif
+			break;
+		case 0x0C:
+			#ifdef ETHERNET_ENABLE
+				Delay(0xffff);
+				send_tcpc(0,str10,24,gWIZNETINFO.gw,5000);
+			#else
+				printf("RFID receive crc error\r\n");
+			#endif
+			break;
+		default : break;
 	}
 }
 

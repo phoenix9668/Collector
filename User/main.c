@@ -21,6 +21,7 @@ uint8_t str2[15] = {'f','r','a','m',' ','t','r','a','n','s','f','e','r',0x0D,0x0
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern uint32_t TimingDelay;
+extern uint32_t GPRSTiming;
 extern wiz_NetInfo gWIZNETINFO;
 extern uint8_t buffer[2048];
 extern uint8_t FRAM_Data[FRAM_DATA_LENGTH];
@@ -51,7 +52,8 @@ int main(void)
 	WWDGRST_Clear();
 	/* WWDG configuration */
 	WWDG_Config();
-	TimingDelay = 40;
+	TimingDelay = 35;
+	GPRSTiming = 86400000;//24hours
 	
 	while(1)
 	{
@@ -97,7 +99,6 @@ int main(void)
 		{
 			LED_STA_OFF();
 		}
-
 	}
 }
 
