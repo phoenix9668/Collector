@@ -1,6 +1,0 @@
--c --cpu Cortex-M4.fp -D__MICROLIB -g -O0 --apcs=interwork -I ..\Libraries\STM32F4xx_StdPeriph_Driver\inc -I ..\User -I ..\Libraries\CMSIS\Include -I ..\Libraries\CMSIS\Device\ST\STM32F4xx\Include -I ..\User\ioLibrary_Driver-master\Ethernet\W5500 -I ..\User\ioLibrary_Driver-master\Internet\DHCP -I ..\User\ioLibrary_Driver-master\Internet\DNS -I ..\User\ioLibrary_Driver-master\Ethernet -I ..\User\ioLibrary_Driver-master\spi -I ..\User\ioLibrary_Driver-master\Application\loopback
--IC:\Keil_v5\ARM\RV31\INC
--IC:\Keil_v5\ARM\CMSIS\Include
--IC:\Keil_v5\ARM\INC\ST\STM32F4xx
--D__UVISION_VERSION="524" -DUSE_STDPERIPH_DRIVER -DSTM32F4XX -DSTM32F40_41xxx
--o ..\objects\bsp_debug_usart.o --omf_browse ..\objects\bsp_debug_usart.crf --depend ..\objects\bsp_debug_usart.d "..\User\usart\bsp_debug_usart.c"
