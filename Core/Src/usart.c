@@ -136,7 +136,7 @@ void USART_CharReception_Callback(void)
   /* Read Received character. RXNE flag is cleared by reading of RDR register */
   RxBuffer[RxCounter++] = LL_USART_ReceiveData8(USART3);
   /* Echo received character on TX */
-  LL_USART_TransmitData8(USART3, RxBuffer[RxCounter-1]);
+//  LL_USART_TransmitData8(USART3, RxBuffer[RxCounter-1]);
 	/* Check if received value is corresponding to specific one : S or s */
   if (RxBuffer[RxCounter-2] == 0x0D && RxBuffer[RxCounter-1] == 0x0A)
   {

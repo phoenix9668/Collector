@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -31,7 +32,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+extern TIM_HandleTypeDef htim6;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -49,9 +50,11 @@
 extern uint8_t RxBuffer[RXBUFFERSIZE];
 extern __IO FlagStatus CommandState;
 extern __IO ITStatus RFReady;
+extern uint32_t basetime;
 
 extern uint8_t MBID_byte1;
 extern uint8_t MBID_byte2;
+uint16_t INTERVAL = 300;
 extern uint8_t RFID_init[RFID_SUM][7]; 
 extern uint8_t FRAM_Data[FRAM_DATA_LENGTH];
 
@@ -105,10 +108,12 @@ int main(void)
   MX_GPIO_Init();
   MX_SPI2_Init();
   MX_USART3_UART_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 	MOD_GPRS_RESET();
 	Activate_SPI();
 	Activate_USART3_RXIT();
+	HAL_TIM_Base_Start_IT(&htim6);
 	Init_ID_Info();
 	Show_Message();
   /* USER CODE END 2 */
@@ -117,6 +122,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		if(basetime == INTERVAL)
+		{
+			LED_COM_ON();
+			Function_Ctrl(RxBuffer);
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -125,20 +135,12 @@ int main(void)
 			if(RxBuffer[0] == 0xAB && RxBuffer[1] == 0xCD)
 			{
 				printf("start transfer\n");
-				LED_STA_ON();
 				Function_Ctrl(RxBuffer);
-				LED_STA_OFF();
 			}
 			else if(RxBuffer[0] == 0xE5 && RxBuffer[1] == 0x5E)
 			{
 				printf("fram transfer\n");
-				LED_COM_ON();
 				FRAM_Ctrl(RxBuffer);
-				LED_COM_OFF();
-			}
-			else
-			{
-				LED_STA_OFF();
 			}
 			CommandState = RESET;
 		}
@@ -198,6 +200,30 @@ void Show_Message(void)
 	printf("using USART3,configuration:%d 8-N-1\n",115200);
 	MBID = (uint16_t)(0xFF00 & MBID_byte1<<8)+(uint16_t)(0x00FF & MBID_byte2);
 	printf("Main_Board ID:%x\n",MBID);
+}
+
+/**
+  * @brief  Check_All_RFID().
+  * @retval None
+  */
+void Check_All_RFID(uint8_t *command)
+{
+	uint16_t syncword;
+	uint8_t i=0;
+	
+	for(i=0; i<RFID_SUM; i++)
+	{
+		syncword = (uint16_t)(0xFF00 & RFID_init[i][1]<<8)+(uint16_t)(0x00FF & RFID_init[i][2]);
+		command[6] = RFID_init[i][3];
+		command[7] = RFID_init[i][4];
+		command[8] = RFID_init[i][5];
+		command[9] = RFID_init[i][6];
+		RFIDInitial(RFID_init[i][0], syncword, RX_MODE);
+		RF_SendPacket(command);
+		HAL_Delay(10);
+		printf("scaning:%d\n",i);
+	}
+	printf("All Finish\n");
 }
 
 /**
@@ -369,7 +395,6 @@ void Check_Assign_Section_RFID(uint8_t *command)
 	{
 		printf("Exceeding Threshold 200\n");
 	}
-
 }
 
 /*===========================================================================
@@ -598,21 +623,22 @@ void RF_SendClearPacket(uint8_t *command)
 uint8_t	RF_Acknowledge(void)
 {
 	uint8_t i=0, length=0;
-	int16_t rssi_dBm;	
+	int16_t rssi_dBm;
 	
-	if(RFReady == SET)         //?????????????? 
+	if(RFReady == SET)
 	{
+		HAL_Delay(2);
 		/* Reset transmission flag */
 		RFReady = RESET;
 		/* clear array */
 		for (i=0; i<RECV_LENGTH; i++)   { RecvBuffer[i] = 0; } 
-		length = CC1101RecPacket(RecvBuffer, &Chip_Addr, &RSSI);//???????????????
+		length = CC1101RecPacket(RecvBuffer, &Chip_Addr, &RSSI);
 		/* Set the CC1101_IRQ_EXTI_LINE enable */
 		EXTILine0_Config(GPIO_MODE_IT_FALLING, ENABLE);
 
 		rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
 		printf("RSSI = %ddBm, length = %d, address = %d\n",rssi_dBm,length,Chip_Addr);
-		rssi_dBm = CC1101CalcRSSI_dBm(RecvBuffer[60]);
+		rssi_dBm = CC1101CalcRSSI_dBm(RecvBuffer[92]);
 		printf("RFID RSSI = %ddBm\n",rssi_dBm);
 		for(i=0; i<RECV_LENGTH; i++)
 		{

@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include "usart.h"
 #include "gpio.h"
+#include "cc1101.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,7 +45,12 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-ITStatus TXFIFOUNFLOW;
+uint32_t basetime;
+__IO ITStatus RFReady = RESET;
+extern __IO FlagStatus TxRxState;
+extern __IO uint8_t cnt_i,cnt_k,cnt_j;
+extern uint8_t SendBuffer[SEND_LENGTH];
+extern uint8_t RecvBuffer[RECV_LENGTH];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,7 +64,7 @@ ITStatus TXFIFOUNFLOW;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-
+extern TIM_HandleTypeDef htim6;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -187,7 +193,6 @@ void SysTick_Handler(void)
 
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
-	LED_RUN_TOG();
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
   /* USER CODE END SysTick_IRQn 1 */
@@ -210,7 +215,15 @@ void EXTI0_IRQHandler(void)
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
   /* USER CODE BEGIN EXTI0_IRQn 1 */
-
+	if(TxRxState == SET)
+	{
+		RFReady = SET;
+		LED_STA_TOG();
+	}
+	else if(TxRxState == RESET)
+	{
+		RFReady = SET;
+	}
   /* USER CODE END EXTI0_IRQn 1 */
 }
 
@@ -224,7 +237,26 @@ void EXTI1_IRQHandler(void)
   /* USER CODE END EXTI1_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
   /* USER CODE BEGIN EXTI1_IRQn 1 */
-
+	if(TxRxState == SET)
+	{
+		cnt_i++;
+		if(cnt_i == cnt_k)
+		{
+			CC1101WriteMultiReg(CC1101_TXFIFO, (SendBuffer+60*cnt_k), cnt_j);
+		}
+		else
+		{
+			CC1101WriteMultiReg(CC1101_TXFIFO, (SendBuffer+60*cnt_i), 60);
+		}
+	}
+	else if(TxRxState == RESET)
+	{
+		if(cnt_i != cnt_k)
+		{
+			CC1101ReadMultiReg(CC1101_RXFIFO, (RecvBuffer+60*cnt_i), 60);// Pull data
+			cnt_i++;
+		}
+	}
   /* USER CODE END EXTI1_IRQn 1 */
 }
 
@@ -250,6 +282,21 @@ void USART3_IRQHandler(void)
   /* USER CODE BEGIN USART3_IRQn 1 */
 
   /* USER CODE END USART3_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM6 global interrupt, DAC1 and DAC2 underrun error interrupts.
+  */
+void TIM6_DAC_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
+
+  /* USER CODE END TIM6_DAC_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim6);
+  /* USER CODE BEGIN TIM6_DAC_IRQn 1 */
+	LED_RUN_TOG();
+	basetime++;
+  /* USER CODE END TIM6_DAC_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

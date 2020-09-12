@@ -56,9 +56,9 @@ extern "C" {
 /* USER CODE BEGIN EC */
 #define RXBUFFERSIZE  		21			// Size of Reception buffer
 #define ACK_SLENGTH   		27   		// 反馈数据包长度
-#define ACK_LLENGTH   		69   		// 反馈数据包长度27+41+1
+#define ACK_LLENGTH   		101   	// 反馈数据包长度18+72+3+8
 #define SEND_LENGTH     	18			// 发送数据包长度
-#define RECV_LENGTH   		61			// 接收数据包长度19+41+1
+#define RECV_LENGTH   		93			// 接收数据包长度18+72+3
 #define SEND_PACKAGE_NUM	200			// 发生数据包数
 #define RECV_TIMEOUT			30000000  		// 接收等待13s
 /* USER CODE END EC */

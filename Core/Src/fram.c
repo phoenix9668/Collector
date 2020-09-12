@@ -24,7 +24,7 @@
 
 uint8_t MBID_byte1;
 uint8_t MBID_byte2;
-uint8_t RFID_init[RFID_SUM][7] = {0}; 
+uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH] = {0}; 
 uint8_t FRAM_Data[FRAM_DATA_LENGTH];
 
 /*******************************************************************
@@ -219,9 +219,9 @@ void Init_ID_Info(void)
 	MBID_byte1 = FRAM_Data[0];
 	MBID_byte2 = FRAM_Data[1];
 	
-	for(i = 0; i < RFID_SUM+1; i++)
+	for(i = 0; i <= RFID_SUM; i++)
 	{
-		address = FRAM_DATA_LENGTH*(i+1);
+		address = FRAM_DATA_LENGTH*(i);
 		FM25L256Read(address, FRAM_DATA_LENGTH, FRAM_Data);
 		for(j = 0; j < FRAM_DATA_LENGTH; j++)
 		{

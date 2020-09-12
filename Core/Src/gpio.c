@@ -20,12 +20,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "gpio.h"
 /* USER CODE BEGIN 0 */
-#include "cc1101.h"
-__IO ITStatus RFReady = RESET;
-extern __IO FlagStatus TxRxState;
-extern __IO uint8_t cnt_i,cnt_k,cnt_j;
-extern uint8_t SendBuffer[SEND_LENGTH];
-extern uint8_t RecvBuffer[RECV_LENGTH];
 /* USER CODE END 0 */
 
 /*----------------------------------------------------------------------------*/
@@ -58,7 +52,7 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, LED_COM_Pin|LED_STA_Pin|LED_RUN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, LED_COM_Pin|LED_STA_Pin|LED_RUN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SPI2_CS1_Pin|SPI2_CS2_Pin, GPIO_PIN_RESET);
@@ -216,46 +210,6 @@ void EXTILine1_Config(uint32_t Mode, FunctionalState NewState)
 	{
 		HAL_NVIC_DisableIRQ(EXTI1_IRQn);
 	}
-}
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	if(GPIO_Pin == GPIO_PIN_0)
-	{
-		if(TxRxState == SET)
-		{
-			RFReady = SET;
-		}
-		else if(TxRxState == RESET)
-		{
-			RFReady = SET;
-		}
-	}
-	if(GPIO_Pin == GPIO_PIN_1)
-	{
-		if(TxRxState == SET)
-		{
-			cnt_i++;
-			if(cnt_i == cnt_k)
-			{
-				CC1101WriteMultiReg(CC1101_TXFIFO, (SendBuffer+60*cnt_k), cnt_j);
-			}
-			else
-			{
-				CC1101WriteMultiReg(CC1101_TXFIFO, (SendBuffer+60*cnt_i), 60);
-			}
-		}
-		else if(TxRxState == RESET)
-		{
-			if(cnt_i != cnt_k)
-			{
-				CC1101ReadMultiReg(CC1101_RXFIFO, (RecvBuffer+60*cnt_i), 60);// Pull data
-				cnt_i++;
-			}
-		}
-	}
-
-
 }
 
 void MOD_GPRS_RESET(void)

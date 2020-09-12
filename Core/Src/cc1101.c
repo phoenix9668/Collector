@@ -16,7 +16,7 @@
 #include "gpio.h"
 
 //10, 7, 5, 0, -5, -10, -15, -20, dbm output power
-uint8_t PaTabel[]={0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint8_t PaTabel[]={0xC0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};
 extern __IO ITStatus RFReady;
 __IO FlagStatus TxRxState = RESET;//RESET on behalf of RX mode,SET on behalf of TX mode
 __IO uint8_t cnt_i = 0,cnt_k = 0,cnt_j = 0;
@@ -44,55 +44,38 @@ __IO uint8_t cnt_i = 0,cnt_k = 0,cnt_j = 0;
 // Modulated = true 
 // Channel number = 0 
 
-static const uint8_t CC1101InitData[47][2]= 
+static const uint8_t CC1101InitData[30][2]= 
 {
-	{CC1101_IOCFG2,				0x29},
-	{CC1101_IOCFG1,				0x2E},
-	{CC1101_IOCFG0,				0x06},
-	{CC1101_FIFOTHR,			0x4C},
-	{CC1101_SYNC1,				0xD3},
-	{CC1101_SYNC0,				0x91},
-	{CC1101_PKTLEN,				0xFF},
-	{CC1101_PKTCTRL1,			0x07},
-	{CC1101_PKTCTRL0,			0x45},
-	{CC1101_ADDR,					0x00},
-	{CC1101_CHANNR,				0x00},
-	{CC1101_FSCTRL1,			0x0B},
-	{CC1101_FSCTRL0,			0x00},
-	{CC1101_FREQ2,				0x10},
-	{CC1101_FREQ1,				0xA7},
-	{CC1101_FREQ0, 				0x62},
-	{CC1101_MDMCFG4,			0x7B},
-	{CC1101_MDMCFG3,			0x83},
-	{CC1101_MDMCFG2,			0x8B},
-	{CC1101_MDMCFG1,			0x22},
-	{CC1101_MDMCFG0,			0xF8},
-	{CC1101_DEVIATN,			0x42},
-	{CC1101_MCSM2,				0x03},
-	{CC1101_MCSM1,				0x30},
-	{CC1101_MCSM0,				0x18},
-	{CC1101_FOCCFG,				0x1D},
-	{CC1101_BSCFG,				0x1C},
-	{CC1101_AGCCTRL2,			0xC7},
-	{CC1101_AGCCTRL1,			0x00},
-	{CC1101_AGCCTRL0,			0xB2},
-	{CC1101_WOREVT1,			0x8C},
-	{CC1101_WOREVT0,			0xA0},
-	{CC1101_WORCTRL,			0xFB},
-	{CC1101_FREND1,				0xB6},
-	{CC1101_FREND0,				0x10},
-	{CC1101_FSCAL3,				0xEA},
-	{CC1101_FSCAL2,				0x2A},
-	{CC1101_FSCAL1,				0x00},
-	{CC1101_FSCAL0,				0x1F},
-	{CC1101_RCCTRL1,			0x41},
-	{CC1101_RCCTRL0,			0x00},
-	{CC1101_FSTEST,				0x59},
-	{CC1101_PTEST,				0x7F},
-	{CC1101_AGCTEST,			0x3F},
-	{CC1101_TEST2,				0x81},
-	{CC1101_TEST1,				0x35},
-	{CC1101_TEST0,				0x09},
+  {CC1101_IOCFG0,      0x06},
+  {CC1101_FIFOTHR,     0x4E},
+	{CC1101_PKTLEN,			 0xFF},
+	{CC1101_PKTCTRL1,    0x07},
+  {CC1101_PKTCTRL0,    0x45},
+  {CC1101_CHANNR,      0x00},
+  {CC1101_FSCTRL1,     0x0B},
+  {CC1101_FREQ2,       0x10},
+  {CC1101_FREQ1,       0xA7},
+  {CC1101_FREQ0,       0x62},
+  {CC1101_MDMCFG4,     0x7B},
+  {CC1101_MDMCFG3,     0x83},
+  {CC1101_MDMCFG2,     0x8B},
+  {CC1101_DEVIATN,     0x42},
+	{CC1101_MCSM1,       0x30},
+  {CC1101_MCSM0,       0x18},
+  {CC1101_FOCCFG,      0x1D},
+	{CC1101_BSCFG,			 0x1C},
+	{CC1101_AGCCTRL2,    0xC7},
+	{CC1101_AGCCTRL1,    0x00},
+	{CC1101_AGCCTRL0,  	 0xB2},
+  {CC1101_WORCTRL,     0xFB},
+	{CC1101_FREND1,      0xB6},
+  {CC1101_FSCAL3,      0xEA},
+  {CC1101_FSCAL2,      0x2A},
+  {CC1101_FSCAL1,      0x00},
+  {CC1101_FSCAL0,      0x1F},
+  {CC1101_TEST2,       0x81},
+  {CC1101_TEST1,       0x35},
+	{CC1101_TEST0,       0x09},
 
 };
 
@@ -363,7 +346,7 @@ void CC1101SendPacket(uint8_t *txbuffer, uint8_t size, TX_DATA_MODE mode)
 {
     uint8_t address;
 	
-		/*##-1- Set the TxRxState ###################################*/  
+		/*##-1- Set the TxRxState ###################################*/
 		TxRxState = SET;
 
 		cnt_i	= 0;
@@ -392,13 +375,13 @@ void CC1101SendPacket(uint8_t *txbuffer, uint8_t size, TX_DATA_MODE mode)
 			CC1101WriteMultiReg(CC1101_TXFIFO, txbuffer, 60);
 			CC1101SetTRMode(TX_MODE,ENABLE);
 			
-			/*##-2- Wait for the trigger of the threshold ###################################*/   
+			/*##-2- Wait for the trigger of the threshold ###################################*/
 			while (cnt_i != cnt_k)
 			{}
 		}
-		/*##-3- Set the CC1101_IRQ_EXTI_LINE to the EXTI_Trigger_Rising ###################################*/  
+		/*##-3- Set the CC1101_IRQ_EXTI_LINE to the EXTI_Trigger_Rising ###################################*/
 		EXTILine0_Config(GPIO_MODE_IT_RISING, ENABLE);
-		/*##-4- Wait for the end of the transfer ###################################*/   
+		/*##-4- Wait for the end of the transfer ###################################*/
 		while (RFReady != SET){}
 		/* Reset transmission flag */
 		RFReady = RESET;
@@ -440,7 +423,7 @@ void CC1101SetAddress(uint8_t address, ADDR_MODE AddressMode)
     if(AddressMode == BROAD_ALL)        {}
     else if(AddressMode == BROAD_NO)    {btmp |= 0x01;}
     else if(AddressMode == BROAD_0)     {btmp |= 0x02;}
-    else if(AddressMode == BROAD_0AND255)   {btmp |= 0x03;}  
+    else if(AddressMode == BROAD_0AND255)   {btmp |= 0x03;}
 }
 /*
 ================================================================================
@@ -521,14 +504,16 @@ void CC1101Init(uint8_t addr, uint16_t sync)
 		/*## Set the CC1101_IRQ_EXTI_LINE and CC1101_GDO2_EXTI_LINE disable ###################################*/  
 		EXTILine0_Config(GPIO_MODE_IT_RISING, DISABLE);
 		EXTILine1_Config(GPIO_MODE_IT_RISING, DISABLE);
-    CC1101Reset();
+
+		CC1101Reset();    
     
-    for(i=0; i<47; i++)
+    for(i=0; i<30; i++)
     {
         CC1101WriteReg(CC1101InitData[i][0], CC1101InitData[i][1]);
     }
     CC1101SetAddress(addr, BROAD_0AND255);
     CC1101SetSYNC(sync);
+    CC1101WriteReg(CC1101_MDMCFG1, 0x72); //Modem Configuration
 
     CC1101WriteMultiReg(CC1101_PATABLE, PaTabel, 8);
 
