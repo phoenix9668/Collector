@@ -56,15 +56,11 @@
 #define FRAM_CSN_LOW()				HAL_GPIO_WritePin(SPI2_CS2_GPIO_Port, SPI2_CS2_Pin, GPIO_PIN_RESET)
 #define FRAM_CSN_HIGH()				HAL_GPIO_WritePin(SPI2_CS2_GPIO_Port, SPI2_CS2_Pin, GPIO_PIN_SET)
 
-#define CC1101_GDO0_READ()   	HAL_GPIO_ReadPin(GDO0_GPIO_Port, GDO0_Pin)
-#define CC1101_GDO2_READ()   	HAL_GPIO_ReadPin(GDO2_GPIO_Port, GDO2_Pin)
 /* USER CODE END Private defines */
 
 void MX_GPIO_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-void EXTILine0_Config(uint32_t Mode, FunctionalState NewState);
-void EXTILine1_Config(uint32_t Mode, FunctionalState NewState);
 void MOD_GPRS_RESET(void);
 /* USER CODE END Prototypes */
 

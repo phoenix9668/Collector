@@ -23,8 +23,8 @@
 #define FRAM_READ				0x03	//Read Memory Data
 #define FRAM_WRITE			0x02	//Write Memory Data
 
-#define FRAM_DATA_LENGTH	16		// 存储fram数据buffer
-#define RFID_SUM    		200   	// RFID标签的总数
+#define FRAM_DATA_LENGTH	16		// buffer length
+#define RFID_SUM    		2046   	// FM25L256 Organized as 32,768 x 8 bits 
 
 void FM25L256WriteEnable(void);
 void FM25L256WriteDisable(void);
@@ -33,6 +33,6 @@ void FM25L256WriteStatusRegister(uint8_t SendValue);
 void FM25L256Read(uint16_t Address, uint16_t NumberofData, uint8_t *Data);
 void FM25L256Write(uint16_t Address, uint16_t NumberofData, uint8_t *Data);
 void FRAM_Ctrl(uint8_t *command);
-void Init_ID_Info(void);
+void Init_RFID_Info(void);
 
 #endif

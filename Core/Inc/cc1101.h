@@ -18,8 +18,6 @@
 #include "cc1101_reg.h"
 #include "main.h"
 
-#define Delay_TimeOut			500000
-
 /*===========================================================================
 ----------------------------------macro definitions--------------------------
 ============================================================================*/
@@ -38,7 +36,7 @@ uint8_t CC1101ReadReg(uint8_t addr);
 uint8_t CC1101ReadStatus(uint8_t addr);
 
 /*Set the device as TX mode or RX mode*/
-void CC1101SetTRMode(TRMODE mode, FunctionalState NewState);
+void CC1101SetTRMode(TRMODE mode);
 
 /*Write a command byte to the device*/
 void CC1101WriteCmd(uint8_t command);
@@ -56,7 +54,7 @@ void CC1101SetAddress(uint8_t address, ADDR_MODE AddressMode);
 void CC1101SetSYNC(uint16_t sync);
 
 /*Receive a packet*/
-uint8_t CC1101RecPacket(uint8_t *rxBuffer, uint8_t *addr, uint8_t *rssi);
+uint8_t CC1101RecPacket(uint8_t *rxbuffer, uint8_t *addr, uint8_t *rssi);
 
 /*Initialize the WOR function of CC1101*/
 void CC1101WORInit(void);

@@ -29,6 +29,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_ll_iwdg.h"
 #include "stm32f4xx_ll_spi.h"
 #include "stm32f4xx_ll_usart.h"
 #include "stm32f4xx_ll_rcc.h"
@@ -55,12 +56,15 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 #define RXBUFFERSIZE  		21			// Size of Reception buffer
-#define ACK_SLENGTH   		27   		// 反馈数据包长度
-#define ACK_LLENGTH   		101   	// 反馈数据包长度18+72+3+8
-#define SEND_LENGTH     	18			// 发送数据包长度
-#define RECV_LENGTH   		93			// 接收数据包长度18+72+3
-#define SEND_PACKAGE_NUM	200			// 发生数据包数
-#define RECV_TIMEOUT			30000000  		// 接收等待13s
+#define ACK_SLENGTH   		10
+#define ACK_LLENGTH   		256
+#define SEND_A026_LENGTH	15
+#define SEND_A3_LENGTH   	23
+#define SEND_A5_LENGTH   	19
+#define SEND_A7_LENGTH   	24
+#define RECV_LENGTH   		120
+#define SEND_PACKAGE_NUM	100			// 发生数据包数
+#define RecvTimeout				3000
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -98,19 +102,12 @@ void Error_Handler(void);
 #define GDO2_EXTI_IRQn EXTI1_IRQn
 /* USER CODE BEGIN Private defines */
 void Show_Message(void);
+void Polling_All_RFID(void);
 void Function_Ctrl(uint8_t *command);
-void Check_All_RFID(uint8_t *command);
-void Cfg_Assign_RFID(uint8_t *command);
 void Check_Assign_RFID(uint8_t *command);
-void Check_Assign_Section_RFID(uint8_t *command);
-void Prog_Assign_RFID(uint8_t *command);
-void Clear_Assign_RFID(uint8_t *command);
-void Clear_Assign_Section_RFID(uint8_t *command);
-void RF_ProgPacket(uint8_t *command);
-void RF_SendPacket(uint8_t *command);
-void RF_SendClearPacket(uint8_t *command);
-uint8_t	RF_Acknowledge(void);
-void Reply_PC(uint8_t index);
+uint8_t RF_SendPacket(uint8_t *buffer, uint8_t size);
+uint8_t	RF_Acknowledge(uint8_t *buffer);
+void Reply_PC(uint8_t ack, uint8_t length);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

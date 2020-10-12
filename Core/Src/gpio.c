@@ -55,7 +55,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOE, LED_COM_Pin|LED_STA_Pin|LED_RUN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, SPI2_CS1_Pin|SPI2_CS2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, SPI2_CS1_Pin|SPI2_CS2_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(MOD_RESET_GPIO_Port, MOD_RESET_Pin, GPIO_PIN_RESET);
@@ -110,7 +110,7 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pins : PBPin PBPin */
   GPIO_InitStruct.Pin = SPI2_CS1_Pin|SPI2_CS2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -139,78 +139,28 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(MOD_GPRS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PEPin PEPin */
-  GPIO_InitStruct.Pin = GDO0_Pin|GDO2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = GDO0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
+  HAL_GPIO_Init(GDO0_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PtPin */
+  GPIO_InitStruct.Pin = GDO2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GDO2_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 1, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI0_IRQn);
 
   HAL_NVIC_SetPriority(EXTI1_IRQn, 2, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+  HAL_NVIC_DisableIRQ(EXTI1_IRQn);
 
 }
 
 /* USER CODE BEGIN 2 */
-
-/**
-  * @brief  Configures EXTI Line0 (connected to PE0 pin) in interrupt mode
-  * @param  None
-  * @retval None
-  */
-void EXTILine0_Config(uint32_t Mode, FunctionalState NewState)
-{
-  GPIO_InitTypeDef   GPIO_InitStructure;
-
-  /* Enable GPIOE clock */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  
-  /* Configure PE0 pin as input floating */
-  GPIO_InitStructure.Mode = Mode;
-  GPIO_InitStructure.Pull = GPIO_NOPULL;
-  GPIO_InitStructure.Pin = GPIO_PIN_0;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStructure);
-
-  /* Enable and set EXTI Line0 Interrupt to the lowest priority */
-	if(NewState == ENABLE)
-	{
-		HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-	}else if(NewState == DISABLE)
-	{
-		HAL_NVIC_DisableIRQ(EXTI0_IRQn);
-	}
-}
-
-/**
-  * @brief  Configures EXTI Line1 (connected to PE1 pin) in interrupt mode
-  * @param  None
-  * @retval None
-  */
-void EXTILine1_Config(uint32_t Mode, FunctionalState NewState)
-{
-  GPIO_InitTypeDef   GPIO_InitStructure;
-
-  /* Enable GPIOE clock */
-  __HAL_RCC_GPIOE_CLK_ENABLE();
-  
-  /* Configure PE0 pin as input floating */
-  GPIO_InitStructure.Mode = Mode;
-  GPIO_InitStructure.Pull = GPIO_NOPULL;
-  GPIO_InitStructure.Pin = GPIO_PIN_1;
-  HAL_GPIO_Init(GPIOE, &GPIO_InitStructure);
-
-  /* Enable and set EXTI Line0 Interrupt to the lowest priority */
-	if(NewState == ENABLE)
-	{
-		HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-	}else if(NewState == DISABLE)
-	{
-		HAL_NVIC_DisableIRQ(EXTI1_IRQn);
-	}
-}
 
 void MOD_GPRS_RESET(void)
 {

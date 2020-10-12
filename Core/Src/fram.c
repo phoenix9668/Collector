@@ -22,9 +22,10 @@
 #include "spi.h"
 #include "gpio.h"
 
-uint8_t MBID_byte1;
-uint8_t MBID_byte2;
-uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH] = {0}; 
+__IO uint8_t MBID_byte1;
+__IO uint8_t MBID_byte2;
+__IO uint16_t INTERVAL;
+__IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH] = {0}; 
 uint8_t FRAM_Data[FRAM_DATA_LENGTH];
 
 /*******************************************************************
@@ -162,7 +163,8 @@ void FM25L256Write(uint16_t Address, uint16_t NumberofData, uint8_t *Data)
 *******************************************************************/
 void FRAM_Ctrl(uint8_t *command)
 {
-	uint8_t i,j;
+	uint16_t i;
+	uint8_t j;
 	uint16_t address;
 	
 	address = (uint16_t)(0xFF00 & command[2]<<8)+(uint16_t)(0x00FF & command[3]);
@@ -188,8 +190,10 @@ void FRAM_Ctrl(uint8_t *command)
 	}
 	else if(command[4] == 0x03)//print info
 	{
+		Init_RFID_Info();
 		printf("%x ",MBID_byte1);
 		printf("%x ",MBID_byte2);
+		printf("%x ",INTERVAL);
 		printf("\n");
 		for(i = 0; i < RFID_SUM; i++)
 		{
@@ -198,7 +202,22 @@ void FRAM_Ctrl(uint8_t *command)
 				printf("%x ",RFID_init[i][j]);
 			}
 			printf("\n");
+			HAL_Delay(1);
 		}
+	}
+	else if(command[4] == 0x04)//erase
+	{
+		for(i = 0; i < FRAM_DATA_LENGTH; i++)
+		{
+			FRAM_Data[i] = 0;
+		}
+		for(i = 0; i < RFID_SUM; i++)
+		{
+			address = FRAM_DATA_LENGTH*i;
+			FM25L256WriteEnable();
+			FM25L256Write(address, FRAM_DATA_LENGTH, FRAM_Data);
+		}
+		printf("Erase Complete\n");
 	}
 }
 
@@ -210,22 +229,24 @@ void FRAM_Ctrl(uint8_t *command)
   @return
          none
 *******************************************************************/
-void Init_ID_Info(void)
+void Init_RFID_Info(void)
 {
-	uint8_t i,j;
+	uint16_t i;
+	uint8_t j;
 	uint16_t address=0;
 	
 	FM25L256Read(0, FRAM_DATA_LENGTH, FRAM_Data);
 	MBID_byte1 = FRAM_Data[0];
 	MBID_byte2 = FRAM_Data[1];
+	FM25L256Read(FRAM_DATA_LENGTH, FRAM_DATA_LENGTH, FRAM_Data);
+	INTERVAL = (uint16_t)(0xFF00 & FRAM_Data[0]<<8)+(uint16_t)(0x00FF & FRAM_Data[1]);
 	
-	for(i = 0; i <= RFID_SUM; i++)
+	for(i = 0; i < RFID_SUM; i++)
 	{
-		address = FRAM_DATA_LENGTH*(i);
+		address = FRAM_DATA_LENGTH*(i+2);
 		FM25L256Read(address, FRAM_DATA_LENGTH, FRAM_Data);
 		for(j = 0; j < FRAM_DATA_LENGTH; j++)
 		{
-			HAL_Delay(5);
 			RFID_init[i][j] = FRAM_Data[j];
 		}
 	}

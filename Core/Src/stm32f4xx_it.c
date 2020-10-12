@@ -25,7 +25,6 @@
 /* USER CODE BEGIN Includes */
 #include "usart.h"
 #include "gpio.h"
-#include "cc1101.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -45,12 +44,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-uint32_t basetime;
-__IO ITStatus RFReady = RESET;
-extern __IO FlagStatus TxRxState;
-extern __IO uint8_t cnt_i,cnt_k,cnt_j;
-extern uint8_t SendBuffer[SEND_LENGTH];
-extern uint8_t RecvBuffer[RECV_LENGTH];
+__IO uint32_t basetime;
+extern __IO ITStatus rxCatch;
+extern __IO ITStatus txFiFoUnFlow;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -215,15 +211,7 @@ void EXTI0_IRQHandler(void)
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
   /* USER CODE BEGIN EXTI0_IRQn 1 */
-	if(TxRxState == SET)
-	{
-		RFReady = SET;
-		LED_STA_TOG();
-	}
-	else if(TxRxState == RESET)
-	{
-		RFReady = SET;
-	}
+	rxCatch = SET;
   /* USER CODE END EXTI0_IRQn 1 */
 }
 
@@ -237,26 +225,7 @@ void EXTI1_IRQHandler(void)
   /* USER CODE END EXTI1_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
   /* USER CODE BEGIN EXTI1_IRQn 1 */
-	if(TxRxState == SET)
-	{
-		cnt_i++;
-		if(cnt_i == cnt_k)
-		{
-			CC1101WriteMultiReg(CC1101_TXFIFO, (SendBuffer+60*cnt_k), cnt_j);
-		}
-		else
-		{
-			CC1101WriteMultiReg(CC1101_TXFIFO, (SendBuffer+60*cnt_i), 60);
-		}
-	}
-	else if(TxRxState == RESET)
-	{
-		if(cnt_i != cnt_k)
-		{
-			CC1101ReadMultiReg(CC1101_RXFIFO, (RecvBuffer+60*cnt_i), 60);// Pull data
-			cnt_i++;
-		}
-	}
+	txFiFoUnFlow = SET;
   /* USER CODE END EXTI1_IRQn 1 */
 }
 
