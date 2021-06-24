@@ -266,10 +266,14 @@ void Polling_All_RFID(void)
 				HAL_Delay(100);
 			}
 			LL_IWDG_ReloadCounter(IWDG);
-			printf("scaning:%d\n",i);
+			#ifdef DEBUG
+				printf("scaning:%d\n",i);
+			#endif
 		}
 	}
-	printf("All Finish\n");
+	#ifdef DEBUG
+		printf("All Finish\n");
+	#endif
 }
 
 /*===========================================================================
@@ -386,7 +390,9 @@ uint8_t RF_SendPacket(uint8_t *buffer, uint8_t size)
 //	printf("tickend is %d\n",tickstart);
 	
 	CC1101SetTRMode(RX_MODE);
-	printf("Transmit OK\n");
+	#ifdef DEBUG
+		printf("Transmit OK\n");
+	#endif
 	/* Init tickstart for timeout managment */
 	tickstart = HAL_GetTick();
 	
@@ -400,14 +406,16 @@ uint8_t RF_SendPacket(uint8_t *buffer, uint8_t size)
 		}
 	}
 	
-	if(buffer[2] == 0xC0)
-		{	printf("Transmit Complete\n");}
-	else if(buffer[2] == 0xC6)
-		{	printf("Clear Complete\n");}
-	else if(buffer[2] == 0xC2 || buffer[2] == 0xC3 || buffer[2] == 0xC5 || buffer[2] == 0xC7)
-		{	printf("Program Complete\n");}
-	else
-		{	printf("ack is %x\n",buffer[2]);}
+	#ifdef DEBUG
+		if(buffer[2] == 0xC0)
+			{	printf("Transmit Complete\n");}
+		else if(buffer[2] == 0xC6)
+			{	printf("Clear Complete\n");}
+		else if(buffer[2] == 0xC2 || buffer[2] == 0xC3 || buffer[2] == 0xC5 || buffer[2] == 0xC7)
+			{	printf("Program Complete\n");}
+		else
+			{	printf("ack is %x\n",buffer[2]);}
+	#endif
 	
 	return err;
 }
@@ -434,12 +442,22 @@ uint8_t	RF_Acknowledge(uint8_t *buffer)
 		length = CC1101RecPacket(recvBuffer, &Chip_Addr, &RSSI);
 
 		rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
-		printf("RSSI = %ddBm, length = %d, address = %d\n",rssi_dBm,length,Chip_Addr);
+		#ifdef DEBUG
+			printf("RSSI = %ddBm, length = %d, address = %d, ",rssi_dBm,length,Chip_Addr);
+		#endif
 		rssi_dBm = CC1101CalcRSSI_dBm(recvBuffer[length-1]);
-		printf("RFID RSSI = %ddBm\n",rssi_dBm);
-		for(i=0; i<length; i++)
-		{	printf("%x ",recvBuffer[i]);}
-		printf("\r\n");
+		#ifdef DEBUG
+			printf("RFID RSSI = %ddBm\n",rssi_dBm);
+			if(recvBuffer[2] == 0xD0)
+			{	printf("%02d/%02d/%02d ",2000+recvBuffer[length-8], recvBuffer[length-7], recvBuffer[length-6]);
+				printf("%02d:%02d:%02d\n",recvBuffer[length-4], recvBuffer[length-3], recvBuffer[length-2]);}
+			else if(recvBuffer[2] == 0xD7)
+			{	printf("%02d/%02d/%02d ",2000+recvBuffer[length-10], recvBuffer[length-9], recvBuffer[length-8]);
+				printf("%02d:%02d:%02d\n",recvBuffer[length-6], recvBuffer[length-5], recvBuffer[length-4]);}
+			for(i=0; i<length; i++)
+			{	printf("%x ",recvBuffer[i]);}
+			printf("\r\n");
+		#endif
 		
 		/* Reset transmission flag */
 		rxCatch = RESET;
@@ -479,21 +497,23 @@ void Reply_PC(uint8_t ack, uint8_t length)
 		
 	if(ack == 0xD0 || ack == 0xD2 || ack == 0xD3 || ack == 0xD5 || ack == 0xD6 || ack == 0xD7)
 	{
-		GetRTC(&sTime, &sDate);
+		#ifdef DEBUG
+			GetRTC(&sTime, &sDate);
+		#endif
 		for(i=0;i<length;i++)
 		{
 			ackBuffer[i] = recvBuffer[i];
 		}
 		ackBuffer[2] = 0xB0 + (0x0F & recvBuffer[2]);
 		ackBuffer[length] = RSSI;
-		ackBuffer[length+1] = sDate.Year;
-		ackBuffer[length+2] = sDate.Month;
-		ackBuffer[length+3] = sDate.Date;
-		ackBuffer[length+4] = sDate.WeekDay;
-		ackBuffer[length+5] = sTime.Hours;
-		ackBuffer[length+6] = sTime.Minutes;
-		ackBuffer[length+7] = sTime.Seconds;
-		for(i=0; i<length+8; i++)
+//		ackBuffer[length+1] = sDate.Year;
+//		ackBuffer[length+2] = sDate.Month;
+//		ackBuffer[length+3] = sDate.Date;
+//		ackBuffer[length+4] = sDate.WeekDay;
+//		ackBuffer[length+5] = sTime.Hours;
+//		ackBuffer[length+6] = sTime.Minutes;
+//		ackBuffer[length+7] = sTime.Seconds;
+		for(i=0; i<length+1; i++)
 		{
 			printf("%x ",ackBuffer[i]);
 		}

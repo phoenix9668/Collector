@@ -52,21 +52,21 @@ void MX_RTC_Init(void)
 
   /** Initialize RTC and set the Time and Date
   */
-  sTime.Hours = 0x0;
-  sTime.Minutes = 0x0;
-  sTime.Seconds = 0x0;
+  sTime.Hours = 0;
+  sTime.Minutes = 0;
+  sTime.Seconds = 0;
   sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
   sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
   {
     Error_Handler();
   }
   sDate.WeekDay = RTC_WEEKDAY_MONDAY;
   sDate.Month = RTC_MONTH_JANUARY;
-  sDate.Date = 0x1;
-  sDate.Year = 0x0;
+  sDate.Date = 1;
+  sDate.Year = 0;
 
-  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
+  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
   {
     Error_Handler();
   }
@@ -109,10 +109,12 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 
 void GetRTC(RTC_TimeTypeDef *sTime, RTC_DateTypeDef *sDate)
 {
-	HAL_RTC_GetTime(&hrtc, sTime, RTC_FORMAT_BCD);
-	HAL_RTC_GetDate(&hrtc, sDate, RTC_FORMAT_BCD);
-	printf("%02d/%02d/%02d\r\n",2000+sDate->Year, sDate->Month, sDate->Date);
-	printf("%02d:%02d:%02d\r\n",sTime->Hours, sTime->Minutes, sTime->Seconds);
+	HAL_RTC_GetTime(&hrtc, sTime, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, sDate, RTC_FORMAT_BIN);
+	#ifdef DEBUG
+		printf("%02d/%02d/%02d ",2000+sDate->Year, sDate->Month, sDate->Date);
+		printf("%02d:%02d:%02d\n",sTime->Hours, sTime->Minutes, sTime->Seconds);
+	#endif
 }
 
 void SetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer)
@@ -126,7 +128,7 @@ void SetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer)
   sTime.Seconds = timeBuffer[2];
   sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
   sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BCD) != HAL_OK)
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
   {
     Error_Handler();
   }
@@ -135,7 +137,7 @@ void SetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer)
   sDate.Date = dateBuffer[2];
   sDate.Year = dateBuffer[0];
 
-  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BCD) != HAL_OK)
+  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
   {
     Error_Handler();
   }
