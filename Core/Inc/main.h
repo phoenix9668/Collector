@@ -40,7 +40,6 @@ extern "C" {
 #include "stm32f4xx_ll_pwr.h"
 #include "stm32f4xx_ll_gpio.h"
 #include "stm32f4xx_ll_dma.h"
-
 #include "stm32f4xx_ll_exti.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -57,12 +56,12 @@ extern "C" {
 /* USER CODE BEGIN EC */
 #define RXBUFFERSIZE  		21			// Size of Reception buffer
 #define ACK_SLENGTH   		10
-#define ACK_LLENGTH   		256
+#define ACK_LLENGTH   		255
 #define SEND_A026_LENGTH	15
 #define SEND_A3_LENGTH   	23
 #define SEND_A5_LENGTH   	19
 #define SEND_A7_LENGTH   	24
-#define RECV_LENGTH   		120
+#define RECV_LENGTH   		255
 #define SEND_PACKAGE_NUM	100			// 发生数据包数
 #define RecvTimeout				3000
 /* USER CODE END EC */

@@ -266,6 +266,16 @@ void Polling_All_RFID(void)
 				HAL_Delay(100);
 			}
 			LL_IWDG_ReloadCounter(IWDG);
+			tempArray[2] = 0xA1;
+			triple = 0x03;
+			err = 0x01;
+			while((err != 0x00) && (triple != 0x00))
+			{
+				err = RF_SendPacket(tempArray,SEND_A026_LENGTH);
+				triple--;
+				HAL_Delay(100);
+			}
+			LL_IWDG_ReloadCounter(IWDG);
 			#ifdef DEBUG
 				printf("scaning:%d\n",i);
 			#endif
@@ -292,7 +302,7 @@ void Function_Ctrl(uint8_t *command)
 	/*A6:clear assign RFID data*/
 	/*A8:configure time information*/
 	/*A9:read time information*/
-	if(command[2] == 0xA0 || command[2] == 0xA2 || command[2] == 0xA3 || command[2] == 0xA5 || command[2] == 0xA6 || command[2] == 0xA7)
+	if(command[2] == 0xA0 || command[2] == 0xA1 || command[2] == 0xA2 || command[2] == 0xA3 || command[2] == 0xA5 || command[2] == 0xA6 || command[2] == 0xA7)
 	{
 		Check_Assign_RFID(command);
 	}
@@ -337,7 +347,7 @@ void Check_Assign_RFID(uint8_t *command)
 		{
 			syncword = (uint16_t)(0xFF00 & RFID_init[i][14]<<8)+(uint16_t)(0x00FF & RFID_init[i][15]);
 			RFIDInitial(RFID_init[i][13], syncword, RX_MODE);
-			if(command[2] == 0xA0 || command[2] == 0xA2 || command[2] == 0xA6)
+			if(command[2] == 0xA0 || command[2] == 0xA1 || command[2] == 0xA2 || command[2] == 0xA6)
 				{RF_SendPacket(command, SEND_A026_LENGTH);}
 			else if(command[2] == 0xA3)
 				{RF_SendPacket(command, SEND_A3_LENGTH);}
@@ -367,6 +377,8 @@ uint8_t RF_SendPacket(uint8_t *buffer, uint8_t size)
 	err = 0x01;
 	if(buffer[2] == 0xA0)
 		{buffer[2] = 0xC0;}
+	else if(buffer[2] == 0xA1)
+		{buffer[2] = 0xC1;}
 	else if(buffer[2] == 0xA2)
 		{buffer[2] = 0xC2;}
 	else if(buffer[2] == 0xA3)
@@ -400,14 +412,14 @@ uint8_t RF_SendPacket(uint8_t *buffer, uint8_t size)
 	{
 		ack = RF_Acknowledge(buffer);
 		Reply_PC(ack, length);
-		if(ack == 0xD0 || ack == 0xD2 || ack == 0xD3 || ack == 0xD5 || ack == 0xD6 || ack == 0xD7)
+		if(ack == 0xD0 || ack == 0xD1 || ack == 0xD2 || ack == 0xD3 || ack == 0xD5 || ack == 0xD6 || ack == 0xD7)
 		{
 			err = 0x00;
 		}
 	}
 	
 	#ifdef DEBUG
-		if(buffer[2] == 0xC0)
+		if(buffer[2] == 0xC0 || buffer[2] == 0xC1)
 			{	printf("Transmit Complete\n");}
 		else if(buffer[2] == 0xC6)
 			{	printf("Clear Complete\n");}
@@ -426,7 +438,6 @@ uint8_t RF_SendPacket(uint8_t *buffer, uint8_t size)
 ============================================================================*/
 uint8_t	RF_Acknowledge(uint8_t *buffer)
 {
-	uint8_t i=0;
 	int16_t rssi_dBm;
 	
 	if(rxCatch == SET)
@@ -435,8 +446,8 @@ uint8_t	RF_Acknowledge(uint8_t *buffer)
 		rxCatch = RESET;
 		txFiFoUnFlow = RESET;
 		/*##-2- clear array ###################################*/
-		for (i=0; i<RECV_LENGTH; i++)
-		{ recvBuffer[i] = 0;} 
+		for (uint8_t i=0; i<RECV_LENGTH; i++)
+		{ recvBuffer[i] = 0;}
 		/*##-3- Wait for the trigger of the threshold ###################################*/ 
 		while (txFiFoUnFlow != SET && rxCatch != SET){}
 		length = CC1101RecPacket(recvBuffer, &Chip_Addr, &RSSI);
@@ -448,13 +459,13 @@ uint8_t	RF_Acknowledge(uint8_t *buffer)
 		rssi_dBm = CC1101CalcRSSI_dBm(recvBuffer[length-1]);
 		#ifdef DEBUG
 			printf("RFID RSSI = %ddBm\n",rssi_dBm);
-			if(recvBuffer[2] == 0xD0)
+			if(recvBuffer[2] == 0xD0 || recvBuffer[2] == 0xD1)
 			{	printf("%02d/%02d/%02d ",2000+recvBuffer[length-8], recvBuffer[length-7], recvBuffer[length-6]);
 				printf("%02d:%02d:%02d\n",recvBuffer[length-4], recvBuffer[length-3], recvBuffer[length-2]);}
 			else if(recvBuffer[2] == 0xD7)
 			{	printf("%02d/%02d/%02d ",2000+recvBuffer[length-10], recvBuffer[length-9], recvBuffer[length-8]);
 				printf("%02d:%02d:%02d\n",recvBuffer[length-6], recvBuffer[length-5], recvBuffer[length-4]);}
-			for(i=0; i<length; i++)
+			for(uint8_t i=0; i<length; i++)
 			{	printf("%x ",recvBuffer[i]);}
 			printf("\r\n");
 		#endif
@@ -471,7 +482,7 @@ uint8_t	RF_Acknowledge(uint8_t *buffer)
 			if(recvBuffer[3] == buffer[3] && recvBuffer[4] == buffer[4] && recvBuffer[5] == buffer[5] && recvBuffer[6] == buffer[6] && recvBuffer[7] == buffer[7] && recvBuffer[8] == buffer[8]
 					&& recvBuffer[9] == buffer[9] && recvBuffer[10] == buffer[10] && recvBuffer[11] == buffer[11] && recvBuffer[12] == buffer[12] && recvBuffer[13] == buffer[13] && recvBuffer[14] == buffer[14])
 				{
-					if(recvBuffer[2] == 0xD0 || recvBuffer[2] == 0xD2 || recvBuffer[2] == 0xD3 || recvBuffer[2] == 0xD5 || recvBuffer[2] == 0xD6 || recvBuffer[2] == 0xD7)
+					if(recvBuffer[2] == 0xD0 || recvBuffer[2] == 0xD1 || recvBuffer[2] == 0xD2 || recvBuffer[2] == 0xD3 || recvBuffer[2] == 0xD5 || recvBuffer[2] == 0xD6 || recvBuffer[2] == 0xD7)
 					{	return recvBuffer[2];}
 					else if(recvBuffer[2] == 0xE1 || recvBuffer[2] == 0xE2 || recvBuffer[2] == 0xE3)
 					{	return recvBuffer[2];}
@@ -491,16 +502,15 @@ uint8_t	RF_Acknowledge(uint8_t *buffer)
   */
 void Reply_PC(uint8_t ack, uint8_t length)
 {
-	uint8_t i=0;
 	RTC_TimeTypeDef sTime = {0};
 	RTC_DateTypeDef sDate = {0};
 		
-	if(ack == 0xD0 || ack == 0xD2 || ack == 0xD3 || ack == 0xD5 || ack == 0xD6 || ack == 0xD7)
+	if(ack == 0xD0 || ack == 0xD1 || ack == 0xD2 || ack == 0xD3 || ack == 0xD5 || ack == 0xD6 || ack == 0xD7)
 	{
 		#ifdef DEBUG
 			GetRTC(&sTime, &sDate);
 		#endif
-		for(i=0;i<length;i++)
+		for(uint8_t i=0;i<length;i++)
 		{
 			ackBuffer[i] = recvBuffer[i];
 		}
@@ -513,7 +523,7 @@ void Reply_PC(uint8_t ack, uint8_t length)
 //		ackBuffer[length+5] = sTime.Hours;
 //		ackBuffer[length+6] = sTime.Minutes;
 //		ackBuffer[length+7] = sTime.Seconds;
-		for(i=0; i<length+1; i++)
+		for(uint8_t i=0; i<length+1; i++)
 		{
 			printf("%x ",ackBuffer[i]);
 		}
@@ -522,7 +532,7 @@ void Reply_PC(uint8_t ack, uint8_t length)
 	else if(ack == 0xA8 || ack == 0xA9)
 	{
 		GetRTC(&sTime, &sDate);
-		for(i=0;i<2;i++)
+		for(uint8_t i=0;i<2;i++)
 		{
 			ackBuffer[i] = recvBuffer[i];
 		}
@@ -534,7 +544,7 @@ void Reply_PC(uint8_t ack, uint8_t length)
 		ackBuffer[7] = sTime.Hours;
 		ackBuffer[8] = sTime.Minutes;
 		ackBuffer[9] = sTime.Seconds;
-		for(i=0; i<length; i++)
+		for(uint8_t i=0; i<length; i++)
 		{
 			printf("%x ",ackBuffer[i]);
 		}
@@ -543,7 +553,7 @@ void Reply_PC(uint8_t ack, uint8_t length)
 	else if(ack == 0xE1 || ack == 0xE2 || ack == 0xE3)
 	{
 		GetRTC(&sTime, &sDate);
-		for(i=0;i<length;i++)
+		for(uint8_t i=0;i<length;i++)
 		{
 			ackBuffer[i] = recvBuffer[i];
 		}
@@ -555,7 +565,7 @@ void Reply_PC(uint8_t ack, uint8_t length)
 		ackBuffer[length+5] = sTime.Hours;
 		ackBuffer[length+6] = sTime.Minutes;
 		ackBuffer[length+7] = sTime.Seconds;
-		for(i=0; i<length+8; i++)
+		for(uint8_t i=0; i<length+8; i++)
 		{
 			printf("%x ",ackBuffer[i]);
 		}

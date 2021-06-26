@@ -457,8 +457,9 @@ OUTPUT   : 1:received count, 0:no data
 uint8_t CC1101RecPacket(uint8_t *rxbuffer, uint8_t *addr, uint8_t *rssi)
 {
     uint8_t status[2];
-    uint8_t pktLen,i;
-		uint8_t tempbuffer[62];
+    uint8_t pktLen;
+		uint8_t tempbuffer1[62];
+		uint8_t tempbuffer2[62];
 
 		if(CC1101GetRXCnt() != 0)
 		{
@@ -479,10 +480,25 @@ uint8_t CC1101RecPacket(uint8_t *rxbuffer, uint8_t *addr, uint8_t *rssi)
 				CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer, 58);	// Pull data
 				/*##-4- Wait for the end of the transfer ###################################*/   
 				while (rxCatch != SET){}
-				CC1101ReadMultiReg(CC1101_RXFIFO, tempbuffer, (pktLen-58));    // Pull data
-				for(i=0; i<(pktLen-58); i++)
-				{	rxbuffer[i+58] = tempbuffer[i];}
+				CC1101ReadMultiReg(CC1101_RXFIFO, tempbuffer1, (pktLen-58));    // Pull data
+				for(uint8_t i=0; i<(pktLen-58); i++)
+				{	rxbuffer[i+58] = tempbuffer1[i];}
 			}
+//			else
+//			{
+//				CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer, 58);	// Pull data
+//				txFiFoUnFlow = RESET;
+//				/*##-4- Wait for the end of the transfer ###################################*/   
+//				while(txFiFoUnFlow != SET){}
+//				txFiFoUnFlow = RESET;
+//				CC1101ReadMultiReg(CC1101_RXFIFO, tempbuffer1, 58);    // Pull data
+//				while (rxCatch != SET){}
+//				CC1101ReadMultiReg(CC1101_RXFIFO, tempbuffer2, (pktLen-116));    // Pull data
+//				for(uint8_t i=0; i<58; i++)
+//				{	rxbuffer[i+58] = tempbuffer1[i];}
+//				for(uint8_t i=0; i<(pktLen-116); i++)
+//				{	rxbuffer[i+116] = tempbuffer2[i];}
+//			}
 			CC1101ReadMultiReg(CC1101_RXFIFO, status, 2);           // Read status bytes
 			*rssi = status[0];
 
