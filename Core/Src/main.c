@@ -516,13 +516,13 @@ void Reply_PC(uint8_t ack, uint8_t length)
 		}
 		ackBuffer[2] = 0xB0 + (0x0F & recvBuffer[2]);
 		ackBuffer[length] = RSSI;
-//		ackBuffer[length+1] = sDate.Year;
-//		ackBuffer[length+2] = sDate.Month;
-//		ackBuffer[length+3] = sDate.Date;
-//		ackBuffer[length+4] = sDate.WeekDay;
-//		ackBuffer[length+5] = sTime.Hours;
-//		ackBuffer[length+6] = sTime.Minutes;
-//		ackBuffer[length+7] = sTime.Seconds;
+		ackBuffer[length+1] = sDate.Year;
+		ackBuffer[length+2] = sDate.Month;
+		ackBuffer[length+3] = sDate.Date;
+		ackBuffer[length+4] = sDate.WeekDay;
+		ackBuffer[length+5] = sTime.Hours;
+		ackBuffer[length+6] = sTime.Minutes;
+		ackBuffer[length+7] = sTime.Seconds;
 		for(uint8_t i=0; i<length+1; i++)
 		{
 			printf("%x ",ackBuffer[i]);

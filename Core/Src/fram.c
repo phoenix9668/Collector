@@ -25,7 +25,7 @@
 __IO uint8_t MBID_byte1;
 __IO uint8_t MBID_byte2;
 __IO uint16_t INTERVAL;
-__IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH] = {0}; 
+__IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH] = {0};
 uint8_t FRAM_Data[FRAM_DATA_LENGTH];
 
 /*******************************************************************

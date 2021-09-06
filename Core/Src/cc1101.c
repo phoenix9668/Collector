@@ -459,7 +459,7 @@ uint8_t CC1101RecPacket(uint8_t *rxbuffer, uint8_t *addr, uint8_t *rssi)
     uint8_t status[2];
     uint8_t pktLen;
 		uint8_t tempbuffer1[62];
-		uint8_t tempbuffer2[62];
+//		uint8_t tempbuffer2[62];
 
 		if(CC1101GetRXCnt() != 0)
 		{
