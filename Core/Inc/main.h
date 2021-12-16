@@ -49,7 +49,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-//#define DEBUG
+#define DEBUG
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

@@ -130,7 +130,7 @@ int main(void)
 		LL_IWDG_ReloadCounter(IWDG);
 		if(INTERVAL != 0)
 		{
-			if(basetime == INTERVAL)
+			if(basetime >= INTERVAL)//change to >=
 			{
 				LED_COM_ON();
 				basetime = 0;
@@ -296,6 +296,7 @@ void Function_Ctrl(uint8_t *command)
 	uint8_t dateBuffer[4];
 	
 	/*A0:check assign rfid*/
+	/*A1:check assign rfid*/
 	/*A2:clear assign RFID battery flag*/
 	/*A3:configure assign RFID's ADXL362 parameter*/
 	/*A5:configure RFID addr sync unicode*/
