@@ -51,9 +51,11 @@ extern TIM_HandleTypeDef htim6;
 /* USER CODE BEGIN PV */
 extern uint8_t RxBuffer[RXBUFFERSIZE];
 extern __IO FlagStatus CommandState;
+__IO FlagStatus IntervalState;
 extern __IO ITStatus rxCatch;
 extern __IO ITStatus txFiFoUnFlow;
 extern __IO uint32_t basetime;
+uint16_t rfid_index = 0;
 
 extern __IO uint8_t MBID_byte1;
 extern __IO uint8_t MBID_byte2;
@@ -66,6 +68,7 @@ uint8_t ackBuffer[ACK_LLENGTH] = {0};
 uint8_t length;
 uint8_t	Chip_Addr	= 0;
 uint8_t	RSSI = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -128,15 +131,16 @@ int main(void)
   while (1)
   {
 		LL_IWDG_ReloadCounter(IWDG);
-		if(INTERVAL != 0)
+		if(INTERVAL != 0 && basetime >= INTERVAL)
 		{
-			if(basetime >= INTERVAL)//change to >=
-			{
-				LED_COM_ON();
-				basetime = 0;
-				Polling_All_RFID();
-				LED_COM_OFF();
-			}
+			IntervalState = SET;
+			basetime = 0;
+		}
+		if(IntervalState == SET)
+		{
+			LED_COM_ON();
+			Polling_All_RFID();
+			LED_COM_OFF();
 		}
     /* USER CODE END WHILE */
 
@@ -239,24 +243,23 @@ void Polling_All_RFID(void)
 	uint16_t syncword;
 	uint32_t device_code1,device_code2,device_code3;
 	uint8_t tempArray[SEND_A026_LENGTH];
-	uint16_t i;
 	uint8_t j;
 	uint8_t triple,err;
 	
-	for(i=0; i<RFID_SUM; i++)
+	if(rfid_index < RFID_SUM)
 	{
-		device_code1 = (uint32_t)(0xFF000000 & RFID_init[i][0]<<24)+(uint32_t)(0x00FF0000 & RFID_init[i][1]<<16)+(uint32_t)(0x0000FF00 & RFID_init[i][2]<<8)+(uint32_t)(0x000000FF & RFID_init[i][3]);
-		device_code2 = (uint32_t)(0xFF000000 & RFID_init[i][4]<<24)+(uint32_t)(0x00FF0000 & RFID_init[i][5]<<16)+(uint32_t)(0x0000FF00 & RFID_init[i][6]<<8)+(uint32_t)(0x000000FF & RFID_init[i][7]);
-		device_code3 = (uint32_t)(0xFF000000 & RFID_init[i][8]<<24)+(uint32_t)(0x00FF0000 & RFID_init[i][9]<<16)+(uint32_t)(0x0000FF00 & RFID_init[i][10]<<8)+(uint32_t)(0x000000FF & RFID_init[i][11]);
+		device_code1 = (uint32_t)(0xFF000000 & RFID_init[rfid_index][0]<<24)+(uint32_t)(0x00FF0000 & RFID_init[rfid_index][1]<<16)+(uint32_t)(0x0000FF00 & RFID_init[rfid_index][2]<<8)+(uint32_t)(0x000000FF & RFID_init[rfid_index][3]);
+		device_code2 = (uint32_t)(0xFF000000 & RFID_init[rfid_index][4]<<24)+(uint32_t)(0x00FF0000 & RFID_init[rfid_index][5]<<16)+(uint32_t)(0x0000FF00 & RFID_init[rfid_index][6]<<8)+(uint32_t)(0x000000FF & RFID_init[rfid_index][7]);
+		device_code3 = (uint32_t)(0xFF000000 & RFID_init[rfid_index][8]<<24)+(uint32_t)(0x00FF0000 & RFID_init[rfid_index][9]<<16)+(uint32_t)(0x0000FF00 & RFID_init[rfid_index][10]<<8)+(uint32_t)(0x000000FF & RFID_init[rfid_index][11]);
 		if(device_code1 != 0 || device_code2 != 0 || device_code3 != 0)
 		{
-			syncword = (uint16_t)(0xFF00 & RFID_init[i][14]<<8)+(uint16_t)(0x00FF & RFID_init[i][15]);
+			syncword = (uint16_t)(0xFF00 & RFID_init[rfid_index][14]<<8)+(uint16_t)(0x00FF & RFID_init[rfid_index][15]);
 			tempArray[0] = MBID_byte1;
 			tempArray[1] = MBID_byte2;
 			tempArray[2] = 0xA0;
 			for(j=0; j<12; j++)
-			{	tempArray[j+3] = RFID_init[i][j];}
-			RFIDInitial(RFID_init[i][13], syncword, RX_MODE);
+			{	tempArray[j+3] = RFID_init[rfid_index][j];}
+			RFIDInitial(RFID_init[rfid_index][13], syncword, RX_MODE);
 			triple = 0x03;
 			err = 0x01;
 			while((err != 0x00) && (triple != 0x00))
@@ -275,15 +278,21 @@ void Polling_All_RFID(void)
 				triple--;
 				HAL_Delay(100);
 			}
+			rfid_index ++;
 			LL_IWDG_ReloadCounter(IWDG);
 			#ifdef DEBUG
-				printf("scaning:%d\n",i);
+				printf("scaning:%d\n",rfid_index);
 			#endif
 		}
 	}
-	#ifdef DEBUG
+	else
+	{
+		rfid_index = 0;
+		IntervalState = RESET;
+		#ifdef DEBUG
 		printf("All Finish\n");
-	#endif
+		#endif
+	}
 }
 
 /*===========================================================================

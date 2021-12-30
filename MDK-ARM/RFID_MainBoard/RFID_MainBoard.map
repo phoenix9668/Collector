@@ -109,6 +109,7 @@ Section Cross References
     main.o(i.Polling_All_RFID) refers to main.o(i.RF_SendPacket) for RF_SendPacket
     main.o(i.Polling_All_RFID) refers to stm32f4xx_hal.o(i.HAL_Delay) for HAL_Delay
     main.o(i.Polling_All_RFID) refers to printf8.o(i.__0printf$8) for __2printf
+    main.o(i.Polling_All_RFID) refers to main.o(.data) for .data
     main.o(i.Polling_All_RFID) refers to fram.o(.bss) for RFID_init
     main.o(i.Polling_All_RFID) refers to fram.o(.data) for MBID_byte1
     main.o(i.RF_Acknowledge) refers to cc1101.o(i.CC1101RecPacket) for CC1101RecPacket
@@ -159,9 +160,10 @@ Section Cross References
     main.o(i.main) refers to fram.o(i.FRAM_Ctrl) for FRAM_Ctrl
     main.o(i.main) refers to tim.o(.bss) for htim6
     main.o(i.main) refers to fram.o(.data) for INTERVAL
-    main.o(i.main) refers to stm32f4xx_it.o(.data) for basetime
+    main.o(i.main) refers to main.o(.data) for .data
     main.o(i.main) refers to usart.o(.bss) for RxBuffer
     main.o(i.main) refers to usart.o(.data) for CommandState
+    main.o(i.main) refers to stm32f4xx_it.o(.data) for basetime
     gpio.o(i.MOD_GPRS_RESET) refers to stm32f4xx_hal_gpio.o(i.HAL_GPIO_WritePin) for HAL_GPIO_WritePin
     gpio.o(i.MOD_GPRS_RESET) refers to stm32f4xx_hal.o(i.HAL_Delay) for HAL_Delay
     gpio.o(i.MOD_GPRS_RESET) refers to printf8.o(i.__0printf$8) for __2printf
@@ -1579,62 +1581,62 @@ Image Symbol Table
     i.NMI_Handler                            0x0800247a   Section        0  stm32f4xx_it.o(i.NMI_Handler)
     i.PendSV_Handler                         0x0800247c   Section        0  stm32f4xx_it.o(i.PendSV_Handler)
     i.Polling_All_RFID                       0x08002480   Section        0  main.o(i.Polling_All_RFID)
-    i.RCC_GetHCLKClockFreq                   0x080025a0   Section        0  stm32f4xx_ll_rcc.o(i.RCC_GetHCLKClockFreq)
-    i.RCC_GetPCLK1ClockFreq                  0x080025bc   Section        0  stm32f4xx_ll_rcc.o(i.RCC_GetPCLK1ClockFreq)
-    i.RCC_GetPCLK2ClockFreq                  0x080025d8   Section        0  stm32f4xx_ll_rcc.o(i.RCC_GetPCLK2ClockFreq)
-    i.RCC_GetSystemClockFreq                 0x080025f4   Section        0  stm32f4xx_ll_rcc.o(i.RCC_GetSystemClockFreq)
-    i.RCC_PLL_GetFreqDomain_SYS              0x08002620   Section        0  stm32f4xx_ll_rcc.o(i.RCC_PLL_GetFreqDomain_SYS)
-    i.RFIDInitial                            0x0800266c   Section        0  cc1101.o(i.RFIDInitial)
-    i.RF_Acknowledge                         0x080026a8   Section        0  main.o(i.RF_Acknowledge)
-    i.RF_SendPacket                          0x080028cc   Section        0  main.o(i.RF_SendPacket)
-    i.RTC_Bcd2ToByte                         0x08002a14   Section        0  stm32f4xx_hal_rtc.o(i.RTC_Bcd2ToByte)
-    i.RTC_ByteToBcd2                         0x08002a26   Section        0  stm32f4xx_hal_rtc.o(i.RTC_ByteToBcd2)
-    i.RTC_EnterInitMode                      0x08002a3c   Section        0  stm32f4xx_hal_rtc.o(i.RTC_EnterInitMode)
-    i.Reply_PC                               0x08002a78   Section        0  main.o(i.Reply_PC)
-    i.SPI_ExchangeByte                       0x08002cc8   Section        0  spi.o(i.SPI_ExchangeByte)
-    i.SVC_Handler                            0x08002cec   Section        0  stm32f4xx_it.o(i.SVC_Handler)
-    i.SetRTC                                 0x08002cf0   Section        0  rtc.o(i.SetRTC)
-    i.Show_Message                           0x08002d5c   Section        0  main.o(i.Show_Message)
-    i.SpiFunction                            0x08002e04   Section        0  spi.o(i.SpiFunction)
-    i.SysTick_Handler                        0x08002e32   Section        0  stm32f4xx_it.o(i.SysTick_Handler)
-    i.SystemClock_Config                     0x08002e38   Section        0  main.o(i.SystemClock_Config)
-    i.SystemInit                             0x08002edc   Section        0  system_stm32f4xx.o(i.SystemInit)
-    i.TIM6_DAC_IRQHandler                    0x08002ef8   Section        0  stm32f4xx_it.o(i.TIM6_DAC_IRQHandler)
-    i.TIM_Base_SetConfig                     0x08002f20   Section        0  stm32f4xx_hal_tim.o(i.TIM_Base_SetConfig)
-    i.USART3_IRQHandler                      0x08002fe8   Section        0  stm32f4xx_it.o(i.USART3_IRQHandler)
-    i.USART_CharReception_Callback           0x08003008   Section        0  usart.o(i.USART_CharReception_Callback)
-    i.UsageFault_Handler                     0x0800304c   Section        0  stm32f4xx_it.o(i.UsageFault_Handler)
-    i.__0printf$8                            0x08003050   Section        0  printf8.o(i.__0printf$8)
-    i.__NVIC_SetPriority                     0x08003070   Section        0  stm32f4xx_hal_cortex.o(i.__NVIC_SetPriority)
-    __NVIC_SetPriority                       0x08003071   Thumb Code    32  stm32f4xx_hal_cortex.o(i.__NVIC_SetPriority)
-    i.__scatterload_copy                     0x08003090   Section       14  handlers.o(i.__scatterload_copy)
-    i.__scatterload_null                     0x0800309e   Section        2  handlers.o(i.__scatterload_null)
-    i.__scatterload_zeroinit                 0x080030a0   Section       14  handlers.o(i.__scatterload_zeroinit)
-    i._printf_core                           0x080030b0   Section        0  printf8.o(i._printf_core)
-    _printf_core                             0x080030b1   Thumb Code   996  printf8.o(i._printf_core)
-    i._printf_post_padding                   0x080034c0   Section        0  printf8.o(i._printf_post_padding)
-    _printf_post_padding                     0x080034c1   Thumb Code    36  printf8.o(i._printf_post_padding)
-    i._printf_pre_padding                    0x080034e4   Section        0  printf8.o(i._printf_pre_padding)
-    _printf_pre_padding                      0x080034e5   Thumb Code    46  printf8.o(i._printf_pre_padding)
-    i.fputc                                  0x08003514   Section        0  usart.o(i.fputc)
-    i.main                                   0x08003528   Section        0  main.o(i.main)
-    .constdata                               0x08003684   Section       94  cc1101.o(.constdata)
-    CC1101InitData                           0x08003684   Data          94  cc1101.o(.constdata)
-    .constdata                               0x080036e2   Section       16  system_stm32f4xx.o(.constdata)
-    .constdata                               0x080036f2   Section        8  system_stm32f4xx.o(.constdata)
+    i.RCC_GetHCLKClockFreq                   0x080025b4   Section        0  stm32f4xx_ll_rcc.o(i.RCC_GetHCLKClockFreq)
+    i.RCC_GetPCLK1ClockFreq                  0x080025d0   Section        0  stm32f4xx_ll_rcc.o(i.RCC_GetPCLK1ClockFreq)
+    i.RCC_GetPCLK2ClockFreq                  0x080025ec   Section        0  stm32f4xx_ll_rcc.o(i.RCC_GetPCLK2ClockFreq)
+    i.RCC_GetSystemClockFreq                 0x08002608   Section        0  stm32f4xx_ll_rcc.o(i.RCC_GetSystemClockFreq)
+    i.RCC_PLL_GetFreqDomain_SYS              0x08002634   Section        0  stm32f4xx_ll_rcc.o(i.RCC_PLL_GetFreqDomain_SYS)
+    i.RFIDInitial                            0x08002680   Section        0  cc1101.o(i.RFIDInitial)
+    i.RF_Acknowledge                         0x080026bc   Section        0  main.o(i.RF_Acknowledge)
+    i.RF_SendPacket                          0x080028e0   Section        0  main.o(i.RF_SendPacket)
+    i.RTC_Bcd2ToByte                         0x08002a28   Section        0  stm32f4xx_hal_rtc.o(i.RTC_Bcd2ToByte)
+    i.RTC_ByteToBcd2                         0x08002a3a   Section        0  stm32f4xx_hal_rtc.o(i.RTC_ByteToBcd2)
+    i.RTC_EnterInitMode                      0x08002a50   Section        0  stm32f4xx_hal_rtc.o(i.RTC_EnterInitMode)
+    i.Reply_PC                               0x08002a8c   Section        0  main.o(i.Reply_PC)
+    i.SPI_ExchangeByte                       0x08002cdc   Section        0  spi.o(i.SPI_ExchangeByte)
+    i.SVC_Handler                            0x08002d00   Section        0  stm32f4xx_it.o(i.SVC_Handler)
+    i.SetRTC                                 0x08002d04   Section        0  rtc.o(i.SetRTC)
+    i.Show_Message                           0x08002d70   Section        0  main.o(i.Show_Message)
+    i.SpiFunction                            0x08002e18   Section        0  spi.o(i.SpiFunction)
+    i.SysTick_Handler                        0x08002e46   Section        0  stm32f4xx_it.o(i.SysTick_Handler)
+    i.SystemClock_Config                     0x08002e4c   Section        0  main.o(i.SystemClock_Config)
+    i.SystemInit                             0x08002ef0   Section        0  system_stm32f4xx.o(i.SystemInit)
+    i.TIM6_DAC_IRQHandler                    0x08002f0c   Section        0  stm32f4xx_it.o(i.TIM6_DAC_IRQHandler)
+    i.TIM_Base_SetConfig                     0x08002f34   Section        0  stm32f4xx_hal_tim.o(i.TIM_Base_SetConfig)
+    i.USART3_IRQHandler                      0x08002ffc   Section        0  stm32f4xx_it.o(i.USART3_IRQHandler)
+    i.USART_CharReception_Callback           0x0800301c   Section        0  usart.o(i.USART_CharReception_Callback)
+    i.UsageFault_Handler                     0x08003060   Section        0  stm32f4xx_it.o(i.UsageFault_Handler)
+    i.__0printf$8                            0x08003064   Section        0  printf8.o(i.__0printf$8)
+    i.__NVIC_SetPriority                     0x08003084   Section        0  stm32f4xx_hal_cortex.o(i.__NVIC_SetPriority)
+    __NVIC_SetPriority                       0x08003085   Thumb Code    32  stm32f4xx_hal_cortex.o(i.__NVIC_SetPriority)
+    i.__scatterload_copy                     0x080030a4   Section       14  handlers.o(i.__scatterload_copy)
+    i.__scatterload_null                     0x080030b2   Section        2  handlers.o(i.__scatterload_null)
+    i.__scatterload_zeroinit                 0x080030b4   Section       14  handlers.o(i.__scatterload_zeroinit)
+    i._printf_core                           0x080030c4   Section        0  printf8.o(i._printf_core)
+    _printf_core                             0x080030c5   Thumb Code   996  printf8.o(i._printf_core)
+    i._printf_post_padding                   0x080034d4   Section        0  printf8.o(i._printf_post_padding)
+    _printf_post_padding                     0x080034d5   Thumb Code    36  printf8.o(i._printf_post_padding)
+    i._printf_pre_padding                    0x080034f8   Section        0  printf8.o(i._printf_pre_padding)
+    _printf_pre_padding                      0x080034f9   Thumb Code    46  printf8.o(i._printf_pre_padding)
+    i.fputc                                  0x08003528   Section        0  usart.o(i.fputc)
+    i.main                                   0x0800353c   Section        0  main.o(i.main)
+    .constdata                               0x080036ac   Section       94  cc1101.o(.constdata)
+    CC1101InitData                           0x080036ac   Data          94  cc1101.o(.constdata)
+    .constdata                               0x0800370a   Section       16  system_stm32f4xx.o(.constdata)
+    .constdata                               0x0800371a   Section        8  system_stm32f4xx.o(.constdata)
     .data                                    0x20000000   Section       10  cc1101.o(.data)
     .data                                    0x2000000a   Section        4  fram.o(.data)
-    .data                                    0x2000000e   Section        3  main.o(.data)
-    .data                                    0x20000011   Section        2  usart.o(.data)
-    .data                                    0x20000014   Section        4  stm32f4xx_it.o(.data)
-    .data                                    0x20000018   Section       12  stm32f4xx_hal.o(.data)
-    .data                                    0x20000024   Section        4  system_stm32f4xx.o(.data)
-    .data                                    0x20000028   Section        4  stdout.o(.data)
-    .bss                                     0x2000002c   Section    32752  fram.o(.bss)
-    .bss                                     0x2000801c   Section      510  main.o(.bss)
-    .bss                                     0x2000821c   Section       32  rtc.o(.bss)
-    .bss                                     0x2000823c   Section       64  tim.o(.bss)
-    .bss                                     0x2000827c   Section       21  usart.o(.bss)
+    .data                                    0x2000000e   Section        6  main.o(.data)
+    .data                                    0x20000014   Section        2  usart.o(.data)
+    .data                                    0x20000018   Section        4  stm32f4xx_it.o(.data)
+    .data                                    0x2000001c   Section       12  stm32f4xx_hal.o(.data)
+    .data                                    0x20000028   Section        4  system_stm32f4xx.o(.data)
+    .data                                    0x2000002c   Section        4  stdout.o(.data)
+    .bss                                     0x20000030   Section    32752  fram.o(.bss)
+    .bss                                     0x20008020   Section      510  main.o(.bss)
+    .bss                                     0x20008220   Section       32  rtc.o(.bss)
+    .bss                                     0x20008240   Section       64  tim.o(.bss)
+    .bss                                     0x20008280   Section       21  usart.o(.bss)
     STACK                                    0x20008298   Section     1024  startup_stm32f407xx.o(STACK)
 
     Global Symbols
@@ -1883,44 +1885,44 @@ Image Symbol Table
     MemManage_Handler                        0x08002479   Thumb Code     2  stm32f4xx_it.o(i.MemManage_Handler)
     NMI_Handler                              0x0800247b   Thumb Code     2  stm32f4xx_it.o(i.NMI_Handler)
     PendSV_Handler                           0x0800247d   Thumb Code     2  stm32f4xx_it.o(i.PendSV_Handler)
-    Polling_All_RFID                         0x08002481   Thumb Code   246  main.o(i.Polling_All_RFID)
-    RCC_GetHCLKClockFreq                     0x080025a1   Thumb Code    18  stm32f4xx_ll_rcc.o(i.RCC_GetHCLKClockFreq)
-    RCC_GetPCLK1ClockFreq                    0x080025bd   Thumb Code    20  stm32f4xx_ll_rcc.o(i.RCC_GetPCLK1ClockFreq)
-    RCC_GetPCLK2ClockFreq                    0x080025d9   Thumb Code    20  stm32f4xx_ll_rcc.o(i.RCC_GetPCLK2ClockFreq)
-    RCC_GetSystemClockFreq                   0x080025f5   Thumb Code    30  stm32f4xx_ll_rcc.o(i.RCC_GetSystemClockFreq)
-    RCC_PLL_GetFreqDomain_SYS                0x08002621   Thumb Code    68  stm32f4xx_ll_rcc.o(i.RCC_PLL_GetFreqDomain_SYS)
-    RFIDInitial                              0x0800266d   Thumb Code    54  cc1101.o(i.RFIDInitial)
-    RF_Acknowledge                           0x080026a9   Thumb Code   426  main.o(i.RF_Acknowledge)
-    RF_SendPacket                            0x080028cd   Thumb Code   238  main.o(i.RF_SendPacket)
-    RTC_Bcd2ToByte                           0x08002a15   Thumb Code    18  stm32f4xx_hal_rtc.o(i.RTC_Bcd2ToByte)
-    RTC_ByteToBcd2                           0x08002a27   Thumb Code    22  stm32f4xx_hal_rtc.o(i.RTC_ByteToBcd2)
-    RTC_EnterInitMode                        0x08002a3d   Thumb Code    58  stm32f4xx_hal_rtc.o(i.RTC_EnterInitMode)
-    Reply_PC                                 0x08002a79   Thumb Code   434  main.o(i.Reply_PC)
-    SPI_ExchangeByte                         0x08002cc9   Thumb Code    32  spi.o(i.SPI_ExchangeByte)
-    SVC_Handler                              0x08002ced   Thumb Code     2  stm32f4xx_it.o(i.SVC_Handler)
-    SetRTC                                   0x08002cf1   Thumb Code   104  rtc.o(i.SetRTC)
-    Show_Message                             0x08002d5d   Thumb Code    52  main.o(i.Show_Message)
-    SpiFunction                              0x08002e05   Thumb Code    46  spi.o(i.SpiFunction)
-    SysTick_Handler                          0x08002e33   Thumb Code     4  stm32f4xx_it.o(i.SysTick_Handler)
-    SystemClock_Config                       0x08002e39   Thumb Code   154  main.o(i.SystemClock_Config)
-    SystemInit                               0x08002edd   Thumb Code    22  system_stm32f4xx.o(i.SystemInit)
-    TIM6_DAC_IRQHandler                      0x08002ef9   Thumb Code    26  stm32f4xx_it.o(i.TIM6_DAC_IRQHandler)
-    TIM_Base_SetConfig                       0x08002f21   Thumb Code   156  stm32f4xx_hal_tim.o(i.TIM_Base_SetConfig)
-    USART3_IRQHandler                        0x08002fe9   Thumb Code    26  stm32f4xx_it.o(i.USART3_IRQHandler)
-    USART_CharReception_Callback             0x08003009   Thumb Code    54  usart.o(i.USART_CharReception_Callback)
-    UsageFault_Handler                       0x0800304d   Thumb Code     2  stm32f4xx_it.o(i.UsageFault_Handler)
-    __0printf$8                              0x08003051   Thumb Code    22  printf8.o(i.__0printf$8)
-    __1printf$8                              0x08003051   Thumb Code     0  printf8.o(i.__0printf$8)
-    __2printf                                0x08003051   Thumb Code     0  printf8.o(i.__0printf$8)
-    __scatterload_copy                       0x08003091   Thumb Code    14  handlers.o(i.__scatterload_copy)
-    __scatterload_null                       0x0800309f   Thumb Code     2  handlers.o(i.__scatterload_null)
-    __scatterload_zeroinit                   0x080030a1   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
-    fputc                                    0x08003515   Thumb Code    14  usart.o(i.fputc)
-    main                                     0x08003529   Thumb Code   248  main.o(i.main)
-    AHBPrescTable                            0x080036e2   Data          16  system_stm32f4xx.o(.constdata)
-    APBPrescTable                            0x080036f2   Data           8  system_stm32f4xx.o(.constdata)
-    Region$$Table$$Base                      0x080036fc   Number         0  anon$$obj.o(Region$$Table)
-    Region$$Table$$Limit                     0x0800371c   Number         0  anon$$obj.o(Region$$Table)
+    Polling_All_RFID                         0x08002481   Thumb Code   264  main.o(i.Polling_All_RFID)
+    RCC_GetHCLKClockFreq                     0x080025b5   Thumb Code    18  stm32f4xx_ll_rcc.o(i.RCC_GetHCLKClockFreq)
+    RCC_GetPCLK1ClockFreq                    0x080025d1   Thumb Code    20  stm32f4xx_ll_rcc.o(i.RCC_GetPCLK1ClockFreq)
+    RCC_GetPCLK2ClockFreq                    0x080025ed   Thumb Code    20  stm32f4xx_ll_rcc.o(i.RCC_GetPCLK2ClockFreq)
+    RCC_GetSystemClockFreq                   0x08002609   Thumb Code    30  stm32f4xx_ll_rcc.o(i.RCC_GetSystemClockFreq)
+    RCC_PLL_GetFreqDomain_SYS                0x08002635   Thumb Code    68  stm32f4xx_ll_rcc.o(i.RCC_PLL_GetFreqDomain_SYS)
+    RFIDInitial                              0x08002681   Thumb Code    54  cc1101.o(i.RFIDInitial)
+    RF_Acknowledge                           0x080026bd   Thumb Code   426  main.o(i.RF_Acknowledge)
+    RF_SendPacket                            0x080028e1   Thumb Code   238  main.o(i.RF_SendPacket)
+    RTC_Bcd2ToByte                           0x08002a29   Thumb Code    18  stm32f4xx_hal_rtc.o(i.RTC_Bcd2ToByte)
+    RTC_ByteToBcd2                           0x08002a3b   Thumb Code    22  stm32f4xx_hal_rtc.o(i.RTC_ByteToBcd2)
+    RTC_EnterInitMode                        0x08002a51   Thumb Code    58  stm32f4xx_hal_rtc.o(i.RTC_EnterInitMode)
+    Reply_PC                                 0x08002a8d   Thumb Code   434  main.o(i.Reply_PC)
+    SPI_ExchangeByte                         0x08002cdd   Thumb Code    32  spi.o(i.SPI_ExchangeByte)
+    SVC_Handler                              0x08002d01   Thumb Code     2  stm32f4xx_it.o(i.SVC_Handler)
+    SetRTC                                   0x08002d05   Thumb Code   104  rtc.o(i.SetRTC)
+    Show_Message                             0x08002d71   Thumb Code    52  main.o(i.Show_Message)
+    SpiFunction                              0x08002e19   Thumb Code    46  spi.o(i.SpiFunction)
+    SysTick_Handler                          0x08002e47   Thumb Code     4  stm32f4xx_it.o(i.SysTick_Handler)
+    SystemClock_Config                       0x08002e4d   Thumb Code   154  main.o(i.SystemClock_Config)
+    SystemInit                               0x08002ef1   Thumb Code    22  system_stm32f4xx.o(i.SystemInit)
+    TIM6_DAC_IRQHandler                      0x08002f0d   Thumb Code    26  stm32f4xx_it.o(i.TIM6_DAC_IRQHandler)
+    TIM_Base_SetConfig                       0x08002f35   Thumb Code   156  stm32f4xx_hal_tim.o(i.TIM_Base_SetConfig)
+    USART3_IRQHandler                        0x08002ffd   Thumb Code    26  stm32f4xx_it.o(i.USART3_IRQHandler)
+    USART_CharReception_Callback             0x0800301d   Thumb Code    54  usart.o(i.USART_CharReception_Callback)
+    UsageFault_Handler                       0x08003061   Thumb Code     2  stm32f4xx_it.o(i.UsageFault_Handler)
+    __0printf$8                              0x08003065   Thumb Code    22  printf8.o(i.__0printf$8)
+    __1printf$8                              0x08003065   Thumb Code     0  printf8.o(i.__0printf$8)
+    __2printf                                0x08003065   Thumb Code     0  printf8.o(i.__0printf$8)
+    __scatterload_copy                       0x080030a5   Thumb Code    14  handlers.o(i.__scatterload_copy)
+    __scatterload_null                       0x080030b3   Thumb Code     2  handlers.o(i.__scatterload_null)
+    __scatterload_zeroinit                   0x080030b5   Thumb Code    14  handlers.o(i.__scatterload_zeroinit)
+    fputc                                    0x08003529   Thumb Code    14  usart.o(i.fputc)
+    main                                     0x0800353d   Thumb Code   262  main.o(i.main)
+    AHBPrescTable                            0x0800370a   Data          16  system_stm32f4xx.o(.constdata)
+    APBPrescTable                            0x0800371a   Data           8  system_stm32f4xx.o(.constdata)
+    Region$$Table$$Base                      0x08003724   Number         0  anon$$obj.o(Region$$Table)
+    Region$$Table$$Limit                     0x08003744   Number         0  anon$$obj.o(Region$$Table)
     rxCatch                                  0x20000000   Data           1  cc1101.o(.data)
     txFiFoUnFlow                             0x20000001   Data           1  cc1101.o(.data)
     PaTabel                                  0x20000002   Data           8  cc1101.o(.data)
@@ -1929,22 +1931,24 @@ Image Symbol Table
     INTERVAL                                 0x2000000c   Data           2  fram.o(.data)
     Chip_Addr                                0x2000000e   Data           1  main.o(.data)
     RSSI                                     0x2000000f   Data           1  main.o(.data)
-    length                                   0x20000010   Data           1  main.o(.data)
-    RxCounter                                0x20000011   Data           1  usart.o(.data)
-    CommandState                             0x20000012   Data           1  usart.o(.data)
-    basetime                                 0x20000014   Data           4  stm32f4xx_it.o(.data)
-    uwTickFreq                               0x20000018   Data           1  stm32f4xx_hal.o(.data)
-    uwTickPrio                               0x2000001c   Data           4  stm32f4xx_hal.o(.data)
-    uwTick                                   0x20000020   Data           4  stm32f4xx_hal.o(.data)
-    SystemCoreClock                          0x20000024   Data           4  system_stm32f4xx.o(.data)
-    __stdout                                 0x20000028   Data           4  stdout.o(.data)
-    RFID_init                                0x2000002c   Data       32736  fram.o(.bss)
-    FRAM_Data                                0x2000800c   Data          16  fram.o(.bss)
-    recvBuffer                               0x2000801c   Data         255  main.o(.bss)
-    ackBuffer                                0x2000811b   Data         255  main.o(.bss)
-    hrtc                                     0x2000821c   Data          32  rtc.o(.bss)
-    htim6                                    0x2000823c   Data          64  tim.o(.bss)
-    RxBuffer                                 0x2000827c   Data          21  usart.o(.bss)
+    IntervalState                            0x20000010   Data           1  main.o(.data)
+    length                                   0x20000011   Data           1  main.o(.data)
+    rfid_index                               0x20000012   Data           2  main.o(.data)
+    RxCounter                                0x20000014   Data           1  usart.o(.data)
+    CommandState                             0x20000015   Data           1  usart.o(.data)
+    basetime                                 0x20000018   Data           4  stm32f4xx_it.o(.data)
+    uwTickFreq                               0x2000001c   Data           1  stm32f4xx_hal.o(.data)
+    uwTickPrio                               0x20000020   Data           4  stm32f4xx_hal.o(.data)
+    uwTick                                   0x20000024   Data           4  stm32f4xx_hal.o(.data)
+    SystemCoreClock                          0x20000028   Data           4  system_stm32f4xx.o(.data)
+    __stdout                                 0x2000002c   Data           4  stdout.o(.data)
+    RFID_init                                0x20000030   Data       32736  fram.o(.bss)
+    FRAM_Data                                0x20008010   Data          16  fram.o(.bss)
+    recvBuffer                               0x20008020   Data         255  main.o(.bss)
+    ackBuffer                                0x2000811f   Data         255  main.o(.bss)
+    hrtc                                     0x20008220   Data          32  rtc.o(.bss)
+    htim6                                    0x20008240   Data          64  tim.o(.bss)
+    RxBuffer                                 0x20008280   Data          21  usart.o(.bss)
     __initial_sp                             0x20008698   Data           0  startup_stm32f407xx.o(STACK)
 
 
@@ -1955,9 +1959,9 @@ Memory Map of the image
 
   Image Entry point : 0x08000189
 
-  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00003748, Max: 0x00100000, ABSOLUTE)
+  Load Region LR_IROM1 (Base: 0x08000000, Size: 0x00003774, Max: 0x00100000, ABSOLUTE)
 
-    Execution Region ER_IROM1 (Exec base: 0x08000000, Load base: 0x08000000, Size: 0x0000371c, Max: 0x00100000, ABSOLUTE)
+    Execution Region ER_IROM1 (Exec base: 0x08000000, Load base: 0x08000000, Size: 0x00003744, Max: 0x00100000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -2080,80 +2084,80 @@ Memory Map of the image
     0x0800247a   0x0800247a   0x00000002   Code   RO          770    i.NMI_Handler       stm32f4xx_it.o
     0x0800247c   0x0800247c   0x00000002   Code   RO          771    i.PendSV_Handler    stm32f4xx_it.o
     0x0800247e   0x0800247e   0x00000002   PAD
-    0x08002480   0x08002480   0x00000120   Code   RO          388    i.Polling_All_RFID  main.o
-    0x080025a0   0x080025a0   0x0000001c   Code   RO         2085    i.RCC_GetHCLKClockFreq  stm32f4xx_ll_rcc.o
-    0x080025bc   0x080025bc   0x0000001c   Code   RO         2086    i.RCC_GetPCLK1ClockFreq  stm32f4xx_ll_rcc.o
-    0x080025d8   0x080025d8   0x0000001c   Code   RO         2087    i.RCC_GetPCLK2ClockFreq  stm32f4xx_ll_rcc.o
-    0x080025f4   0x080025f4   0x0000002c   Code   RO         2088    i.RCC_GetSystemClockFreq  stm32f4xx_ll_rcc.o
-    0x08002620   0x08002620   0x0000004c   Code   RO         2091    i.RCC_PLL_GetFreqDomain_SYS  stm32f4xx_ll_rcc.o
-    0x0800266c   0x0800266c   0x0000003c   Code   RO           34    i.RFIDInitial       cc1101.o
-    0x080026a8   0x080026a8   0x00000224   Code   RO          389    i.RF_Acknowledge    main.o
-    0x080028cc   0x080028cc   0x00000148   Code   RO          390    i.RF_SendPacket     main.o
-    0x08002a14   0x08002a14   0x00000012   Code   RO         2320    i.RTC_Bcd2ToByte    stm32f4xx_hal_rtc.o
-    0x08002a26   0x08002a26   0x00000016   Code   RO         2321    i.RTC_ByteToBcd2    stm32f4xx_hal_rtc.o
-    0x08002a3c   0x08002a3c   0x0000003a   Code   RO         2322    i.RTC_EnterInitMode  stm32f4xx_hal_rtc.o
-    0x08002a76   0x08002a76   0x00000002   PAD
-    0x08002a78   0x08002a78   0x00000250   Code   RO          391    i.Reply_PC          main.o
-    0x08002cc8   0x08002cc8   0x00000024   Code   RO          595    i.SPI_ExchangeByte  spi.o
-    0x08002cec   0x08002cec   0x00000002   Code   RO          772    i.SVC_Handler       stm32f4xx_it.o
-    0x08002cee   0x08002cee   0x00000002   PAD
-    0x08002cf0   0x08002cf0   0x0000006c   Code   RO          543    i.SetRTC            rtc.o
-    0x08002d5c   0x08002d5c   0x000000a8   Code   RO          392    i.Show_Message      main.o
-    0x08002e04   0x08002e04   0x0000002e   Code   RO          596    i.SpiFunction       spi.o
-    0x08002e32   0x08002e32   0x00000004   Code   RO          773    i.SysTick_Handler   stm32f4xx_it.o
-    0x08002e36   0x08002e36   0x00000002   PAD
-    0x08002e38   0x08002e38   0x000000a4   Code   RO          393    i.SystemClock_Config  main.o
-    0x08002edc   0x08002edc   0x0000001c   Code   RO         3781    i.SystemInit        system_stm32f4xx.o
-    0x08002ef8   0x08002ef8   0x00000028   Code   RO          774    i.TIM6_DAC_IRQHandler  stm32f4xx_it.o
-    0x08002f20   0x08002f20   0x000000c8   Code   RO         2876    i.TIM_Base_SetConfig  stm32f4xx_hal_tim.o
-    0x08002fe8   0x08002fe8   0x00000020   Code   RO          775    i.USART3_IRQHandler  stm32f4xx_it.o
-    0x08003008   0x08003008   0x00000044   Code   RO          690    i.USART_CharReception_Callback  usart.o
-    0x0800304c   0x0800304c   0x00000002   Code   RO          776    i.UsageFault_Handler  stm32f4xx_it.o
-    0x0800304e   0x0800304e   0x00000002   PAD
-    0x08003050   0x08003050   0x00000020   Code   RO         4029    i.__0printf$8       mc_w.l(printf8.o)
-    0x08003070   0x08003070   0x00000020   Code   RO         1703    i.__NVIC_SetPriority  stm32f4xx_hal_cortex.o
-    0x08003090   0x08003090   0x0000000e   Code   RO         4123    i.__scatterload_copy  mc_w.l(handlers.o)
-    0x0800309e   0x0800309e   0x00000002   Code   RO         4124    i.__scatterload_null  mc_w.l(handlers.o)
-    0x080030a0   0x080030a0   0x0000000e   Code   RO         4125    i.__scatterload_zeroinit  mc_w.l(handlers.o)
-    0x080030ae   0x080030ae   0x00000002   PAD
-    0x080030b0   0x080030b0   0x00000410   Code   RO         4036    i._printf_core      mc_w.l(printf8.o)
-    0x080034c0   0x080034c0   0x00000024   Code   RO         4037    i._printf_post_padding  mc_w.l(printf8.o)
-    0x080034e4   0x080034e4   0x0000002e   Code   RO         4038    i._printf_pre_padding  mc_w.l(printf8.o)
-    0x08003512   0x08003512   0x00000002   PAD
-    0x08003514   0x08003514   0x00000014   Code   RO          691    i.fputc             usart.o
-    0x08003528   0x08003528   0x0000015c   Code   RO          394    i.main              main.o
-    0x08003684   0x08003684   0x0000005e   Data   RO           35    .constdata          cc1101.o
-    0x080036e2   0x080036e2   0x00000010   Data   RO         3782    .constdata          system_stm32f4xx.o
-    0x080036f2   0x080036f2   0x00000008   Data   RO         3783    .constdata          system_stm32f4xx.o
-    0x080036fa   0x080036fa   0x00000002   PAD
-    0x080036fc   0x080036fc   0x00000020   Data   RO         4121    Region$$Table       anon$$obj.o
+    0x08002480   0x08002480   0x00000134   Code   RO          388    i.Polling_All_RFID  main.o
+    0x080025b4   0x080025b4   0x0000001c   Code   RO         2085    i.RCC_GetHCLKClockFreq  stm32f4xx_ll_rcc.o
+    0x080025d0   0x080025d0   0x0000001c   Code   RO         2086    i.RCC_GetPCLK1ClockFreq  stm32f4xx_ll_rcc.o
+    0x080025ec   0x080025ec   0x0000001c   Code   RO         2087    i.RCC_GetPCLK2ClockFreq  stm32f4xx_ll_rcc.o
+    0x08002608   0x08002608   0x0000002c   Code   RO         2088    i.RCC_GetSystemClockFreq  stm32f4xx_ll_rcc.o
+    0x08002634   0x08002634   0x0000004c   Code   RO         2091    i.RCC_PLL_GetFreqDomain_SYS  stm32f4xx_ll_rcc.o
+    0x08002680   0x08002680   0x0000003c   Code   RO           34    i.RFIDInitial       cc1101.o
+    0x080026bc   0x080026bc   0x00000224   Code   RO          389    i.RF_Acknowledge    main.o
+    0x080028e0   0x080028e0   0x00000148   Code   RO          390    i.RF_SendPacket     main.o
+    0x08002a28   0x08002a28   0x00000012   Code   RO         2320    i.RTC_Bcd2ToByte    stm32f4xx_hal_rtc.o
+    0x08002a3a   0x08002a3a   0x00000016   Code   RO         2321    i.RTC_ByteToBcd2    stm32f4xx_hal_rtc.o
+    0x08002a50   0x08002a50   0x0000003a   Code   RO         2322    i.RTC_EnterInitMode  stm32f4xx_hal_rtc.o
+    0x08002a8a   0x08002a8a   0x00000002   PAD
+    0x08002a8c   0x08002a8c   0x00000250   Code   RO          391    i.Reply_PC          main.o
+    0x08002cdc   0x08002cdc   0x00000024   Code   RO          595    i.SPI_ExchangeByte  spi.o
+    0x08002d00   0x08002d00   0x00000002   Code   RO          772    i.SVC_Handler       stm32f4xx_it.o
+    0x08002d02   0x08002d02   0x00000002   PAD
+    0x08002d04   0x08002d04   0x0000006c   Code   RO          543    i.SetRTC            rtc.o
+    0x08002d70   0x08002d70   0x000000a8   Code   RO          392    i.Show_Message      main.o
+    0x08002e18   0x08002e18   0x0000002e   Code   RO          596    i.SpiFunction       spi.o
+    0x08002e46   0x08002e46   0x00000004   Code   RO          773    i.SysTick_Handler   stm32f4xx_it.o
+    0x08002e4a   0x08002e4a   0x00000002   PAD
+    0x08002e4c   0x08002e4c   0x000000a4   Code   RO          393    i.SystemClock_Config  main.o
+    0x08002ef0   0x08002ef0   0x0000001c   Code   RO         3781    i.SystemInit        system_stm32f4xx.o
+    0x08002f0c   0x08002f0c   0x00000028   Code   RO          774    i.TIM6_DAC_IRQHandler  stm32f4xx_it.o
+    0x08002f34   0x08002f34   0x000000c8   Code   RO         2876    i.TIM_Base_SetConfig  stm32f4xx_hal_tim.o
+    0x08002ffc   0x08002ffc   0x00000020   Code   RO          775    i.USART3_IRQHandler  stm32f4xx_it.o
+    0x0800301c   0x0800301c   0x00000044   Code   RO          690    i.USART_CharReception_Callback  usart.o
+    0x08003060   0x08003060   0x00000002   Code   RO          776    i.UsageFault_Handler  stm32f4xx_it.o
+    0x08003062   0x08003062   0x00000002   PAD
+    0x08003064   0x08003064   0x00000020   Code   RO         4029    i.__0printf$8       mc_w.l(printf8.o)
+    0x08003084   0x08003084   0x00000020   Code   RO         1703    i.__NVIC_SetPriority  stm32f4xx_hal_cortex.o
+    0x080030a4   0x080030a4   0x0000000e   Code   RO         4123    i.__scatterload_copy  mc_w.l(handlers.o)
+    0x080030b2   0x080030b2   0x00000002   Code   RO         4124    i.__scatterload_null  mc_w.l(handlers.o)
+    0x080030b4   0x080030b4   0x0000000e   Code   RO         4125    i.__scatterload_zeroinit  mc_w.l(handlers.o)
+    0x080030c2   0x080030c2   0x00000002   PAD
+    0x080030c4   0x080030c4   0x00000410   Code   RO         4036    i._printf_core      mc_w.l(printf8.o)
+    0x080034d4   0x080034d4   0x00000024   Code   RO         4037    i._printf_post_padding  mc_w.l(printf8.o)
+    0x080034f8   0x080034f8   0x0000002e   Code   RO         4038    i._printf_pre_padding  mc_w.l(printf8.o)
+    0x08003526   0x08003526   0x00000002   PAD
+    0x08003528   0x08003528   0x00000014   Code   RO          691    i.fputc             usart.o
+    0x0800353c   0x0800353c   0x00000170   Code   RO          394    i.main              main.o
+    0x080036ac   0x080036ac   0x0000005e   Data   RO           35    .constdata          cc1101.o
+    0x0800370a   0x0800370a   0x00000010   Data   RO         3782    .constdata          system_stm32f4xx.o
+    0x0800371a   0x0800371a   0x00000008   Data   RO         3783    .constdata          system_stm32f4xx.o
+    0x08003722   0x08003722   0x00000002   PAD
+    0x08003724   0x08003724   0x00000020   Data   RO         4121    Region$$Table       anon$$obj.o
 
 
-    Execution Region RW_IRAM2 (Exec base: 0x10000000, Load base: 0x08003748, Size: 0x00000000, Max: 0x00010000, ABSOLUTE)
+    Execution Region RW_IRAM2 (Exec base: 0x10000000, Load base: 0x08003774, Size: 0x00000000, Max: 0x00010000, ABSOLUTE)
 
     **** No section assigned to this execution region ****
 
 
-    Execution Region RW_IRAM1 (Exec base: 0x20000000, Load base: 0x0800371c, Size: 0x00008698, Max: 0x00020000, ABSOLUTE)
+    Execution Region RW_IRAM1 (Exec base: 0x20000000, Load base: 0x08003744, Size: 0x00008698, Max: 0x00020000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
-    0x20000000   0x0800371c   0x0000000a   Data   RW           36    .data               cc1101.o
-    0x2000000a   0x08003726   0x00000004   Data   RW          321    .data               fram.o
-    0x2000000e   0x0800372a   0x00000003   Data   RW          397    .data               main.o
-    0x20000011   0x0800372d   0x00000002   Data   RW          693    .data               usart.o
-    0x20000013   0x0800372f   0x00000001   PAD
-    0x20000014   0x08003730   0x00000004   Data   RW          777    .data               stm32f4xx_it.o
-    0x20000018   0x08003734   0x0000000c   Data   RW         1847    .data               stm32f4xx_hal.o
-    0x20000024   0x08003740   0x00000004   Data   RW         3784    .data               system_stm32f4xx.o
-    0x20000028   0x08003744   0x00000004   Data   RW         4097    .data               mc_w.l(stdout.o)
-    0x2000002c        -       0x00007ff0   Zero   RW          320    .bss                fram.o
-    0x2000801c        -       0x000001fe   Zero   RW          396    .bss                main.o
-    0x2000821a   0x08003748   0x00000002   PAD
-    0x2000821c        -       0x00000020   Zero   RW          544    .bss                rtc.o
-    0x2000823c        -       0x00000040   Zero   RW          644    .bss                tim.o
-    0x2000827c        -       0x00000015   Zero   RW          692    .bss                usart.o
-    0x20008291   0x08003748   0x00000007   PAD
+    0x20000000   0x08003744   0x0000000a   Data   RW           36    .data               cc1101.o
+    0x2000000a   0x0800374e   0x00000004   Data   RW          321    .data               fram.o
+    0x2000000e   0x08003752   0x00000006   Data   RW          397    .data               main.o
+    0x20000014   0x08003758   0x00000002   Data   RW          693    .data               usart.o
+    0x20000016   0x0800375a   0x00000002   PAD
+    0x20000018   0x0800375c   0x00000004   Data   RW          777    .data               stm32f4xx_it.o
+    0x2000001c   0x08003760   0x0000000c   Data   RW         1847    .data               stm32f4xx_hal.o
+    0x20000028   0x0800376c   0x00000004   Data   RW         3784    .data               system_stm32f4xx.o
+    0x2000002c   0x08003770   0x00000004   Data   RW         4097    .data               mc_w.l(stdout.o)
+    0x20000030        -       0x00007ff0   Zero   RW          320    .bss                fram.o
+    0x20008020        -       0x000001fe   Zero   RW          396    .bss                main.o
+    0x2000821e   0x08003774   0x00000002   PAD
+    0x20008220        -       0x00000020   Zero   RW          544    .bss                rtc.o
+    0x20008240        -       0x00000040   Zero   RW          644    .bss                tim.o
+    0x20008280        -       0x00000015   Zero   RW          692    .bss                usart.o
+    0x20008295   0x08003774   0x00000003   PAD
     0x20008298        -       0x00000400   Zero   RW            1    STACK               startup_stm32f407xx.o
 
 
@@ -2168,7 +2172,7 @@ Image component sizes
        648         98          0          4      32752       4159   fram.o
        520         68          0          0          0       1644   gpio.o
         44          6          0          0          0       2363   iwdg.o
-      2870        690          0          3        510      11587   main.o
+      2910        698          0          6        510      11688   main.o
        356         58          0          0         32       2777   rtc.o
        254         22          0          0          0      18651   spi.o
         36          8        392          0       1024        824   startup_stm32f407xx.o
@@ -2191,9 +2195,9 @@ Image component sizes
        464         66          0          2         21      47446   usart.o
 
     ----------------------------------------------------------------------
-     12124       1516        544         40      34412     982468   Object Totals
+     12164       1524        544         44      34408     982569   Object Totals
          0          0         32          0          0          0   (incl. Generated)
-        24          0          2          1          9          0   (incl. Padding)
+        24          0          2          2          5          0   (incl. Padding)
 
     ----------------------------------------------------------------------
 
@@ -2236,15 +2240,15 @@ Image component sizes
 
       Code (inc. data)   RO Data    RW Data    ZI Data      Debug   
 
-     13564       1586        544         44      34412     971416   Grand Totals
-     13564       1586        544         44      34412     971416   ELF Image Totals
-     13564       1586        544         44          0          0   ROM Totals
+     13604       1594        544         48      34408     971517   Grand Totals
+     13604       1594        544         48      34408     971517   ELF Image Totals
+     13604       1594        544         48          0          0   ROM Totals
 
 ==============================================================================
 
-    Total RO  Size (Code + RO Data)                14108 (  13.78kB)
+    Total RO  Size (Code + RO Data)                14148 (  13.82kB)
     Total RW  Size (RW Data + ZI Data)             34456 (  33.65kB)
-    Total ROM Size (Code + RO Data + RW Data)      14152 (  13.82kB)
+    Total ROM Size (Code + RO Data + RW Data)      14196 (  13.86kB)
 
 ==============================================================================
 
