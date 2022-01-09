@@ -1,3 +1,7 @@
 # RFID_MainBoard
-物联网采集卡主板代码，标准库版本
-包括CC1101配置代码（CC1101具体配置在cc1101.h中）和WIFI模块USR-C215配置代码
+RFID MainBoard code using freeRTOS on stm32f407.
+function include:
+
+1. CC1101 drive；
+2. FRAM drive；
+3. smart command protocol；
