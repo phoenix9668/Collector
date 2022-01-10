@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,8 +50,8 @@
 /* USER CODE END Variables */
 osThreadId commandTaskHandle;
 osThreadId rfidInputTaskHandle;
-osSemaphoreId rfidInputBinarySemHandle;
 osSemaphoreId commandBinarySemHandle;
+osSemaphoreId rfidInputBinarySemHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -94,13 +94,13 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_MUTEX */
 
   /* Create the semaphores(s) */
-  /* definition and creation of rfidInputBinarySem */
-  osSemaphoreDef(rfidInputBinarySem);
-  rfidInputBinarySemHandle = osSemaphoreCreate(osSemaphore(rfidInputBinarySem), 1);
-
   /* definition and creation of commandBinarySem */
   osSemaphoreDef(commandBinarySem);
   commandBinarySemHandle = osSemaphoreCreate(osSemaphore(commandBinarySem), 1);
+
+  /* definition and creation of rfidInputBinarySem */
+  osSemaphoreDef(rfidInputBinarySem);
+  rfidInputBinarySemHandle = osSemaphoreCreate(osSemaphore(rfidInputBinarySem), 1);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
@@ -142,6 +142,11 @@ void StartCommandTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+		if (lte.rxIndex == true)
+		{
+		printf("rxBuffer = %s\n", lte.rxBuffer);
+		printf("rxCounter = %d\n", lte.rxCounter);
+		}
     osDelay(1);
   }
   /* USER CODE END StartCommandTask */
@@ -160,6 +165,7 @@ void StartRFIDInputTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+		
     osDelay(1);
   }
   /* USER CODE END StartRFIDInputTask */
