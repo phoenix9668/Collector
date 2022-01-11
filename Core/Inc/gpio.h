@@ -32,7 +32,28 @@ extern "C" {
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
+#define LED_COM_ON()					HAL_GPIO_WritePin(LED_COM_GPIO_Port, LED_COM_Pin, GPIO_PIN_RESET)
+#define LED_COM_OFF()					HAL_GPIO_WritePin(LED_COM_GPIO_Port, LED_COM_Pin, GPIO_PIN_SET)
+#define LED_COM_TOG()					HAL_GPIO_TogglePin(LED_COM_GPIO_Port, LED_COM_Pin)
 
+#define LED_STA_ON()					HAL_GPIO_WritePin(LED_STA_GPIO_Port, LED_STA_Pin, GPIO_PIN_RESET)
+#define LED_STA_OFF()					HAL_GPIO_WritePin(LED_STA_GPIO_Port, LED_STA_Pin, GPIO_PIN_SET)
+#define LED_STA_TOG()					HAL_GPIO_TogglePin(LED_STA_GPIO_Port, LED_STA_Pin)
+
+#define LED_RUN_ON()					HAL_GPIO_WritePin(LED_RUN_GPIO_Port, LED_RUN_Pin, GPIO_PIN_RESET)
+#define LED_RUN_OFF()					HAL_GPIO_WritePin(LED_RUN_GPIO_Port, LED_RUN_Pin, GPIO_PIN_SET)
+#define LED_RUN_TOG()					HAL_GPIO_TogglePin(LED_RUN_GPIO_Port, LED_RUN_Pin)
+
+#define MOD_RESET_OFF()				HAL_GPIO_WritePin(MOD_RESET_GPIO_Port, MOD_RESET_Pin, GPIO_PIN_RESET)
+#define MOD_RESET_ON()				HAL_GPIO_WritePin(MOD_RESET_GPIO_Port, MOD_RESET_Pin, GPIO_PIN_SET)
+#define MOD_RESET_TOG()				HAL_GPIO_TogglePin(MOD_RESET_GPIO_Port, MOD_RESET_Pin)
+#define MOD_GPRS_READ()   		HAL_GPIO_ReadPin(MOD_GPRS_GPIO_Port, MOD_GPRS_Pin)
+
+#define CC1101_CSN_LOW()			HAL_GPIO_WritePin(SPI2_CS1_GPIO_Port, SPI2_CS1_Pin, GPIO_PIN_RESET)
+#define CC1101_CSN_HIGH()			HAL_GPIO_WritePin(SPI2_CS1_GPIO_Port, SPI2_CS1_Pin, GPIO_PIN_SET)
+
+#define FRAM_CSN_LOW()				HAL_GPIO_WritePin(SPI2_CS2_GPIO_Port, SPI2_CS2_Pin, GPIO_PIN_RESET)
+#define FRAM_CSN_HIGH()				HAL_GPIO_WritePin(SPI2_CS2_GPIO_Port, SPI2_CS2_Pin, GPIO_PIN_SET)
 /* USER CODE END Private defines */
 
 void MX_GPIO_Init(void);

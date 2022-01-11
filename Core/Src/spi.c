@@ -75,7 +75,42 @@ void MX_SPI2_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
+//##################################################################################################################
+/**
+  * @brief  This function Activate SPI2
+  * @param  None
+  * @retval None
+  */
+void Activate_SPI(void)
+{
+  /* Enable SPI2 */
+  LL_SPI_Enable(SPI2);
+}
+//##################################################################################################################
+uint8_t SPI_ExchangeByte(uint8_t input)
+{
+	LL_SPI_TransmitData8(SPI2, input);
 
+	while (!LL_SPI_IsActiveFlag_TXE(SPI2)){};
+	while (!LL_SPI_IsActiveFlag_RXNE(SPI2)){};
+
+	return (LL_SPI_ReceiveData8(SPI2));
+}
+//##################################################################################################################
+// Function for sending and receiving data through SPI
+void SpiFunction(uint8_t *OutputBuff,uint8_t *InputBuff, uint16_t OutNoOfBytes, uint16_t InNoOfBytes)
+{
+	for(uint16_t i=0;i<OutNoOfBytes;i++)
+	{
+    SPI_ExchangeByte(OutputBuff[i]);					// Send data
+	}
+
+	for(uint16_t i=0;i<InNoOfBytes;i++)
+	{
+		InputBuff[i] = SPI_ExchangeByte(0xFF);		// Receive data
+	}
+}
+//##################################################################################################################
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

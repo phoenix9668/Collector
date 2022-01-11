@@ -52,6 +52,18 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+#define	_DEBUG        1 //  use printf debug
+
+#if (_DEBUG == 1)
+#define debug_printf(...)     			printf(__VA_ARGS__)
+#define debug_info(format,...)   		printf("[info] %s() %d "format"\r\n",__func__,__LINE__,##__VA_ARGS__)
+#define debug_error(format,...)  		printf("[error] %s %s()%d "format"\r\n",__FILE__,__func__,__LINE__,##__VA_ARGS__)
+
+#else
+#define debug_printf(...)     			{};
+#define debug_info(format,...)     	{};
+#define debug_error(format,...)    	{};
+#endif
 
 /* USER CODE END ET */
 
@@ -94,7 +106,9 @@ void Error_Handler(void);
 #define GDO2_GPIO_Port GPIOE
 #define GDO2_EXTI_IRQn EXTI1_IRQn
 /* USER CODE BEGIN Private defines */
-
+void SystemInitial(void);
+void ShowMessage(void);
+void ModuleLteReset(void);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

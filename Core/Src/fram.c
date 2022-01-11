@@ -22,9 +22,7 @@
 #include "spi.h"
 #include "gpio.h"
 
-__IO uint8_t MBID_byte1;
-__IO uint8_t MBID_byte2;
-__IO uint16_t INTERVAL;
+__IO uint16_t MainBoardID;
 __IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH] = {0};
 uint8_t FRAM_Data[FRAM_DATA_LENGTH];
 
@@ -161,7 +159,7 @@ void FM25L256Write(uint16_t Address, uint16_t NumberofData, uint8_t *Data)
   @return
          none
 *******************************************************************/
-void FRAM_Ctrl(uint8_t *command)
+void Fram_Ctrl(uint8_t *command)
 {
 	uint16_t i;
 	uint8_t j;
@@ -185,16 +183,12 @@ void FRAM_Ctrl(uint8_t *command)
 		{
 			printf("%x ",FRAM_Data[i]);
 		}
-		printf("\n");
-		printf("Read Complete\n");
+		printf("\nRead Complete\n");
 	}
 	else if(command[4] == 0x03)//print info
 	{
-		Init_RFID_Info();
-		printf("%x ",MBID_byte1);
-		printf("%x ",MBID_byte2);
-		printf("%x ",INTERVAL);
-		printf("\n");
+		Init_Fram_Info();
+		printf("%x\n",MainBoardID);
 		for(i = 0; i < RFID_SUM; i++)
 		{
 			for(j = 0; j < FRAM_DATA_LENGTH; j++)
@@ -204,6 +198,7 @@ void FRAM_Ctrl(uint8_t *command)
 			printf("\n");
 			HAL_Delay(1);
 		}
+		printf("Print Complete\n");
 	}
 	else if(command[4] == 0x04)//erase
 	{
@@ -229,17 +224,14 @@ void FRAM_Ctrl(uint8_t *command)
   @return
          none
 *******************************************************************/
-void Init_RFID_Info(void)
+void Init_Fram_Info(void)
 {
 	uint16_t i;
 	uint8_t j;
 	uint16_t address=0;
 	
 	FM25L256Read(0, FRAM_DATA_LENGTH, FRAM_Data);
-	MBID_byte1 = FRAM_Data[0];
-	MBID_byte2 = FRAM_Data[1];
-	FM25L256Read(FRAM_DATA_LENGTH, FRAM_DATA_LENGTH, FRAM_Data);
-	INTERVAL = (uint16_t)(0xFF00 & FRAM_Data[0]<<8)+(uint16_t)(0x00FF & FRAM_Data[1]);
+	MainBoardID = (uint16_t)(0xFF00 & FRAM_Data[0]<<8)+(uint16_t)(0x00FF & FRAM_Data[1]);
 	
 	for(i = 0; i < RFID_SUM; i++)
 	{

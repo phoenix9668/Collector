@@ -21,6 +21,9 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+lte_usart_rx_dma_index_t lte_usart_rx_dma_index;
+lte_t lte;
+
 #ifdef __GNUC__
 /* With GCC, small printf (option LD Linker->Libraries->Small printf
    set to 'Yes') calls __io_putchar() */
@@ -118,13 +121,6 @@ int fputc(int ch,FILE *f)
 	return ch;
 }
 //##################################################################################################################
-void Activate_USART3_RXIT(void)
-{
-  /* Enable RXNE and Error interrupts */
-  LL_USART_EnableIT_RXNE(_LTE_USART);
-  LL_USART_EnableIT_ERROR(_LTE_USART);
-}
-//##################################################################################################################
 void lte_usart_init(void)
 {
 	LL_DMA_SetPeriphAddress(DMA1, LL_DMA_STREAM_1, (uint32_t)&_LTE_USART->DR);
@@ -202,7 +198,7 @@ bool lte_usart_process_data(const void* data, size_t len, uint8_t mode) {
 /**
  * \brief           Check for new data received with DMA
  */
-void lte_usart_rxCallBack(void) {
+void lte_usart_rx_check(void) {
     static size_t old_pos;
     size_t pos;
 
@@ -215,7 +211,7 @@ void lte_usart_rxCallBack(void) {
             lte_usart_process_data(&lte_usart_rx_dma_buffer[old_pos], pos - old_pos, 1);
         } else {
             /* We are in "overflow" mode */
-            /* First process data to the end of buffer */
+            /* First process data to the end of buffer */\
             lte_usart_process_data(&lte_usart_rx_dma_buffer[old_pos], ARRAY_LEN(lte_usart_rx_dma_buffer) - old_pos, 2);
             /* Check and continue with beginning of buffer */
             if (pos > 0) {
@@ -257,27 +253,6 @@ void lte_usart_send_string(const char* str) {
     lte_usart_send_data((uint8_t*)str, strlen(str));
 }
 //##################################################################################################################
-/**
-  * @brief  Function called from USART IRQ Handler when RXNE flag is set
-  *         Function is in charge of reading character received on USART RX line.
-  * @param  None
-  * @retval None
-  */
-//void USART_CharReception_Callback(void)
-//{
-//  /* Read Received character. RXNE flag is cleared by reading of RDR register */
-//  RxBuffer[RxCounter++] = LL_USART_ReceiveData8(USART3);
-//  /* Echo received character on TX */
-////  LL_USART_TransmitData8(USART3, RxBuffer[RxCounter-1]);
-//	/* Check if received value is corresponding to specific one : S or s */
-//  if (RxBuffer[RxCounter-2] == 0x0D && RxBuffer[RxCounter-1] == 0x0A)
-//  {
-//    /* Clear RxCounter : Expected character has been received */
-//    RxCounter = 0x00;
-//		CommandState = SET;
-//  }
-//}
-//##################################################################################################################
 void MX_USART3_UART_DeInit(void)
 {
   LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -303,7 +278,7 @@ void MX_USART3_UART_DeInit(void)
 	LL_USART_Disable(USART3);
   LL_USART_DeInit(USART3);
 }
-
+//##################################################################################################################
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

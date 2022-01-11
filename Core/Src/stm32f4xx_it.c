@@ -23,6 +23,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "cmsis_os.h"
 #include "usart.h"
 /* USER CODE END Includes */
 
@@ -33,7 +34,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+extern osMessageQId usartRxQueueHandle;
+extern __IO ITStatus rxCatch;
+extern __IO ITStatus txFiFoUnFlow;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,7 +60,6 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern TIM_HandleTypeDef htim6;
 extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
@@ -172,7 +174,7 @@ void EXTI0_IRQHandler(void)
   /* USER CODE END EXTI0_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
   /* USER CODE BEGIN EXTI0_IRQn 1 */
-
+	rxCatch = SET;
   /* USER CODE END EXTI0_IRQn 1 */
 }
 
@@ -186,7 +188,7 @@ void EXTI1_IRQHandler(void)
   /* USER CODE END EXTI1_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_1);
   /* USER CODE BEGIN EXTI1_IRQn 1 */
-
+	txFiFoUnFlow = SET;
   /* USER CODE END EXTI1_IRQn 1 */
 }
 
@@ -198,18 +200,19 @@ void DMA1_Stream1_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
 	/* Events for DMA Stream1 1 = USART DMA RX */
 	/* Check half-transfer complete interrupt */
-	if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_HT3(DMA1))
+	uint32_t d = 1;
+	if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_HT1(DMA1))
 	{
-		LL_DMA_ClearFlag_HT3(DMA1);             /* Clear half-transfer complete flag */
+		LL_DMA_ClearFlag_HT1(DMA1);             /* Clear half-transfer complete flag */
 		lte_usart_rx_dma_index.DMAHTIndex = true;
-		lte_usart_rxCallBack();              		/* Check for data to process */
+		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
 	}
 	/* Check transfer-complete interrupt */
-	if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_TC3(DMA1))
+	if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_TC1(DMA1))
 	{
-		LL_DMA_ClearFlag_TC3(DMA1);             /* Clear transfer complete flag */
+		LL_DMA_ClearFlag_TC1(DMA1);             /* Clear transfer complete flag */
 		lte_usart_rx_dma_index.DMATCIndex = true;
-		lte_usart_rxCallBack();                 /* Check for data to process */
+		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
 	}
   /* USER CODE END DMA1_Stream1_IRQn 0 */
 
@@ -239,31 +242,18 @@ void USART3_IRQHandler(void)
 {
   /* USER CODE BEGIN USART3_IRQn 0 */
 	/* Check for IDLE line interrupt */
+	uint32_t d = 1;
 	if (LL_USART_IsEnabledIT_IDLE(USART3) && LL_USART_IsActiveFlag_IDLE(USART3))
 	{
 		LL_USART_ClearFlag_IDLE(USART3);        /* Clear IDLE line flag */
 		lte_usart_rx_dma_index.UARTIdleIndex = true;
-		lte_usart_rxCallBack();                 /* Check for data to process */
+		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
 		lte.rxIndex = true;
 	}
   /* USER CODE END USART3_IRQn 0 */
   /* USER CODE BEGIN USART3_IRQn 1 */
 
   /* USER CODE END USART3_IRQn 1 */
-}
-
-/**
-  * @brief This function handles TIM6 global interrupt, DAC1 and DAC2 underrun error interrupts.
-  */
-void TIM6_DAC_IRQHandler(void)
-{
-  /* USER CODE BEGIN TIM6_DAC_IRQn 0 */
-
-  /* USER CODE END TIM6_DAC_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim6);
-  /* USER CODE BEGIN TIM6_DAC_IRQn 1 */
-
-  /* USER CODE END TIM6_DAC_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

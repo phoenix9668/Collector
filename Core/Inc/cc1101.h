@@ -18,6 +18,8 @@
 #include "cc1101_reg.h"
 #include "main.h"
 
+#define ACK_LENGTH        256
+#define RECV_LENGTH   		256
 /*===========================================================================
 ----------------------------------macro definitions--------------------------
 ============================================================================*/
@@ -97,6 +99,9 @@ int16_t CC1101ReadRSSI(void);
 
 /*Calc the RSSI value to RSSI dBm*/
 int16_t CC1101CalcRSSI_dBm(uint8_t rssi_dec);
+
+/*waiting receive assign rfid data*/
+uint8_t	RF_Receive(void);
 
 #endif // _CC1101_H_
 

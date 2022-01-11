@@ -23,13 +23,13 @@
 #include "dma.h"
 #include "rtc.h"
 #include "spi.h"
-#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "cc1101.h"
+#include "fram.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,13 +92,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_SPI2_Init();
   MX_USART3_UART_Init();
-  MX_TIM6_Init();
-  MX_DMA_Init();
   MX_RTC_Init();
   /* USER CODE BEGIN 2 */
-
+	SystemInitial();
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in freertos.c) */
@@ -163,7 +162,39 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+//##################################################################################################################
+void SystemInitial(void)
+{
+	ModuleLteReset();
+	lte_usart_init();
+	memset(&lte,0,sizeof(lte));
+	Activate_SPI();
+	Init_Fram_Info();
+	RFIDInitial(0x20, 0x2020, RX_MODE);
+	HAL_Delay(10000);
+	ShowMessage();
+}
+//##################################################################################################################
+void ShowMessage(void)
+{
+	/* Print Open Massage */
+	printf("####################################################################\n");
+	printf("MainBoard Program Start Running\n");
+	printf("Main_Board ID:%x\n",MainBoardID);
+	printf("Using USART3,Configuration:%d 8-N-1\n",115200);
+	printf("USART RX Method: DMA HT & TC + USART IDLE LINE IRQ + RTOS processing\n");
+	printf("####################################################################\n");
+}
+//##################################################################################################################
+void ModuleLteReset(void)
+{
+	MOD_RESET_OFF();
+	HAL_Delay(1000);
+	MOD_RESET_ON();
+	HAL_Delay(5000);
+	lte_usart_send_string("LTE Module Reset Complete\n");
+}
+//##################################################################################################################
 /* USER CODE END 4 */
 
 /**
