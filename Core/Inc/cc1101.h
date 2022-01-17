@@ -18,14 +18,27 @@
 #include "cc1101_reg.h"
 #include "main.h"
 
-#define ACK_LENGTH        256
-#define RECV_LENGTH   		256
 /*===========================================================================
 ----------------------------------macro definitions--------------------------
 ============================================================================*/
-typedef enum { TX_MODE, RX_MODE, IDLE_MODE } TRMODE;
+typedef enum { TX_MODE, RX_MODE, IDLE_MODE, WOR_Mode } TRMODE;
 typedef enum { BROAD_ALL, BROAD_NO, BROAD_0, BROAD_0AND255 } ADDR_MODE;
 typedef enum { BROADCAST, ADDRESS_CHECK} TX_DATA_MODE;
+
+#define _RECV_LENGTH   		256
+#define _SEND_LENGTH     	256
+
+typedef struct
+{
+	uint8_t  recvBuffer[_RECV_LENGTH];
+	uint8_t  sendBuffer[_SEND_LENGTH];
+  uint8_t  length;
+	uint8_t  addr;
+  uint8_t  rssi;
+	int16_t  rssidBm;
+}cc1101_t;
+
+extern cc1101_t cc1101;
 
 /*===========================================================================
 -------------------------------------exported APIs---------------------------
@@ -101,7 +114,7 @@ int16_t CC1101ReadRSSI(void);
 int16_t CC1101CalcRSSI_dBm(uint8_t rssi_dec);
 
 /*waiting receive assign rfid data*/
-uint8_t	RF_Receive(void);
+uint8_t	CC1101RecvHandler(void);
 
 #endif // _CC1101_H_
 

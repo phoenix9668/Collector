@@ -25,7 +25,7 @@
 #define FRAM_DATA_LENGTH	16	// buffer length
 #define RFID_SUM    		2046  // FM25L256 Organized as 32,768 x 8 bits 
 
-extern __IO uint16_t MainBoardID;
+extern __IO uint32_t CollectorID;
 extern __IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH];
 
 void FM25L256WriteEnable(void);
@@ -34,7 +34,7 @@ uint8_t FM25L256ReadStatusRegister(void);
 void FM25L256WriteStatusRegister(uint8_t SendValue);
 void FM25L256Read(uint16_t Address, uint16_t NumberofData, uint8_t *Data);
 void FM25L256Write(uint16_t Address, uint16_t NumberofData, uint8_t *Data);
-void Fram_Ctrl(uint8_t *command);
-void Init_Fram_Info(void);
+void FramCtrl(uint8_t *command);
+void InitFramInfo(void);
 
 #endif

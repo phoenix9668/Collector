@@ -128,6 +128,40 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 
 /* USER CODE BEGIN 1 */
 
+void GetRTC(RTC_TimeTypeDef *sTime, RTC_DateTypeDef *sDate)
+{
+	HAL_RTC_GetTime(&hrtc, sTime, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, sDate, RTC_FORMAT_BIN);
+	debug_printf("%02d/%02d/%02d ",2000+sDate->Year, sDate->Month, sDate->Date);
+	debug_printf("%02d:%02d:%02d\n",sTime->Hours, sTime->Minutes, sTime->Seconds);
+}
+
+void SetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer)
+{
+	RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef sDate = {0};
+  /** Initialize RTC and set the Time and Date
+  */
+  sTime.Hours = timeBuffer[0];
+  sTime.Minutes = timeBuffer[1];
+  sTime.Seconds = timeBuffer[2];
+  sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
+  sTime.StoreOperation = RTC_STOREOPERATION_RESET;
+  if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sDate.WeekDay = dateBuffer[3];
+  sDate.Month = dateBuffer[1];
+  sDate.Date = dateBuffer[2];
+  sDate.Year = dateBuffer[0];
+
+  if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

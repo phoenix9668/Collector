@@ -27,6 +27,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "gpio.h"
+#include "rtc.h"
 #include "usart.h"
 #include "cc1101.h"
 #include "fram.h"
@@ -39,7 +40,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define	_SEND_TO_CLOUD_BUFFERSIZE  256 // tx buffer size
+static uint8_t sendToCloudBuffer[_SEND_TO_CLOUD_BUFFERSIZE];
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -60,7 +62,8 @@ osSemaphoreId rfidInputBinarySemHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+void FunctionCtrl(uint8_t *command);
+void SendToCloud(uint8_t functionID, uint8_t length);
 /* USER CODE END FunctionPrototypes */
 
 void StartUsartRxDmaTask(void const * argument);
@@ -71,6 +74,25 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
 void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+
+/* Hook prototypes */
+void vApplicationIdleHook(void);
+
+/* USER CODE BEGIN 2 */
+__weak void vApplicationIdleHook( void )
+{
+   /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
+   to 1 in FreeRTOSConfig.h. It will be called on each iteration of the idle
+   task. It is essential that code added to this hook function never attempts
+   to block in any way (for example, call xQueueReceive() with a block time
+   specified, or call vTaskDelay()). If the application makes use of the
+   vTaskDelete() API function (as this demo application does) then it is also
+   important that vApplicationIdleHook() is permitted to return to its calling
+   function, because it is the responsibility of the idle task to clean up
+   memory allocated by the kernel to any task that has since been deleted. */
+  SendToCloud(CC1101RecvHandler(),cc1101.length);
+}
+/* USER CODE END 2 */
 
 /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */
 static StaticTask_t xIdleTaskTCBBuffer;
@@ -180,8 +202,9 @@ void StartRFIDInputTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		RF_Receive();
-    osDelay(1);
+		LED_COM_TOG();
+		RFIDInitial(0x00, 0x1234, RX_MODE);
+    osDelay(600000);
   }
   /* USER CODE END StartRFIDInputTask */
 }
@@ -207,12 +230,13 @@ void StartCommandTask(void const * argument)
 
 			if(lte.rxBuffer[0] == 0xE5 && lte.rxBuffer[1] == 0x5E)
 			{
-				debug_printf("fram transfer\n");
-				Fram_Ctrl(lte.rxBuffer);
+				debug_printf("Header Right\n");
+				FramCtrl(lte.rxBuffer);
 			}
-			else if(lte.rxBuffer[0] == (uint8_t)(0xFF & MainBoardID>>8) && lte.rxBuffer[1] == (uint8_t)(0xFF & MainBoardID))
+			else if(lte.rxBuffer[0] == (uint8_t)(0xFF & CollectorID>>24) && lte.rxBuffer[1] == (uint8_t)(0xFF & CollectorID>>16) && lte.rxBuffer[2] == (uint8_t)(0xFF & CollectorID>>8) && lte.rxBuffer[3] == (uint8_t)(0xFF & CollectorID))
 			{
-				debug_printf("start transfer\n");
+				debug_printf("CollectorID Right\n");
+				FunctionCtrl(lte.rxBuffer);
 			}
 			LED_STA_OFF();
 			memset(&lte,0,sizeof(lte));
@@ -225,6 +249,98 @@ void StartCommandTask(void const * argument)
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 
+/*===========================================================================
+* FunctionCtrl(uint8_t *command) => handle PC command                    	* 
+============================================================================*/
+void FunctionCtrl(uint8_t *command)
+{
+	uint8_t timeBuffer[3];
+	uint8_t dateBuffer[4];
+
+	/*A8:configure time information*/
+	/*A9:read time information*/
+	if(command[4] == 0xA8)
+	{
+		for(uint8_t i=0; i<3; i++)
+		{	timeBuffer[i] = command[9+i];}
+		for(uint8_t i=0; i<4; i++)
+		{	dateBuffer[i] = command[5+i];}
+
+		SetRTC(timeBuffer, dateBuffer);
+		SendToCloud(command[4], 12);
+	}
+	else if(command[4] == 0xA9)
+	{
+		SendToCloud(command[4], 12);
+	}
+	else
+		debug_printf("FunctionID Unused\n");
+}
+
+/*===========================================================================
+* void SendToCloud(uint8_t functionID, uint8_t length) => send data to cloud* 
+============================================================================*/
+void SendToCloud(uint8_t functionID, uint8_t length)
+{
+	RTC_TimeTypeDef sTime = {0};
+	RTC_DateTypeDef sDate = {0};
+
+	if(functionID == 0xD0)
+	{
+		GetRTC(&sTime, &sDate);
+		sendToCloudBuffer[0] = (uint8_t)(0xFF & CollectorID>>24);
+    sendToCloudBuffer[1] = (uint8_t)(0xFF & CollectorID>>16);
+    sendToCloudBuffer[2] = (uint8_t)(0xFF & CollectorID>>8);
+    sendToCloudBuffer[3] = (uint8_t)(0xFF & CollectorID);
+		sendToCloudBuffer[4] = 0xB0;
+		for(uint8_t i=0;i<length;i++)
+		{
+			sendToCloudBuffer[5+i] = cc1101.recvBuffer[i];
+		}
+		sendToCloudBuffer[length+5] = cc1101.rssi;
+		sendToCloudBuffer[length+6] = sDate.Year;
+		sendToCloudBuffer[length+7] = sDate.Month;
+		sendToCloudBuffer[length+8] = sDate.Date;
+		sendToCloudBuffer[length+9] = sDate.WeekDay;
+		sendToCloudBuffer[length+10] = sTime.Hours;
+		sendToCloudBuffer[length+11] = sTime.Minutes;
+		sendToCloudBuffer[length+12] = sTime.Seconds;
+		
+    lte_usart_send_data(sendToCloudBuffer,length+13);
+//		for(uint8_t i=0; i<length+1; i++)
+//		{
+//			printf("%x ",sendToCloudBuffer[i]);
+//		}
+//		printf("\n");
+	}
+	else if(functionID == 0xA8 || functionID == 0xA9)
+	{
+		GetRTC(&sTime, &sDate);
+		sendToCloudBuffer[0] = (uint8_t)(0xFF & CollectorID>>24);
+    sendToCloudBuffer[1] = (uint8_t)(0xFF & CollectorID>>16);
+    sendToCloudBuffer[2] = (uint8_t)(0xFF & CollectorID>>8);
+    sendToCloudBuffer[3] = (uint8_t)(0xFF & CollectorID);		
+		sendToCloudBuffer[4] = 0xB0 + (0x0F & functionID);
+		sendToCloudBuffer[5] = sDate.Year;
+		sendToCloudBuffer[6] = sDate.Month;
+		sendToCloudBuffer[7] = sDate.Date;
+		sendToCloudBuffer[8] = sDate.WeekDay;
+		sendToCloudBuffer[9] = sTime.Hours;
+		sendToCloudBuffer[10] = sTime.Minutes;
+		sendToCloudBuffer[11] = sTime.Seconds;
+
+    lte_usart_send_data(sendToCloudBuffer,length);
+	}
+	else if(functionID == 0x01)
+	{	printf("receive error or Address Filtering fail\n");}
+	else if(functionID == 0x02)
+	{	printf("RFID receive crc error\r\n");}
+	else if(functionID == 0x03)
+	{	printf("RFID receive function order error\r\n");}
+	else if(functionID == 0x04)
+	{	printf("RFID receive RFID code error\r\n");}
+
+}
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

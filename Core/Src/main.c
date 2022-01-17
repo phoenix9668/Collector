@@ -169,7 +169,7 @@ void SystemInitial(void)
 	lte_usart_init();
 	memset(&lte,0,sizeof(lte));
 	Activate_SPI();
-	Init_Fram_Info();
+	InitFramInfo();
 	RFIDInitial(0x20, 0x2020, RX_MODE);
 	HAL_Delay(10000);
 	ShowMessage();
@@ -179,8 +179,8 @@ void ShowMessage(void)
 {
 	/* Print Open Massage */
 	printf("####################################################################\n");
-	printf("MainBoard Program Start Running\n");
-	printf("Main_Board ID:%x\n",MainBoardID);
+	printf("Collector Program Start Running\n");
+	printf("CollectorID:%x\n",CollectorID);
 	printf("Using USART3,Configuration:%d 8-N-1\n",115200);
 	printf("USART RX Method: DMA HT & TC + USART IDLE LINE IRQ + RTOS processing\n");
 	printf("####################################################################\n");

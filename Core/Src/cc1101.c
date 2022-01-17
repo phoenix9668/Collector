@@ -14,11 +14,12 @@
 #include "usart.h"
 #include "spi.h"
 #include "gpio.h"
+#include "fram.h"
 
-uint8_t recvBuffer[RECV_LENGTH] = {0};
-uint8_t ackBuffer[ACK_LENGTH] = {0};
+extern __IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH];
 //10, 7, 5, 0, -5, -10, -15, -20, dbm output power
 uint8_t PaTabel[]={0xC0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};
+cc1101_t cc1101;
 __IO ITStatus rxCatch = RESET;
 __IO ITStatus txFiFoUnFlow;
 
@@ -298,10 +299,14 @@ void CC1101Reset(void)
 {
     CC1101_CSN_HIGH();
     CC1101_CSN_LOW();
+		for(uint16_t i=0; i<10; i++){}
     CC1101_CSN_HIGH();
-    for(uint16_t i=0; i<1000; i++);
+    for(uint16_t i=0; i<500; i++){}//40us
+		CC1101_CSN_LOW();
+		for(uint16_t i=0; i<10; i++){}
+		while(CC1101_MISO_READ()){}
     CC1101WriteCmd(CC1101_SRES);
-    for(uint16_t i=0; i<1000; i++);
+    for(uint16_t i=0; i<500; i++){}
 }
 /*
 ================================================================================
@@ -518,8 +523,9 @@ void CC1101Init(uint8_t addr, uint16_t sync)
 		HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 		HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
-    debug_printf("CC1101_PARTNUM = %d ",CC1101ReadStatus(CC1101_PARTNUM));//for test, must be 0x00
-    debug_printf("CC1101_VERSION = %d ",CC1101ReadStatus(CC1101_VERSION));//for test, refer to the datasheet,must be 0x14
+    memset(&cc1101, 0, sizeof(cc1101));
+//		debug_printf("CC1101_PKTCTRL1 = %d\n",CC1101ReadStatus(CC1101_PARTNUM));//for test, must be 0x00
+//		debug_printf("CC1101_VERSION = %d\n",CC1101ReadStatus(CC1101_VERSION));//for test, refer to the datasheet,must be 0x14
 }
 /*
 ================================================================================
@@ -537,6 +543,8 @@ void RFIDInitial(uint8_t addr, uint16_t sync, TRMODE mode)
 	else if(mode == TX_MODE)
 	{	CC1101SetTRMode(TX_MODE);}
 	else if(mode == IDLE_MODE)
+	{CC1101SetIdle();}
+	else if(mode == WOR_Mode)
 	{
 		CC1101SetIdle();
 		CC1101WORInit();
@@ -585,134 +593,44 @@ int16_t CC1101CalcRSSI_dBm(uint8_t rssi_dec)
 	return rssi_dBm;
 }
 /*===========================================================================
-* RF_Receive(void) => waiting receive assign rfid data 			                * 
+* CC1101RecvHandler(void) => waiting receive assign rfid data 			        * 
 ============================================================================*/
-uint8_t	RF_Receive(void)
+uint8_t	CC1101RecvHandler(void)
 {
-	int16_t rssi_dBm;
-	uint8_t length;
-	uint8_t	ChipAddr;
-	uint8_t	RSSI;
-	
 	if(rxCatch == SET)
 	{
 		/*##-1- Reset transmission flag ###################################*/
 		rxCatch = RESET;
 		txFiFoUnFlow = RESET;
 		/*##-2- clear array ###################################*/
-		for (uint16_t i=0; i<RECV_LENGTH; i++)
-		{ recvBuffer[i] = 0;}
+		for (uint16_t i=0; i<sizeof(cc1101.recvBuffer); i++)
+		{ cc1101.recvBuffer[i] = 0;}
 		/*##-3- Wait for the trigger of the threshold ###################################*/ 
 		while (txFiFoUnFlow != SET && rxCatch != SET){}
-		length = CC1101RecPacket(recvBuffer, &ChipAddr, &RSSI);
+		cc1101.length = CC1101RecPacket(cc1101.recvBuffer, &cc1101.addr, &cc1101.rssi);
 
-		rssi_dBm = CC1101CalcRSSI_dBm(RSSI);
-		debug_printf("RSSI = %ddBm, length = %d, address = %d, ",rssi_dBm,length,ChipAddr);
-		rssi_dBm = CC1101CalcRSSI_dBm(recvBuffer[length-1]);
-		debug_printf("RFID RSSI = %ddBm\n",rssi_dBm);
-		for(uint8_t i=0; i<length; i++)
-		{	debug_printf("%x ",recvBuffer[i]);}
+		cc1101.rssidBm = CC1101CalcRSSI_dBm(cc1101.rssi);
+		debug_printf("RSSI = %ddBm, length = %d, address = %d, ",cc1101.rssidBm,cc1101.length,cc1101.addr);
+		cc1101.rssidBm = CC1101CalcRSSI_dBm(cc1101.recvBuffer[cc1101.length-1]);
+		debug_printf("RFID RSSI = %ddBm\n",cc1101.rssidBm);
+
+		for(uint8_t i=0; i<cc1101.length; i++)
+		{	debug_printf("%x ",cc1101.recvBuffer[i]);}
 		debug_printf("\r\n");
 		
 		/* Reset transmission flag */
 		rxCatch = RESET;
 		
-		if(length == 0)
+		if(cc1101.length == 0)
 		{	return 0x01;}
-		else if(length == 1)
+		else if(cc1101.length == 1)
 		{	return 0x02;}
-		else if(recvBuffer[2] == 0xD0)
-		{	return recvBuffer[2];}
+		else if(cc1101.recvBuffer[2] == 0xD0)
+		{	return cc1101.recvBuffer[2];}
 	}
 	
 	return 0x00;
 }
-
-/**
-  * @brief  Reply_PC(uint8_t ack, uint8_t length).
-  * @retval None
-  */
-//void Reply_PC(uint8_t ack, uint8_t length)
-//{
-//	RTC_TimeTypeDef sTime = {0};
-//	RTC_DateTypeDef sDate = {0};
-//		
-//	if(ack == 0xD0)
-//	{
-//		#ifdef DEBUG
-//			GetRTC(&sTime, &sDate);
-//		#endif
-//		for(uint8_t i=0;i<length;i++)
-//		{
-//			ackBuffer[i] = recvBuffer[i];
-//		}
-//		ackBuffer[2] = 0xB0 + (0x0F & recvBuffer[2]);
-//		ackBuffer[length] = RSSI;
-//		ackBuffer[length+1] = sDate.Year;
-//		ackBuffer[length+2] = sDate.Month;
-//		ackBuffer[length+3] = sDate.Date;
-//		ackBuffer[length+4] = sDate.WeekDay;
-//		ackBuffer[length+5] = sTime.Hours;
-//		ackBuffer[length+6] = sTime.Minutes;
-//		ackBuffer[length+7] = sTime.Seconds;
-//		for(uint8_t i=0; i<length+1; i++)
-//		{
-//			printf("%x ",ackBuffer[i]);
-//		}
-//		printf("\n");
-//	}
-//	else if(ack == 0xA8 || ack == 0xA9)
-//	{
-//		GetRTC(&sTime, &sDate);
-//		for(uint8_t i=0;i<2;i++)
-//		{
-//			ackBuffer[i] = recvBuffer[i];
-//		}
-//		ackBuffer[2] = 0xB0 + (0x0F & recvBuffer[2]);
-//		ackBuffer[3] = sDate.Year;
-//		ackBuffer[4] = sDate.Month;
-//		ackBuffer[5] = sDate.Date;
-//		ackBuffer[6] = sDate.WeekDay;
-//		ackBuffer[7] = sTime.Hours;
-//		ackBuffer[8] = sTime.Minutes;
-//		ackBuffer[9] = sTime.Seconds;
-//		for(uint8_t i=0; i<length; i++)
-//		{
-//			printf("%x ",ackBuffer[i]);
-//		}
-//		printf("\n");
-//	}
-//	else if(ack == 0xE1 || ack == 0xE2 || ack == 0xE3)
-//	{
-//		GetRTC(&sTime, &sDate);
-//		for(uint8_t i=0;i<length;i++)
-//		{
-//			ackBuffer[i] = recvBuffer[i];
-//		}
-//		ackBuffer[length] = RSSI;
-//		ackBuffer[length+1] = sDate.Year;
-//		ackBuffer[length+2] = sDate.Month;
-//		ackBuffer[length+3] = sDate.Date;
-//		ackBuffer[length+4] = sDate.WeekDay;
-//		ackBuffer[length+5] = sTime.Hours;
-//		ackBuffer[length+6] = sTime.Minutes;
-//		ackBuffer[length+7] = sTime.Seconds;
-//		for(uint8_t i=0; i<length+8; i++)
-//		{
-//			printf("%x ",ackBuffer[i]);
-//		}
-//		printf("\n");
-//	}
-//	else if(ack == 0x01)
-//	{	printf("receive error or Address Filtering fail\n");}
-//	else if(ack == 0x02)
-//	{	printf("RFID receive crc error\r\n");}
-//	else if(ack == 0x03)
-//	{	printf("RFID receive function order error\r\n");}
-//	else if(ack == 0x04)
-//	{	printf("RFID receive RFID code error\r\n");}
-
-//}
 /*================================================================================
 ------------------------------------THE END-------------------------------------
 ================================================================================*/

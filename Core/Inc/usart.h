@@ -34,7 +34,7 @@ extern "C" {
 /* USER CODE BEGIN Private defines */
 //##################################################################################################################
 #define _LTE_USART         USART3
-#define	_LTE_RXSIZE        128    //  GPS-command rx buffer size
+#define	_LTE_RXSIZE        128    //  LTE-command rx buffer size
 //##################################################################################################################
 /**
  * \brief           Calculate length of statically allocated array

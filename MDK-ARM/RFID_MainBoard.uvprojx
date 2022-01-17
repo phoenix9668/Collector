@@ -196,7 +196,7 @@
             <RoSelD>3</RoSelD>
             <RwSelD>4</RwSelD>
             <CodeSel>0</CodeSel>
-            <OptFeed>0</OptFeed>
+            <OptFeed>1</OptFeed>
             <NoZi1>0</NoZi1>
             <NoZi2>0</NoZi2>
             <NoZi3>0</NoZi3>
@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>USE_FULL_LL_DRIVER,USE_HAL_DRIVER,STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;     ../Drivers/STM32F4xx_HAL_Driver/Inc;     ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;     ../Middlewares/Third_Party/FreeRTOS/Source/include;     ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;     ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;     ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;     ../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Core/Inc;       ../Drivers/STM32F4xx_HAL_Driver/Inc;       ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;       ../Middlewares/Third_Party/FreeRTOS/Source/include;       ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;       ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;       ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;       ../Drivers/CMSIS/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -397,6 +397,11 @@
               <FileName>fram.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Core\Src\fram.c</FilePath>
+            </File>
+            <File>
+              <FileName>cc1101.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\cc1101.c</FilePath>
             </File>
             <File>
               <FileName>main.c</FileName>
@@ -498,11 +503,6 @@
               <FileName>stm32f4xx_hal_timebase_tim.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32f4xx_hal_timebase_tim.c</FilePath>
-            </File>
-            <File>
-              <FileName>cc1101.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Core\Src\cc1101.c</FilePath>
             </File>
           </Files>
         </Group>

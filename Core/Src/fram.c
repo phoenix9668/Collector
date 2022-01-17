@@ -22,7 +22,7 @@
 #include "spi.h"
 #include "gpio.h"
 
-__IO uint16_t MainBoardID;
+__IO uint32_t CollectorID;
 __IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH] = {0};
 uint8_t FRAM_Data[FRAM_DATA_LENGTH];
 
@@ -152,92 +152,89 @@ void FM25L256Write(uint16_t Address, uint16_t NumberofData, uint8_t *Data)
 }
 
 /*******************************************************************
-  @brief FRAM_Ctrl(uint8_t *command)
+  @brief FRAMCtrl(uint8_t *command)
          through commamd control FM25L256
   @param
 				 uint8_t *command:     	control command
   @return
          none
 *******************************************************************/
-void Fram_Ctrl(uint8_t *command)
+void FramCtrl(uint8_t *command)
 {
-	uint16_t i;
-	uint8_t j;
 	uint16_t address;
 	
-	address = (uint16_t)(0xFF00 & command[2]<<8)+(uint16_t)(0x00FF & command[3]);
-	for(i = 0; i < FRAM_DATA_LENGTH; i++)
+	address = (uint16_t)(0xFF00 & command[3]<<8)+(uint16_t)(0x00FF & command[4]);
+	for(uint16_t i = 0; i < FRAM_DATA_LENGTH; i++)
 	{
 		FRAM_Data[i] = command[i+5];
 	}
-	if(command[4] == 0x01)//write
+	if(command[2] == 0x01)//write
 	{
 		FM25L256WriteEnable();
 		FM25L256Write(address, FRAM_DATA_LENGTH, FRAM_Data);
-		printf("Write Complete\n");
+		printf("Write Memory Complete\n");
 	}
-	else if(command[4] == 0x02)//read
+	else if(command[2] == 0x02)//read
 	{
 		FM25L256Read(address, FRAM_DATA_LENGTH, FRAM_Data);
-		for(i = 0; i < FRAM_DATA_LENGTH; i++)
+		for(uint16_t i = 0; i < FRAM_DATA_LENGTH; i++)
 		{
 			printf("%x ",FRAM_Data[i]);
 		}
-		printf("\nRead Complete\n");
+		printf("\nRead Memory Complete\n");
 	}
-	else if(command[4] == 0x03)//print info
+	else if(command[2] == 0x03)//erase
 	{
-		Init_Fram_Info();
-		printf("%x\n",MainBoardID);
-		for(i = 0; i < RFID_SUM; i++)
+		for(uint16_t i = 0; i < FRAM_DATA_LENGTH; i++)
 		{
-			for(j = 0; j < FRAM_DATA_LENGTH; j++)
+			FRAM_Data[i] = 0;
+		}
+		for(uint16_t i = 0; i < RFID_SUM; i++)
+		{
+			address = FRAM_DATA_LENGTH*i;
+			FM25L256WriteEnable();
+			FM25L256Write(address, FRAM_DATA_LENGTH, FRAM_Data);
+		}
+		printf("Erase ALL Memory Complete\n");
+	}
+	else if(command[2] == 0x04)//print info
+	{
+		InitFramInfo();
+		printf("%x\n",CollectorID);
+		for(uint16_t i = 0; i < RFID_SUM; i++)
+		{
+			for(uint8_t j = 0; j < FRAM_DATA_LENGTH; j++)
 			{
 				printf("%x ",RFID_init[i][j]);
 			}
 			printf("\n");
 			HAL_Delay(1);
 		}
-		printf("Print Complete\n");
+		printf("Print Memory Complete\n");
 	}
-	else if(command[4] == 0x04)//erase
-	{
-		for(i = 0; i < FRAM_DATA_LENGTH; i++)
-		{
-			FRAM_Data[i] = 0;
-		}
-		for(i = 0; i < RFID_SUM; i++)
-		{
-			address = FRAM_DATA_LENGTH*i;
-			FM25L256WriteEnable();
-			FM25L256Write(address, FRAM_DATA_LENGTH, FRAM_Data);
-		}
-		printf("Erase Complete\n");
-	}
+
 }
 
 /*******************************************************************
-  @brief Init_ID_Info(void)
+  @brief InitFramInfo(void)
          initial ID infomation
   @param
 				 none
   @return
          none
 *******************************************************************/
-void Init_Fram_Info(void)
+void InitFramInfo(void)
 {
-	uint16_t i;
-	uint8_t j;
 	uint16_t address=0;
 	
 	FM25L256Read(0, FRAM_DATA_LENGTH, FRAM_Data);
-	MainBoardID = (uint16_t)(0xFF00 & FRAM_Data[0]<<8)+(uint16_t)(0x00FF & FRAM_Data[1]);
+	CollectorID = (uint32_t)(0xFF000000 & FRAM_Data[0]<<24)+(uint32_t)(0x00FF0000 & FRAM_Data[1]<<16)+(uint32_t)(0x0000FF00 & FRAM_Data[2]<<8)+(uint32_t)(0x000000FF & FRAM_Data[3]);
 	
-	for(i = 0; i < RFID_SUM; i++)
+	for(uint16_t i = 0; i < RFID_SUM; i++)
 	{
 		address = FRAM_DATA_LENGTH*(i+2);
 		FM25L256Read(address, FRAM_DATA_LENGTH, FRAM_Data);
-		for(j = 0; j < FRAM_DATA_LENGTH; j++)
+		for(uint8_t j = 0; j < FRAM_DATA_LENGTH; j++)
 		{
 			RFID_init[i][j] = FRAM_Data[j];
 		}
