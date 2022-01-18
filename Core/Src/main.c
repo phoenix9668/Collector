@@ -170,7 +170,7 @@ void SystemInitial(void)
 	memset(&lte,0,sizeof(lte));
 	Activate_SPI();
 	InitFramInfo();
-	RFIDInitial(0x20, 0x2020, RX_MODE);
+	RFIDInitial(0x00, 0x1234, RX_MODE);
 	HAL_Delay(10000);
 	ShowMessage();
 }

@@ -299,14 +299,14 @@ void CC1101Reset(void)
 {
     CC1101_CSN_HIGH();
     CC1101_CSN_LOW();
-		for(uint16_t i=0; i<10; i++){}
+		HAL_Delay(1);
     CC1101_CSN_HIGH();
-    for(uint16_t i=0; i<500; i++){}//40us
+    HAL_Delay(1);//>40us
 		CC1101_CSN_LOW();
-		for(uint16_t i=0; i<10; i++){}
+		HAL_Delay(1);
 		while(CC1101_MISO_READ()){}
     CC1101WriteCmd(CC1101_SRES);
-    for(uint16_t i=0; i<500; i++){}
+    HAL_Delay(1);
 }
 /*
 ================================================================================
@@ -610,9 +610,7 @@ uint8_t	CC1101RecvHandler(void)
 		cc1101.length = CC1101RecPacket(cc1101.recvBuffer, &cc1101.addr, &cc1101.rssi);
 
 		cc1101.rssidBm = CC1101CalcRSSI_dBm(cc1101.rssi);
-		debug_printf("RSSI = %ddBm, length = %d, address = %d, ",cc1101.rssidBm,cc1101.length,cc1101.addr);
-		cc1101.rssidBm = CC1101CalcRSSI_dBm(cc1101.recvBuffer[cc1101.length-1]);
-		debug_printf("RFID RSSI = %ddBm\n",cc1101.rssidBm);
+		debug_printf("RSSI = %ddBm, length = %d, address = %d\n",cc1101.rssidBm,cc1101.length,cc1101.addr);
 
 		for(uint8_t i=0; i<cc1101.length; i++)
 		{	debug_printf("%x ",cc1101.recvBuffer[i]);}
@@ -620,13 +618,14 @@ uint8_t	CC1101RecvHandler(void)
 		
 		/* Reset transmission flag */
 		rxCatch = RESET;
+		CC1101SetTRMode(RX_MODE);
 		
 		if(cc1101.length == 0)
 		{	return 0x01;}
 		else if(cc1101.length == 1)
 		{	return 0x02;}
-		else if(cc1101.recvBuffer[2] == 0xD0)
-		{	return cc1101.recvBuffer[2];}
+		else if(cc1101.recvBuffer[0] == 0x30)
+		{	return 0x30;}
 	}
 	
 	return 0x00;

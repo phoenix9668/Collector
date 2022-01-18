@@ -52,7 +52,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-#define	_DEBUG        1 //  use printf debug
+#define	_DEBUG    0 //  use printf debug
 
 #if (_DEBUG == 1)
 #define debug_printf(...)     			printf(__VA_ARGS__)

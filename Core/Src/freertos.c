@@ -41,6 +41,9 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define	_SEND_TO_CLOUD_BUFFERSIZE  256 // tx buffer size
+#define	_COLLECTOR_ID_SIZE         4   // collectorID size
+#define	_FUNCTION_ID_SIZE          1   // functionID size
+#define	_UTC_TIME_SIZE             7   // UTC time size
 static uint8_t sendToCloudBuffer[_SEND_TO_CLOUD_BUFFERSIZE];
 /* USER CODE END PD */
 
@@ -267,11 +270,11 @@ void FunctionCtrl(uint8_t *command)
 		{	dateBuffer[i] = command[5+i];}
 
 		SetRTC(timeBuffer, dateBuffer);
-		SendToCloud(command[4], 12);
+		SendToCloud(command[4], _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE);
 	}
 	else if(command[4] == 0xA9)
 	{
-		SendToCloud(command[4], 12);
+		SendToCloud(command[4], _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE);
 	}
 	else
 		debug_printf("FunctionID Unused\n");
@@ -285,7 +288,7 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 	RTC_TimeTypeDef sTime = {0};
 	RTC_DateTypeDef sDate = {0};
 
-	if(functionID == 0xD0)
+	if(functionID == 0x30)
 	{
 		GetRTC(&sTime, &sDate);
 		sendToCloudBuffer[0] = (uint8_t)(0xFF & CollectorID>>24);
@@ -306,12 +309,11 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 		sendToCloudBuffer[length+11] = sTime.Minutes;
 		sendToCloudBuffer[length+12] = sTime.Seconds;
 		
-    lte_usart_send_data(sendToCloudBuffer,length+13);
-//		for(uint8_t i=0; i<length+1; i++)
-//		{
-//			printf("%x ",sendToCloudBuffer[i]);
-//		}
-//		printf("\n");
+    lte_usart_send_data((uint8_t*)sendToCloudBuffer,_COLLECTOR_ID_SIZE + length + 1 + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE);
+		
+		for(uint8_t i=0; i<_COLLECTOR_ID_SIZE + length + 1 + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE; i++){
+			debug_printf("%x ",sendToCloudBuffer[i]);}
+		debug_printf("\n");
 	}
 	else if(functionID == 0xA8 || functionID == 0xA9)
 	{
@@ -332,13 +334,9 @@ void SendToCloud(uint8_t functionID, uint8_t length)
     lte_usart_send_data(sendToCloudBuffer,length);
 	}
 	else if(functionID == 0x01)
-	{	printf("receive error or Address Filtering fail\n");}
+	{	debug_printf("receive error or address filtering fail\r\n");}
 	else if(functionID == 0x02)
-	{	printf("RFID receive crc error\r\n");}
-	else if(functionID == 0x03)
-	{	printf("RFID receive function order error\r\n");}
-	else if(functionID == 0x04)
-	{	printf("RFID receive RFID code error\r\n");}
+	{	debug_printf("rfid receive crc error\r\n");}
 
 }
 /* USER CODE END Application */
