@@ -32,6 +32,7 @@ typedef struct
 {
 	uint8_t  recvBuffer[_RECV_LENGTH];
 	uint8_t  sendBuffer[_SEND_LENGTH];
+	uint32_t crcValue;
   uint8_t  length;
 	uint8_t  addr;
   uint8_t  rssi;

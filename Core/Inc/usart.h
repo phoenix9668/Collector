@@ -47,21 +47,11 @@ extern "C" {
  */
 static uint8_t lte_usart_rx_dma_buffer[_LTE_RXSIZE];
 
-typedef struct 
-{
-	bool      UARTIdleIndex;
-	bool      DMAHTIndex;
-	bool      DMATCIndex;
-	
-}lte_usart_rx_dma_index_t;
-
-extern lte_usart_rx_dma_index_t lte_usart_rx_dma_index;
 //##################################################################################################################
 typedef struct 
 {
   uint8_t   rxBuffer[_LTE_RXSIZE];
 	uint16_t	rxCounter;
-	bool      rxIndex;
 }lte_t;
 
 extern lte_t lte;

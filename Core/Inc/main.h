@@ -64,6 +64,8 @@ extern "C" {
 #define debug_info(format,...)     	{};
 #define debug_error(format,...)    	{};
 #endif
+	
+#define	_Error_Handler(__FILE__, __LINE__)	printf("[error] %s %d \r\n",__FILE__,__LINE__)
 
 /* USER CODE END ET */
 
@@ -109,6 +111,8 @@ void Error_Handler(void);
 void SystemInitial(void);
 void ShowMessage(void);
 void ModuleLteReset(void);
+void strcatArray(uint8_t *dest, uint8_t *src, uint8_t position, uint8_t srclength);
+void LED_Blinking(uint32_t Period);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

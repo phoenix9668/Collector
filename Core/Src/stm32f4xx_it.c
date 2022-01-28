@@ -24,7 +24,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "cmsis_os.h"
-#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,9 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-extern osMessageQId usartRxQueueHandle;
-extern __IO ITStatus rxCatch;
-extern __IO ITStatus txFiFoUnFlow;
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,7 +43,13 @@ extern __IO ITStatus txFiFoUnFlow;
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern __IO ITStatus rxCatch;
+extern __IO ITStatus txFiFoUnFlow;
+extern osMessageQId usartRxQueueHandle;
+extern osSemaphoreId rxBufferBinarySemHandle;
+extern osSemaphoreId usartIdleBinarySemHandle;
+extern osSemaphoreId dmaHTBinarySemHandle;
+extern osSemaphoreId dmaTCBinarySemHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -204,14 +207,14 @@ void DMA1_Stream1_IRQHandler(void)
 	if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_HT1(DMA1))
 	{
 		LL_DMA_ClearFlag_HT1(DMA1);             /* Clear half-transfer complete flag */
-		lte_usart_rx_dma_index.DMAHTIndex = true;
+		osSemaphoreRelease(dmaHTBinarySemHandle);
 		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
 	}
 	/* Check transfer-complete interrupt */
 	if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_TC1(DMA1))
 	{
 		LL_DMA_ClearFlag_TC1(DMA1);             /* Clear transfer complete flag */
-		lte_usart_rx_dma_index.DMATCIndex = true;
+		osSemaphoreRelease(dmaTCBinarySemHandle);
 		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
 	}
   /* USER CODE END DMA1_Stream1_IRQn 0 */
@@ -246,9 +249,9 @@ void USART3_IRQHandler(void)
 	if (LL_USART_IsEnabledIT_IDLE(USART3) && LL_USART_IsActiveFlag_IDLE(USART3))
 	{
 		LL_USART_ClearFlag_IDLE(USART3);        /* Clear IDLE line flag */
-		lte_usart_rx_dma_index.UARTIdleIndex = true;
+		osSemaphoreRelease(usartIdleBinarySemHandle);
 		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
-		lte.rxIndex = true;
+		osSemaphoreRelease(rxBufferBinarySemHandle);
 	}
   /* USER CODE END USART3_IRQn 0 */
   /* USER CODE BEGIN USART3_IRQn 1 */

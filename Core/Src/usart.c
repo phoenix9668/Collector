@@ -21,7 +21,10 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-lte_usart_rx_dma_index_t lte_usart_rx_dma_index;
+#include "cmsis_os.h"
+extern osSemaphoreId usartIdleBinarySemHandle;
+extern osSemaphoreId dmaHTBinarySemHandle;
+extern osSemaphoreId dmaTCBinarySemHandle;
 lte_t lte;
 
 #ifdef __GNUC__
@@ -159,19 +162,19 @@ void lte_usart_deinit(void)
  */
 bool lte_usart_process_data(const void* data, size_t len, uint8_t mode) {
 	const uint8_t* d = data;
-	if ((mode == 1) && (lte_usart_rx_dma_index.DMAHTIndex == true)){
+	if ((mode == 1) && (osSemaphoreWait(dmaHTBinarySemHandle, 0) == osOK)){
 		for (uint8_t i=0; i<len; i++, ++d)
 				lte.rxBuffer[i] = *d;
 		lte.rxCounter += len;
 		return true;
 	}
-	if ((mode == 2) && (lte_usart_rx_dma_index.DMATCIndex == true)){
+	if ((mode == 2) && (osSemaphoreWait(dmaTCBinarySemHandle, 0) == osOK)){
 		for (uint8_t i=0; i<len; i++, ++d)
 				lte.rxBuffer[i] = *d;
 		lte.rxCounter += len;
 		return true;
 	}
-	if (lte_usart_rx_dma_index.UARTIdleIndex == true){
+	if (osSemaphoreWait(usartIdleBinarySemHandle, 0) == osOK){
 		if (mode == 1){
 			if (lte.rxCounter == 0){
 				for (uint8_t i=0; i<len; i++, ++d)
@@ -219,7 +222,6 @@ void lte_usart_rx_check(void) {
             }
         }
         old_pos = pos;                          /* Save current position as old */
-				memset(&lte_usart_rx_dma_index,0,sizeof(lte_usart_rx_dma_index));
     }
 }
 //##################################################################################################################

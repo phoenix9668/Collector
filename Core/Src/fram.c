@@ -172,16 +172,16 @@ void FramCtrl(uint8_t *command)
 	{
 		FM25L256WriteEnable();
 		FM25L256Write(address, FRAM_DATA_LENGTH, FRAM_Data);
-		printf("Write Memory Complete\n");
+		printf("Write Memory Complete\r\n");
 	}
 	else if(command[2] == 0x02)//read
 	{
 		FM25L256Read(address, FRAM_DATA_LENGTH, FRAM_Data);
 		for(uint16_t i = 0; i < FRAM_DATA_LENGTH; i++)
 		{
-			printf("%x ",FRAM_Data[i]);
+			printf("%02x",FRAM_Data[i]);
 		}
-		printf("\nRead Memory Complete\n");
+		printf("\nRead Memory Complete\r\n");
 	}
 	else if(command[2] == 0x03)//erase
 	{
@@ -195,22 +195,22 @@ void FramCtrl(uint8_t *command)
 			FM25L256WriteEnable();
 			FM25L256Write(address, FRAM_DATA_LENGTH, FRAM_Data);
 		}
-		printf("Erase ALL Memory Complete\n");
+		printf("Erase All Memory Complete\r\n");
 	}
 	else if(command[2] == 0x04)//print info
 	{
 		InitFramInfo();
-		printf("%x\n",CollectorID);
+		printf("CollectorID:%x\n",CollectorID);
 		for(uint16_t i = 0; i < RFID_SUM; i++)
 		{
 			for(uint8_t j = 0; j < FRAM_DATA_LENGTH; j++)
 			{
-				printf("%x ",RFID_init[i][j]);
+				printf("%02x",RFID_init[i][j]);
 			}
 			printf("\n");
 			HAL_Delay(1);
 		}
-		printf("Print Memory Complete\n");
+		printf("\nPrint Memory Complete\r\n");
 	}
 
 }

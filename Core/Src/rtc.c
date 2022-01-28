@@ -128,12 +128,24 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 
 /* USER CODE BEGIN 1 */
 
-void GetRTC(RTC_TimeTypeDef *sTime, RTC_DateTypeDef *sDate)
+void GetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer)
 {
-	HAL_RTC_GetTime(&hrtc, sTime, RTC_FORMAT_BIN);
-	HAL_RTC_GetDate(&hrtc, sDate, RTC_FORMAT_BIN);
-	debug_printf("%02d/%02d/%02d ",2000+sDate->Year, sDate->Month, sDate->Date);
-	debug_printf("%02d:%02d:%02d\n",sTime->Hours, sTime->Minutes, sTime->Seconds);
+	RTC_TimeTypeDef sTime = {0};
+	RTC_DateTypeDef sDate = {0};
+	
+	HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+	HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+	
+  timeBuffer[0] = sTime.Hours;
+  timeBuffer[1] = sTime.Minutes;
+  timeBuffer[2] = sTime.Seconds;
+  dateBuffer[3] = sDate.WeekDay;
+  dateBuffer[1] = sDate.Month;
+  dateBuffer[2] = sDate.Date;
+  dateBuffer[0] = sDate.Year;
+
+	debug_printf("%02d/%02d/%02d ",2000+sDate.Year, sDate.Month, sDate.Date);
+	debug_printf("%02d:%02d:%02d\n",sTime.Hours, sTime.Minutes, sTime.Seconds);
 }
 
 void SetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer)

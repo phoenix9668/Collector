@@ -14,6 +14,7 @@
 #include "usart.h"
 #include "spi.h"
 #include "gpio.h"
+#include "crc.h"
 #include "fram.h"
 
 extern __IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH];
@@ -460,30 +461,38 @@ uint8_t CC1101RecPacket(uint8_t *rxbuffer, uint8_t *addr, uint8_t *rssi)
 {
     uint8_t status[2];
     uint8_t pktLen;
-		uint8_t tempbuffer[62];
 
 		if(CC1101GetRXCnt() != 0)
 		{
 			pktLen=CC1101ReadReg(CC1101_RXFIFO);                    // Read length byte
-			if((CC1101ReadReg(CC1101_PKTCTRL1) & ~0x03) != 0)
-			{
+			if((CC1101ReadReg(CC1101_PKTCTRL1) & ~0x03) != 0){
 				*addr = CC1101ReadReg(CC1101_RXFIFO);
 			}
 			
-			if(pktLen == 0) {return 0;}
+			if(pktLen == 0) 
+        {return 0;}
 			else
-			{pktLen--;}
+			  {pktLen--;}
 			
-			if(pktLen <= 60)
-			{	CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer, pktLen);}	// Pull data
-			else
-			{
-				CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer, 58);	// Pull data
-				/*##-4- Wait for the end of the transfer ###################################*/   
-				while (rxCatch != SET){}
-				CC1101ReadMultiReg(CC1101_RXFIFO, tempbuffer, (pktLen-58));    // Pull data
-				for(uint8_t i=0; i<(pktLen-58); i++)
-				{	rxbuffer[i+58] = tempbuffer[i];}
+			if(pktLen <= 60){	
+			  CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer, pktLen);	// Pull data
+			}
+			else{
+				while(txFiFoUnFlow != SET){}
+				txFiFoUnFlow = RESET;
+				CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer, 60);	// Pull data
+				
+				for(uint8_t i=0; i<(pktLen/60); i++){
+					if((i+1) == (pktLen/60)){
+            /*##-4- Wait for the end of the transfer ###################################*/   
+				    while (rxCatch != SET){}
+				    CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer+(i+1)*60, (pktLen-(i+1)*60));    // Pull data
+					}else{
+						while(txFiFoUnFlow != SET){}
+						txFiFoUnFlow = RESET;
+					  CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer+(i+1)*60, 60);    // Pull data
+					}
+				}
 			}
 			CC1101ReadMultiReg(CC1101_RXFIFO, status, 2);           // Read status bytes
 			*rssi = status[0];
@@ -524,8 +533,8 @@ void CC1101Init(uint8_t addr, uint16_t sync)
 		HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
     memset(&cc1101, 0, sizeof(cc1101));
-//		debug_printf("CC1101_PKTCTRL1 = %d\n",CC1101ReadStatus(CC1101_PARTNUM));//for test, must be 0x00
-//		debug_printf("CC1101_VERSION = %d\n",CC1101ReadStatus(CC1101_VERSION));//for test, refer to the datasheet,must be 0x14
+		debug_printf("CC1101_PKTCTRL1 = %d\n",CC1101ReadStatus(CC1101_PARTNUM));//for test, must be 0x00
+		debug_printf("CC1101_VERSION = %d\n",CC1101ReadStatus(CC1101_VERSION));//for test, refer to the datasheet,must be 0x14
 }
 /*
 ================================================================================
@@ -607,26 +616,25 @@ uint8_t	CC1101RecvHandler(void)
 		{ cc1101.recvBuffer[i] = 0;}
 		/*##-3- Wait for the trigger of the threshold ###################################*/ 
 		while (txFiFoUnFlow != SET && rxCatch != SET){}
+		txFiFoUnFlow = RESET;
 		cc1101.length = CC1101RecPacket(cc1101.recvBuffer, &cc1101.addr, &cc1101.rssi);
 
 		cc1101.rssidBm = CC1101CalcRSSI_dBm(cc1101.rssi);
 		debug_printf("RSSI = %ddBm, length = %d, address = %d\n",cc1101.rssidBm,cc1101.length,cc1101.addr);
 
 		for(uint8_t i=0; i<cc1101.length; i++)
-		{	debug_printf("%x ",cc1101.recvBuffer[i]);}
+		{	debug_printf("%02x ",cc1101.recvBuffer[i]);}
 		debug_printf("\r\n");
 		
-		/* Reset transmission flag */
-		rxCatch = RESET;
 		CC1101SetTRMode(RX_MODE);
 		
 		if(cc1101.length == 0)
 		{	return 0x01;}
 		else if(cc1101.length == 1)
 		{	return 0x02;}
-		else if(cc1101.recvBuffer[0] == 0x30)
+		else if(CRC32_Check(cc1101.recvBuffer, cc1101.length, CRC_INPUTDATA_FORMAT_BYTES) == 0x0)
 		{	return 0x30;}
-	}
+  }
 	
 	return 0x00;
 }
