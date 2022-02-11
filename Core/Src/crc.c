@@ -94,6 +94,8 @@ uint32_t CRC32_Check(uint8_t pBuffer[], uint32_t BufferLength, InputDataFormat i
 	memset(tbuffer, 0, sizeof(tbuffer));
 	if ((BufferLength % 4U) != 0U)
 	{ uLen = 4U - BufferLength & 0x03;}
+	else
+	{ uLen = 0;}
 	debug_printf("uLen = %x\n",uLen);
 	
 	crc32Value = ((uint32_t)pBuffer[BufferLength - 4U] << 24U) | \
@@ -130,6 +132,8 @@ uint32_t CRC32_Calculate(uint8_t pBuffer[], uint32_t BufferLength, InputDataForm
 	memset(tbuffer, 0, sizeof(tbuffer));
 	if ((BufferLength % 4U) != 0U)
 	{ uLen = 4U - BufferLength & 0x03;}
+	else
+	{ uLen = 0;}
 	debug_printf("uLen = %x\n",uLen);
 	
 	for (uint8_t i=0; i<BufferLength; i++)

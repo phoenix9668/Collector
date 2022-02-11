@@ -23,7 +23,7 @@
 #define FRAM_WRITE			0x02	//Write Memory Data
 
 #define FRAM_DATA_LENGTH	16	// buffer length
-#define RFID_SUM    		2046  // FM25L256 Organized as 32,768 x 8 bits 
+#define RFID_SUM    		  16  //2048  // FM25L256 Organized as 32,768 x 8 bits 
 
 extern __IO uint32_t CollectorID;
 extern __IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH];

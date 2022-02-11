@@ -171,14 +171,14 @@ void SystemClock_Config(void)
 //##################################################################################################################
 void SystemInitial(void)
 {
+//	lte_usart_init();
+//	memset(&lte,0,sizeof(lte));
+	Activate_SPI();
 	if (HAL_IWDG_Refresh(&hiwdg) != HAL_OK)
 	{
 		Error_Handler();
 	}
 	ModuleLteReset();
-	lte_usart_init();
-	memset(&lte,0,sizeof(lte));
-	Activate_SPI();
 	InitFramInfo();
 	RFIDInitial(0x00, 0x1234, RX_MODE);
 	if (HAL_IWDG_Refresh(&hiwdg) != HAL_OK)

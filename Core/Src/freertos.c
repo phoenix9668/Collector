@@ -105,6 +105,7 @@ __weak void vApplicationIdleHook( void )
 	{
 		Error_Handler();
 	}
+	LED_COM_TOG();
 }
 /* USER CODE END 2 */
 
@@ -187,6 +188,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+	lte_usart_init();
+	memset(&lte,0,sizeof(lte));
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -227,7 +230,7 @@ void StartRFIDInputTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		LED_COM_TOG();
+		LED_STA_TOG();
 		RFIDInitial(0x00, 0x1234, RX_MODE);
     osDelay(600000);
   }
@@ -282,7 +285,11 @@ void FunctionCtrl(uint8_t *command)
 
 	/*A8:configure time information*/
 	/*A9:read time information*/
-	if(command[4] == 0xA8){
+	if(command[4] == 0xA0){
+		__set_FAULTMASK(1);
+		NVIC_SystemReset();
+	}
+	else if(command[4] == 0xA8){
 		for(uint8_t i=0; i<3; i++)
 		{	timeBuffer[i] = command[9+i];}
 		for(uint8_t i=0; i<4; i++)
@@ -312,7 +319,14 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 	{
 		GetRTC(timeBuffer, dateBuffer);
 		strcatArray(sendToCloudBuffer, collectorIDBuffer, 0, 0);
-		sendFunctionID = 0xB0;
+		
+		if (cc1101.recvBuffer[38] == 0xD1 && cc1101.recvBuffer[39] == 0xD1){ 
+			sendFunctionID = 0xB1;
+			length = length - 2;
+		}
+		else
+		{ sendFunctionID = 0xB0;}
+
 		strcatArray(sendToCloudBuffer, &sendFunctionID, _COLLECTOR_ID_SIZE, 0);
 		strcatArray(sendToCloudBuffer, cc1101.recvBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE, length - sizeof(cc1101.crcValue));
     strcatArray(sendToCloudBuffer, &cc1101.rssi, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue), 0);

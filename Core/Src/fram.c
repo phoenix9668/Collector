@@ -226,18 +226,16 @@ void FramCtrl(uint8_t *command)
 void InitFramInfo(void)
 {
 	uint16_t address=0;
-	
-	FM25L256Read(0, FRAM_DATA_LENGTH, FRAM_Data);
-	CollectorID = (uint32_t)(0xFF000000 & FRAM_Data[0]<<24)+(uint32_t)(0x00FF0000 & FRAM_Data[1]<<16)+(uint32_t)(0x0000FF00 & FRAM_Data[2]<<8)+(uint32_t)(0x000000FF & FRAM_Data[3]);
-	
+
 	for(uint16_t i = 0; i < RFID_SUM; i++)
 	{
-		address = FRAM_DATA_LENGTH*(i+2);
+		address = FRAM_DATA_LENGTH*i;
 		FM25L256Read(address, FRAM_DATA_LENGTH, FRAM_Data);
 		for(uint8_t j = 0; j < FRAM_DATA_LENGTH; j++)
 		{
 			RFID_init[i][j] = FRAM_Data[j];
 		}
 	}
+	CollectorID = (uint32_t)(0xFF000000 & RFID_init[0][0]<<24)+(uint32_t)(0x00FF0000 & RFID_init[0][1]<<16)+(uint32_t)(0x0000FF00 & RFID_init[0][2]<<8)+(uint32_t)(0x000000FF & RFID_init[0][3]);
 }
 
