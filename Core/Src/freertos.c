@@ -370,5 +370,3 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 
 }
 /* USER CODE END Application */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
