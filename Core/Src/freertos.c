@@ -42,6 +42,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define EEPROM_DATA_LENGTH	16	// buffer length
 #define	_SEND_TO_CLOUD_BUFFERSIZE  256 // tx buffer size
 #define	_COLLECTOR_ID_SIZE         4   // collectorID size
 #define	_FUNCTION_ID_SIZE          1   // functionID size
@@ -72,6 +73,7 @@ osSemaphoreId dmaTCBinarySemHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+void EepromCtrl(uint8_t *command);
 void FunctionCtrl(uint8_t *command);
 void SendToCloud(uint8_t functionID, uint8_t length);
 /* USER CODE END FunctionPrototypes */
@@ -105,7 +107,7 @@ __weak void vApplicationIdleHook( void )
 	{
 		Error_Handler();
 	}
-	LED_COM_TOG();
+	LED1_TOG();
 }
 /* USER CODE END 2 */
 
@@ -230,7 +232,7 @@ void StartRFIDInputTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-		LED_STA_TOG();
+		LED2_TOG();
 		RFIDInitial(0x00, 0x1234, RX_MODE);
     osDelay(600000);
   }
@@ -252,14 +254,14 @@ void StartCommandTask(void const * argument)
   {
 		osSemaphoreWait(rxBufferBinarySemHandle, osWaitForever);
 
-		LED_RUN_ON();
+		LED2_ON();
 		debug_printf("rxBuffer = %s\n",lte.rxBuffer);
 		debug_printf("rxCounter = %d\n",lte.rxCounter);
 
 		if(lte.rxBuffer[0] == 0xE5 && lte.rxBuffer[1] == 0x5E)
 		{
 			lte_usart_send_string("Header Right\r\n");
-			FramCtrl(lte.rxBuffer);
+			EepromCtrl(lte.rxBuffer);
 		}
 		else if(lte.rxBuffer[0] == (uint8_t)(0xFF & CollectorID>>24) && lte.rxBuffer[1] == (uint8_t)(0xFF & CollectorID>>16) && lte.rxBuffer[2] == (uint8_t)(0xFF & CollectorID>>8) && lte.rxBuffer[3] == (uint8_t)(0xFF & CollectorID))
 		{
@@ -267,13 +269,39 @@ void StartCommandTask(void const * argument)
 			FunctionCtrl(lte.rxBuffer);
 		}
 		memset(&lte,0,sizeof(lte));
-    LED_RUN_OFF();
+    LED2_OFF();
   }
   /* USER CODE END StartCommandTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+/*===========================================================================
+* EepromCtrl(uint8_t *command) => handle PC command                    	* 
+============================================================================*/
+void EepromCtrl(uint8_t *command)
+{
+	uint32_t address,data;
+	
+	address = (uint32_t)(0x0000FF00 & command[3]<<8)+(uint32_t)(0x000000FF & command[4]);
+	data = (uint32_t)(0xFF000000 & command[5]<<24)+(uint32_t)(0x00FF0000 & command[6]<<16)+(uint32_t)(0x0000FF00 & command[7]<<8)+(uint32_t)(0x000000FF & command[8]);
+	
+	if(command[2] == 0x01)//write
+	{
+		DATAEEPROM_Program(EEPROM_START_ADDR + address, data);
+		printf("\nWrite Memory Complete\r\n");
+	}
+	else if(command[2] == 0x02)//read
+	{
+		DATAEEPROM_Read(EEPROM_START_ADDR + address);
+		printf("\nRead Memory Complete\r\n");
+	}
+	else if(command[2] == 0x03)//erase
+	{
+		DATAEEPROM_Program(EEPROM_START_ADDR + address, 0);
+		printf("\nErase Memory Complete\r\n");
+	}
+}
 
 /*===========================================================================
 * FunctionCtrl(uint8_t *command) => handle PC command                    	* 
@@ -286,7 +314,7 @@ void FunctionCtrl(uint8_t *command)
 	/*A8:configure time information*/
 	/*A9:read time information*/
 	if(command[4] == 0xA0){
-		__set_FAULTMASK(1);
+		__disable_irq();
 		NVIC_SystemReset();
 	}
 	else if(command[4] == 0xA8){
@@ -333,7 +361,9 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 	  strcatArray(sendToCloudBuffer, dateBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi), 0);
     strcatArray(sendToCloudBuffer, timeBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + sizeof(dateBuffer), 0);
 		
-		cc1101.crcValue = CRC32_Calculate(sendToCloudBuffer, (uint32_t)(_COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + _UTC_TIME_SIZE), CRC_INPUTDATA_FORMAT_BYTES);
+		cc1101.crcValue = ~HAL_CRC_Calculate(&hcrc, (uint32_t *)sendToCloudBuffer, (uint32_t)(_COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + _UTC_TIME_SIZE));
+		debug_printf("BufferLength = %d\n",_COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + _UTC_TIME_SIZE);
+		debug_printf("crcValue = %x\n",cc1101.crcValue);
 		crcBuffer[0] = (uint8_t)(0xFF & cc1101.crcValue>>24);
 		crcBuffer[1] = (uint8_t)(0xFF & cc1101.crcValue>>16);
 		crcBuffer[2] = (uint8_t)(0xFF & cc1101.crcValue>>8);
@@ -370,3 +400,4 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 
 }
 /* USER CODE END Application */
+

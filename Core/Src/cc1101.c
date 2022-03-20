@@ -516,8 +516,8 @@ OUTPUT   : None
 */
 void CC1101Init(uint8_t addr, uint16_t sync)
 {
-		HAL_NVIC_DisableIRQ(EXTI0_IRQn);
-		HAL_NVIC_DisableIRQ(EXTI1_IRQn);
+		HAL_NVIC_DisableIRQ(EXTI2_3_IRQn);
+		HAL_NVIC_DisableIRQ(EXTI4_15_IRQn);
 		CC1101Reset();
     
     for(uint8_t i=0; i<47; i++)
@@ -529,8 +529,8 @@ void CC1101Init(uint8_t addr, uint16_t sync)
     CC1101WriteReg(CC1101_MDMCFG1, 0x72); //Modem Configuration
 
     CC1101WriteMultiReg(CC1101_PATABLE, PaTabel, 8);
-		HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-		HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+		HAL_NVIC_EnableIRQ(EXTI2_3_IRQn);
+		HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
 
     memset(&cc1101, 0, sizeof(cc1101));
 		debug_printf("CC1101_PKTCTRL1 = %d\n",CC1101ReadStatus(CC1101_PARTNUM));//for test, must be 0x00
@@ -632,7 +632,8 @@ uint8_t	CC1101RecvHandler(void)
 		{	return 0x01;}
 		else if(cc1101.length == 1)
 		{	return 0x02;}
-		else if(CRC32_Check(cc1101.recvBuffer, cc1101.length, CRC_INPUTDATA_FORMAT_BYTES) == 0x0)
+		else if(~HAL_CRC_Calculate(&hcrc, (uint32_t *)cc1101.recvBuffer, (uint32_t)(cc1101.length - 4U)) == 
+			(((uint32_t)cc1101.recvBuffer[cc1101.length - 4U] << 24U) | ((uint32_t)cc1101.recvBuffer[cc1101.length - 3U] << 16U) | ((uint32_t)cc1101.recvBuffer[cc1101.length - 2U] << 8U) | (uint32_t)cc1101.recvBuffer[cc1101.length - 1U]))
 		{	return 0x30;}
   }
 	

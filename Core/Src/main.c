@@ -20,12 +20,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "adc.h"
 #include "crc.h"
 #include "dma.h"
 #include "iwdg.h"
+#include "lptim.h"
+#include "usart.h"
 #include "rtc.h"
 #include "spi.h"
-#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -41,6 +43,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+__IO uint32_t CollectorID;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -94,12 +97,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
+  MX_USART1_UART_Init();
+  MX_SPI1_Init();
   MX_SPI2_Init();
-	MX_DMA_Init();
-  MX_USART3_UART_Init();
+  MX_IWDG_Init();
   MX_RTC_Init();
   MX_CRC_Init();
-  MX_IWDG_Init();
+  MX_ADC_Init();
+  MX_LPUART1_UART_Init();
+  MX_LPTIM1_Init();
   /* USER CODE BEGIN 2 */
 	SystemInitial();
   /* USER CODE END 2 */
@@ -130,11 +137,16 @@ void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Configure the main internal regulator output voltage
   */
-  __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+  /** Configure LSE Drive Capability
+  */
+  HAL_PWR_EnableBkUpAccess();
+  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -146,10 +158,8 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.LSIState = RCC_LSI_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLLMUL_8;
+  RCC_OscInitStruct.PLL.PLLDIV = RCC_PLLDIV_2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -161,10 +171,21 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_LPUART1
+                              |RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_LPTIM1;
+  PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+  PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
+  PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+  PeriphClkInit.LptimClockSelection = RCC_LPTIM1CLKSOURCE_LSE;
+
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
@@ -182,7 +203,7 @@ void SystemInitial(void)
 		Error_Handler();
 	}
 	ModuleLteReset();
-	InitFramInfo();
+	CollectorID = DATAEEPROM_Read(EEPROM_START_ADDR);
 	RFIDInitial(0x00, 0x1234, RX_MODE);
 	if (HAL_IWDG_Refresh(&hiwdg) != HAL_OK)
 	{
@@ -209,9 +230,9 @@ void ShowMessage(void)
 //##################################################################################################################
 void ModuleLteReset(void)
 {
-	MOD_RESET_OFF();
+	USR4G_RESET_OFF();
 	HAL_Delay(1000);
-	MOD_RESET_ON();
+	USR4G_RESET_ON();
 	HAL_Delay(5000);
 	lte_usart_send_string("LTE Module Reset Complete\n");
 }
@@ -227,12 +248,49 @@ void strcatArray(uint8_t *dest, uint8_t *src, uint8_t position, uint8_t srclen)
 	}
 }
 //##################################################################################################################
+void DATAEEPROM_Program(uint32_t Address, uint32_t Data)
+{
+	/* Unlocks the data memory and FLASH_PECR register access *************/
+	if(HAL_FLASHEx_DATAEEPROM_Unlock() != HAL_OK)
+	{
+    Error_Handler();
+	}
+	/* Clear FLASH error pending bits */
+	__HAL_FLASH_CLEAR_FLAG(FLASH_FLAG_WRPERR | FLASH_FLAG_SIZERR |
+							FLASH_FLAG_OPTVERR | FLASH_FLAG_RDERR |
+								FLASH_FLAG_FWWERR | FLASH_FLAG_NOTZEROERR);
+	/*Erase a word in data memory *************/
+	if (HAL_FLASHEx_DATAEEPROM_Erase(Address) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/*Enable DATA EEPROM fixed Time programming (2*Tprog) *************/
+	HAL_FLASHEx_DATAEEPROM_EnableFixedTimeProgram();
+	/* Program word at a specified address *************/
+	if (HAL_FLASHEx_DATAEEPROM_Program(FLASH_TYPEPROGRAMDATA_WORD, Address, Data) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/*Disables DATA EEPROM fixed Time programming (2*Tprog) *************/
+	HAL_FLASHEx_DATAEEPROM_DisableFixedTimeProgram();
+
+	/* Locks the Data memory and FLASH_PECR register access. (recommended
+     to protect the DATA_EEPROM against possible unwanted operation) *********/
+	HAL_FLASHEx_DATAEEPROM_Lock();
+
+}
+//##################################################################################################################
+uint32_t DATAEEPROM_Read(uint32_t Address)
+{
+	return *(__IO uint32_t*)Address;
+}
+//##################################################################################################################
 void LED_Blinking(uint32_t Period)
 {
   /* Toggle LED in an infinite loop */
   while (1)
   {
-    LED_STA_TOG();
+    LED_GREEN_TOG();
     HAL_Delay(Period);
   }
 }
@@ -241,7 +299,7 @@ void LED_Blinking(uint32_t Period)
 
 /**
   * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM1 interrupt took place, inside
+  * @note   This function is called  when TIM2 interrupt took place, inside
   * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
   * a global variable "uwTick" used as application time base.
   * @param  htim : TIM handle
@@ -252,7 +310,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM1) {
+  if (htim->Instance == TIM2) {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */

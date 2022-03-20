@@ -1,6 +1,6 @@
 /*
- * FreeRTOS Kernel V10.3.1
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V10.2.1
+ * Copyright (C) 2019 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -300,10 +300,7 @@ typedef struct tskTaskControlBlock 			/* The old naming convention is used to pr
 		responsible for resulting newlib operation.  User must be familiar with
 		newlib and must provide system-wide implementations of the necessary
 		stubs. Be warned that (at the time of writing) the current newlib design
-		implements a system-wide malloc() that must be provided with locks.
-
-		See the third party link http://www.nadler.com/embedded/newlibAndFreeRTOS.html
-		for additional information. */
+		implements a system-wide malloc() that must be provided with locks. */
 		struct	_reent xNewLib_reent;
 	#endif
 
@@ -340,23 +337,23 @@ PRIVILEGED_DATA TCB_t * volatile pxCurrentTCB = NULL;
 xDelayedTaskList1 and xDelayedTaskList2 could be move to function scople but
 doing so breaks some kernel aware debuggers and debuggers that rely on removing
 the static qualifier. */
-PRIVILEGED_DATA static List_t pxReadyTasksLists[ configMAX_PRIORITIES ];/*< Prioritised ready tasks. */
-PRIVILEGED_DATA static List_t xDelayedTaskList1;						/*< Delayed tasks. */
-PRIVILEGED_DATA static List_t xDelayedTaskList2;						/*< Delayed tasks (two lists are used - one for delays that have overflowed the current tick count. */
-PRIVILEGED_DATA static List_t * volatile pxDelayedTaskList;				/*< Points to the delayed task list currently being used. */
-PRIVILEGED_DATA static List_t * volatile pxOverflowDelayedTaskList;		/*< Points to the delayed task list currently being used to hold tasks that have overflowed the current tick count. */
-PRIVILEGED_DATA static List_t xPendingReadyList;						/*< Tasks that have been readied while the scheduler was suspended.  They will be moved to the ready list when the scheduler is resumed. */
+PRIVILEGED_DATA static List_t pxReadyTasksLists[ configMAX_PRIORITIES ] = { 0 };/*< Prioritised ready tasks. */
+PRIVILEGED_DATA static List_t xDelayedTaskList1 = { 0 };						/*< Delayed tasks. */
+PRIVILEGED_DATA static List_t xDelayedTaskList2 = { 0 };						/*< Delayed tasks (two lists are used - one for delays that have overflowed the current tick count. */
+PRIVILEGED_DATA static List_t * volatile pxDelayedTaskList = NULL;				/*< Points to the delayed task list currently being used. */
+PRIVILEGED_DATA static List_t * volatile pxOverflowDelayedTaskList = NULL;		/*< Points to the delayed task list currently being used to hold tasks that have overflowed the current tick count. */
+PRIVILEGED_DATA static List_t xPendingReadyList = { 0 };						/*< Tasks that have been readied while the scheduler was suspended.  They will be moved to the ready list when the scheduler is resumed. */
 
 #if( INCLUDE_vTaskDelete == 1 )
 
-	PRIVILEGED_DATA static List_t xTasksWaitingTermination;				/*< Tasks that have been deleted - but their memory not yet freed. */
+PRIVILEGED_DATA static List_t xTasksWaitingTermination = { 0 };				/*< Tasks that have been deleted - but their memory not yet freed. */
 	PRIVILEGED_DATA static volatile UBaseType_t uxDeletedTasksWaitingCleanUp = ( UBaseType_t ) 0U;
 
 #endif
 
 #if ( INCLUDE_vTaskSuspend == 1 )
 
-	PRIVILEGED_DATA static List_t xSuspendedTaskList;					/*< Tasks that are currently suspended. */
+	PRIVILEGED_DATA static List_t xSuspendedTaskList = { 0 };					/*< Tasks that are currently suspended. */
 
 #endif
 
@@ -371,7 +368,7 @@ PRIVILEGED_DATA static volatile UBaseType_t uxCurrentNumberOfTasks 	= ( UBaseTyp
 PRIVILEGED_DATA static volatile TickType_t xTickCount 				= ( TickType_t ) configINITIAL_TICK_COUNT;
 PRIVILEGED_DATA static volatile UBaseType_t uxTopReadyPriority 		= tskIDLE_PRIORITY;
 PRIVILEGED_DATA static volatile BaseType_t xSchedulerRunning 		= pdFALSE;
-PRIVILEGED_DATA static volatile TickType_t xPendedTicks 			= ( TickType_t ) 0U;
+PRIVILEGED_DATA static volatile UBaseType_t uxPendedTicks 			= ( UBaseType_t ) 0U;
 PRIVILEGED_DATA static volatile BaseType_t xYieldPending 			= pdFALSE;
 PRIVILEGED_DATA static volatile BaseType_t xNumOfOverflows 			= ( BaseType_t ) 0;
 PRIVILEGED_DATA static UBaseType_t uxTaskNumber 					= ( UBaseType_t ) 0U;
@@ -996,9 +993,7 @@ UBaseType_t x;
 
 	#if ( configUSE_NEWLIB_REENTRANT == 1 )
 	{
-		/* Initialise this task's Newlib reent structure.
-		See the third party link http://www.nadler.com/embedded/newlibAndFreeRTOS.html
-		for additional information. */
+		/* Initialise this task's Newlib reent structure. */
 		_REENT_INIT_PTR( ( &( pxNewTCB->xNewLib_reent ) ) );
 	}
 	#endif
@@ -1169,7 +1164,7 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB )
 			being deleted. */
 			pxTCB = prvGetTCBFromHandle( xTaskToDelete );
 
-			/* Remove task from the ready/delayed list. */
+			/* Remove task from the ready list. */
 			if( uxListRemove( &( pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 )
 			{
 				taskRESET_READY_PRIORITY( pxTCB->uxPriority );
@@ -1209,10 +1204,6 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB )
 				check the xTasksWaitingTermination list. */
 				++uxDeletedTasksWaitingCleanUp;
 
-				/* Call the delete hook before portPRE_TASK_DELETE_HOOK() as
-				portPRE_TASK_DELETE_HOOK() does not return in the Win32 port. */
-				traceTASK_DELETE( pxTCB );
-
 				/* The pre-delete hook is primarily for the Windows simulator,
 				in which Windows specific clean up operations are performed,
 				after which it is not possible to yield away from this task -
@@ -1223,13 +1214,14 @@ static void prvAddNewTaskToReadyList( TCB_t *pxNewTCB )
 			else
 			{
 				--uxCurrentNumberOfTasks;
-				traceTASK_DELETE( pxTCB );
 				prvDeleteTCB( pxTCB );
 
 				/* Reset the next expected unblock time in case it referred to
 				the task that has just been deleted. */
 				prvResetNextTaskUnblockTime();
 			}
+
+			traceTASK_DELETE( pxTCB );
 		}
 		taskEXIT_CRITICAL();
 
@@ -2049,9 +2041,7 @@ BaseType_t xReturn;
 		#if ( configUSE_NEWLIB_REENTRANT == 1 )
 		{
 			/* Switch Newlib's _impure_ptr variable to point to the _reent
-			structure specific to the task that will run first.
-			See the third party link http://www.nadler.com/embedded/newlibAndFreeRTOS.html
-			for additional information. */
+			structure specific to the task that will run first. */
 			_impure_ptr = &( pxCurrentTCB->xNewLib_reent );
 		}
 		#endif /* configUSE_NEWLIB_REENTRANT */
@@ -2113,17 +2103,7 @@ void vTaskSuspendAll( void )
 	BaseType_t.  Please read Richard Barry's reply in the following link to a
 	post in the FreeRTOS support forum before reporting this as a bug! -
 	http://goo.gl/wu4acr */
-
-	/* portSOFRWARE_BARRIER() is only implemented for emulated/simulated ports that
-	do not otherwise exhibit real time behaviour. */
-	portSOFTWARE_BARRIER();
-
-	/* The scheduler is suspended if uxSchedulerSuspended is non-zero.  An increment
-	is used to allow calls to vTaskSuspendAll() to nest. */
 	++uxSchedulerSuspended;
-
-	/* Enforces ordering for ports and optimised compilers that may otherwise place
-	the above increment elsewhere. */
 	portMEMORY_BARRIER();
 }
 /*----------------------------------------------------------*/
@@ -2250,9 +2230,9 @@ BaseType_t xAlreadyYielded = pdFALSE;
 				not	slip, and that any delayed tasks are resumed at the correct
 				time. */
 				{
-					TickType_t xPendedCounts = xPendedTicks; /* Non-volatile copy. */
+					UBaseType_t uxPendedCounts = uxPendedTicks; /* Non-volatile copy. */
 
-					if( xPendedCounts > ( TickType_t ) 0U )
+					if( uxPendedCounts > ( UBaseType_t ) 0U )
 					{
 						do
 						{
@@ -2264,10 +2244,10 @@ BaseType_t xAlreadyYielded = pdFALSE;
 							{
 								mtCOVERAGE_TEST_MARKER();
 							}
-							--xPendedCounts;
-						} while( xPendedCounts > ( TickType_t ) 0U );
+							--uxPendedCounts;
+						} while( uxPendedCounts > ( UBaseType_t ) 0U );
 
-						xPendedTicks = 0;
+						uxPendedTicks = 0;
 					}
 					else
 					{
@@ -2606,24 +2586,6 @@ implementations require configUSE_TICKLESS_IDLE to be set to a value other than
 #endif /* configUSE_TICKLESS_IDLE */
 /*----------------------------------------------------------*/
 
-BaseType_t xTaskCatchUpTicks( TickType_t xTicksToCatchUp )
-{
-BaseType_t xYieldRequired = pdFALSE;
-
-	/* Must not be called with the scheduler suspended as the implementation
-	relies on xPendedTicks being wound down to 0 in xTaskResumeAll(). */
-	configASSERT( uxSchedulerSuspended == 0 );
-
-	/* Use xPendedTicks to mimic xTicksToCatchUp number of ticks occurring when
-	the scheduler is suspended so the ticks are executed in xTaskResumeAll(). */
-	vTaskSuspendAll();
-	xPendedTicks += xTicksToCatchUp;
-	xYieldRequired = xTaskResumeAll();
-
-	return xYieldRequired;
-}
-/*----------------------------------------------------------*/
-
 #if ( INCLUDE_xTaskAbortDelay == 1 )
 
 	BaseType_t xTaskAbortDelay( TaskHandle_t xTask )
@@ -2655,10 +2617,6 @@ BaseType_t xYieldRequired = pdFALSE;
 					if( listLIST_ITEM_CONTAINER( &( pxTCB->xEventListItem ) ) != NULL )
 					{
 						( void ) uxListRemove( &( pxTCB->xEventListItem ) );
-
-						/* This lets the task know it was forcibly removed from the
-						blocked state so it should not re-evaluate its block time and
-						then block again. */
 						pxTCB->ucDelayAborted = pdTRUE;
 					}
 					else
@@ -2835,7 +2793,7 @@ BaseType_t xSwitchRequired = pdFALSE;
 		{
 			/* Guard against the tick hook being called when the pended tick
 			count is being unwound (when the scheduler is being unlocked). */
-			if( xPendedTicks == ( TickType_t ) 0 )
+			if( uxPendedTicks == ( UBaseType_t ) 0U )
 			{
 				vApplicationTickHook();
 			}
@@ -2845,23 +2803,10 @@ BaseType_t xSwitchRequired = pdFALSE;
 			}
 		}
 		#endif /* configUSE_TICK_HOOK */
-
-		#if ( configUSE_PREEMPTION == 1 )
-		{
-			if( xYieldPending != pdFALSE )
-			{
-				xSwitchRequired = pdTRUE;
-			}
-			else
-			{
-				mtCOVERAGE_TEST_MARKER();
-			}
-		}
-		#endif /* configUSE_PREEMPTION */
 	}
 	else
 	{
-		++xPendedTicks;
+		++uxPendedTicks;
 
 		/* The tick hook gets called at regular intervals, even if the
 		scheduler is locked. */
@@ -2871,6 +2816,19 @@ BaseType_t xSwitchRequired = pdFALSE;
 		}
 		#endif
 	}
+
+	#if ( configUSE_PREEMPTION == 1 )
+	{
+		if( xYieldPending != pdFALSE )
+		{
+			xSwitchRequired = pdTRUE;
+		}
+		else
+		{
+			mtCOVERAGE_TEST_MARKER();
+		}
+	}
+	#endif /* configUSE_PREEMPTION */
 
 	return xSwitchRequired;
 }
@@ -3051,9 +3009,7 @@ void vTaskSwitchContext( void )
 		#if ( configUSE_NEWLIB_REENTRANT == 1 )
 		{
 			/* Switch Newlib's _impure_ptr variable to point to the _reent
-			structure specific to this task.
-			See the third party link http://www.nadler.com/embedded/newlibAndFreeRTOS.html
-			for additional information. */
+			structure specific to this task. */
 			_impure_ptr = &( pxCurrentTCB->xNewLib_reent );
 		}
 		#endif /* configUSE_NEWLIB_REENTRANT */
@@ -3219,20 +3175,6 @@ TCB_t *pxUnblockedTCB;
 	pxUnblockedTCB = listGET_LIST_ITEM_OWNER( pxEventListItem ); /*lint !e9079 void * is used as this macro is used with timers and co-routines too.  Alignment is known to be fine as the type of the pointer stored and retrieved is the same. */
 	configASSERT( pxUnblockedTCB );
 	( void ) uxListRemove( pxEventListItem );
-
-	#if( configUSE_TICKLESS_IDLE != 0 )
-	{
-		/* If a task is blocked on a kernel object then xNextTaskUnblockTime
-		might be set to the blocked task's time out time.  If the task is
-		unblocked for a reason other than a timeout xNextTaskUnblockTime is
-		normally left unchanged, because it is automatically reset to a new
-		value when the tick count equals xNextTaskUnblockTime.  However if
-		tickless idling is used it might be more important to enter sleep mode
-		at the earliest possible time - so reset xNextTaskUnblockTime here to
-		ensure it is updated at the earliest possible time. */
-		prvResetNextTaskUnblockTime();
-	}
-	#endif
 
 	/* Remove the task from the delayed list and add it to the ready list.  The
 	scheduler is suspended so interrupts will not be accessing the ready
@@ -3514,8 +3456,6 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
 	const UBaseType_t uxNonApplicationTasks = 1;
 	eSleepModeStatus eReturn = eStandardSleep;
 
-		/* This function must be called from a critical section. */
-
 		if( listCURRENT_LIST_LENGTH( &xPendingReadyList ) != 0 )
 		{
 			/* A task was made ready while the scheduler was suspended. */
@@ -3557,7 +3497,6 @@ static portTASK_FUNCTION( prvIdleTask, pvParameters )
 		if( xIndex < configNUM_THREAD_LOCAL_STORAGE_POINTERS )
 		{
 			pxTCB = prvGetTCBFromHandle( xTaskToSet );
-			configASSERT( pxTCB != NULL );
 			pxTCB->pvThreadLocalStoragePointers[ xIndex ] = pvValue;
 		}
 	}
@@ -3892,9 +3831,7 @@ static void prvCheckTasksWaitingTermination( void )
 		portCLEAN_UP_TCB( pxTCB );
 
 		/* Free up the memory allocated by the scheduler for the task.  It is up
-		to the task to free any memory allocated at the application level.
-		See the third party link http://www.nadler.com/embedded/newlibAndFreeRTOS.html
-		for additional information. */
+		to the task to free any memory allocated at the application level. */
 		#if ( configUSE_NEWLIB_REENTRANT == 1 )
 		{
 			_reclaim_reent( &( pxTCB->xNewLib_reent ) );
@@ -4044,10 +3981,7 @@ TCB_t *pxTCB;
 				{
 					if( uxListRemove( &( pxMutexHolderTCB->xStateListItem ) ) == ( UBaseType_t ) 0 )
 					{
-						/* It is known that the task is in its ready list so
-						there is no need to check again and the port level
-						reset macro can be called directly. */
-						portRESET_READY_PRIORITY( pxMutexHolderTCB->uxPriority, uxTopReadyPriority );
+						taskRESET_READY_PRIORITY( pxMutexHolderTCB->uxPriority );
 					}
 					else
 					{
@@ -4127,7 +4061,7 @@ TCB_t *pxTCB;
 					the mutex.  If the mutex is held by a task then it cannot be
 					given from an interrupt, and if a mutex is given by the
 					holding task then it must be the running state task.  Remove
-					the holding task from the ready/delayed list. */
+					the holding task from the ready list. */
 					if( uxListRemove( &( pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 )
 					{
 						taskRESET_READY_PRIORITY( pxTCB->uxPriority );
@@ -4248,10 +4182,7 @@ TCB_t *pxTCB;
 					{
 						if( uxListRemove( &( pxTCB->xStateListItem ) ) == ( UBaseType_t ) 0 )
 						{
-							/* It is known that the task is in its ready list so
-							there is no need to check again and the port level
-							reset macro can be called directly. */
-							portRESET_READY_PRIORITY( pxTCB->uxPriority, uxTopReadyPriority );
+							taskRESET_READY_PRIORITY( pxTCB->uxPriority );
 						}
 						else
 						{
@@ -5105,6 +5036,7 @@ TickType_t uxReturn;
 	}
 
 #endif /* configUSE_TASK_NOTIFICATIONS */
+
 /*-----------------------------------------------------------*/
 
 #if( configUSE_TASK_NOTIFICATIONS == 1 )
@@ -5138,39 +5070,11 @@ TickType_t uxReturn;
 #endif /* configUSE_TASK_NOTIFICATIONS */
 /*-----------------------------------------------------------*/
 
-#if( configUSE_TASK_NOTIFICATIONS == 1 )
-
-	uint32_t ulTaskNotifyValueClear( TaskHandle_t xTask, uint32_t ulBitsToClear )
-	{
-	TCB_t *pxTCB;
-	uint32_t ulReturn;
-
-		/* If null is passed in here then it is the calling task that is having
-		its notification state cleared. */
-		pxTCB = prvGetTCBFromHandle( xTask );
-
-		taskENTER_CRITICAL();
-		{
-			/* Return the notification as it was before the bits were cleared,
-			then clear the bit mask. */
-			ulReturn = pxCurrentTCB->ulNotifiedValue;
-			pxTCB->ulNotifiedValue &= ~ulBitsToClear;
-		}
-		taskEXIT_CRITICAL();
-
-		return ulReturn;
-	}
-
-#endif /* configUSE_TASK_NOTIFICATIONS */
-/*-----------------------------------------------------------*/
-
 #if( ( configGENERATE_RUN_TIME_STATS == 1 ) && ( INCLUDE_xTaskGetIdleTaskHandle == 1 ) )
-
-	uint32_t ulTaskGetIdleRunTimeCounter( void )
+	TickType_t xTaskGetIdleRunTimeCounter( void )
 	{
 		return xIdleTaskHandle->ulRunTimeCounter;
 	}
-
 #endif
 /*-----------------------------------------------------------*/
 

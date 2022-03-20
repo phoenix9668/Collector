@@ -34,7 +34,7 @@ extern "C" {
 
 /* USER CODE BEGIN Private defines */
 //##################################################################################################################
-#define _LTE_USART         USART3
+#define _LTE_USART         USART1
 #define	_LTE_RXSIZE        128    //  LTE-command rx buffer size
 //##################################################################################################################
 /**
@@ -59,7 +59,8 @@ extern lte_t lte;
 //##################################################################################################################
 /* USER CODE END Private defines */
 
-void MX_USART3_UART_Init(void);
+void MX_LPUART1_UART_Init(void);
+void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 /* USART related functions */
@@ -69,7 +70,6 @@ void lte_usart_rx_check(void);
 void lte_usart_send_data(const void* data, size_t len);
 void lte_usart_send_string(const char* str);
 
-void MX_USART3_UART_DeInit(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

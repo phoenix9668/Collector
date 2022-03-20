@@ -35,15 +35,13 @@ extern "C" {
 extern CRC_HandleTypeDef hcrc;
 
 /* USER CODE BEGIN Private defines */
-typedef enum { CRC_INPUTDATA_FORMAT_WORDS, CRC_INPUTDATA_FORMAT_BYTES, CRC_INPUTDATA_FORMAT_HALFWORDS } InputDataFormat;
+
 /* USER CODE END Private defines */
 
 void MX_CRC_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-uint32_t CRC32_Check(uint8_t pBuffer[], uint32_t BufferLength, InputDataFormat inputDataFormat);
-uint32_t CRC32_Calculate(uint8_t pBuffer[], uint32_t BufferLength, InputDataFormat inputDataFormat);
-uint32_t HAL_CRC_Calculate_U(CRC_HandleTypeDef *hcrc, uint32_t pBuffer[], uint32_t BufferLength, InputDataFormat inputDataFormat);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
