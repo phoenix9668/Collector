@@ -53,7 +53,7 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 extern __IO uint32_t CollectorID;
-#define	_DEBUG    0 //  use printf debug
+#define	_DEBUG    1 //  use printf debug
 
 #if (_DEBUG == 1)
 #define debug_printf(...)     			printf(__VA_ARGS__)
@@ -88,8 +88,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define ADC_V_Pin LL_GPIO_PIN_0
-#define ADC_V_GPIO_Port GPIOA
 #define TX_EN_Pin LL_GPIO_PIN_1
 #define TX_EN_GPIO_Port GPIOA
 #define SPI1_CS_Pin LL_GPIO_PIN_2
@@ -100,30 +98,24 @@ void Error_Handler(void);
 #define GDO2_Pin LL_GPIO_PIN_4
 #define GDO2_GPIO_Port GPIOA
 #define GDO2_EXTI_IRQn EXTI4_15_IRQn
-#define INT1_Pin LL_GPIO_PIN_0
-#define INT1_GPIO_Port GPIOB
-#define INT1_EXTI_IRQn EXTI0_1_IRQn
-#define INT2_Pin LL_GPIO_PIN_1
-#define INT2_GPIO_Port GPIOB
-#define INT2_EXTI_IRQn EXTI0_1_IRQn
 #define RX_EN_Pin LL_GPIO_PIN_2
 #define RX_EN_GPIO_Port GPIOB
-#define SPI2_CS_Pin LL_GPIO_PIN_12
-#define SPI2_CS_GPIO_Port GPIOB
 #define LED1_Pin LL_GPIO_PIN_8
 #define LED1_GPIO_Port GPIOA
 #define LED2_Pin LL_GPIO_PIN_11
 #define LED2_GPIO_Port GPIOA
 #define LED_GREEN_Pin LL_GPIO_PIN_12
 #define LED_GREEN_GPIO_Port GPIOA
-#define USR4G_RESET_Pin LL_GPIO_PIN_8
+#define USR4G_POWER_KEY_Pin LL_GPIO_PIN_3
+#define USR4G_POWER_KEY_GPIO_Port GPIOB
+#define USR4G_RESET_Pin LL_GPIO_PIN_4
 #define USR4G_RESET_GPIO_Port GPIOB
-#define USR4G_GPRS_Pin LL_GPIO_PIN_9
-#define USR4G_GPRS_GPIO_Port GPIOB
+#define USR4G_RELOAD_Pin LL_GPIO_PIN_5
+#define USR4G_RELOAD_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 void SystemInitial(void);
 void ShowMessage(void);
-void ModuleLteReset(void);
+void ModuleLtePowerOn(void);
 void strcatArray(uint8_t *dest, uint8_t *src, uint8_t position, uint8_t srclength);
 void DATAEEPROM_Program(uint32_t Address, uint32_t Data);
 uint32_t DATAEEPROM_Read(uint32_t Address);

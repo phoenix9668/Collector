@@ -20,7 +20,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "adc.h"
 #include "crc.h"
 #include "dma.h"
 #include "iwdg.h"
@@ -99,13 +98,11 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_USART1_UART_Init();
+  MX_LPUART1_UART_Init();
   MX_SPI1_Init();
-  MX_SPI2_Init();
   MX_IWDG_Init();
   MX_RTC_Init();
   MX_CRC_Init();
-  MX_ADC_Init();
-  MX_LPUART1_UART_Init();
   MX_LPTIM1_Init();
   /* USER CODE BEGIN 2 */
 	SystemInitial();
@@ -195,16 +192,15 @@ void SystemClock_Config(void)
 //##################################################################################################################
 void SystemInitial(void)
 {
-//	lte_usart_init();
-//	memset(&lte,0,sizeof(lte));
 	Activate_SPI();
 	if (HAL_IWDG_Refresh(&hiwdg) != HAL_OK)
 	{
 		Error_Handler();
 	}
-	ModuleLteReset();
+	ModuleLtePowerOn();
 	CollectorID = DATAEEPROM_Read(EEPROM_START_ADDR);
 	RFIDInitial(0x00, 0x1234, RX_MODE);
+	HAL_Delay(10000);
 	if (HAL_IWDG_Refresh(&hiwdg) != HAL_OK)
 	{
 		Error_Handler();
@@ -223,18 +219,17 @@ void ShowMessage(void)
 	printf("####################################################################\n");
 	printf("Collector Program Start Running\n");
 	printf("CollectorID:%x\n",CollectorID);
-	printf("Using USART3,Configuration:%d 8-N-1\n",115200);
+	printf("Using LPUART1,Configuration:%d 8-N-1\n",115200);
 	printf("USART RX Method: DMA HT & TC + USART IDLE LINE IRQ + RTOS processing\n");
 	printf("####################################################################\n");
 }
 //##################################################################################################################
-void ModuleLteReset(void)
+void ModuleLtePowerOn(void)
 {
-	USR4G_RESET_OFF();
-	HAL_Delay(1000);
-	USR4G_RESET_ON();
-	HAL_Delay(5000);
-	lte_usart_send_string("LTE Module Reset Complete\n");
+	USR4G_POWER_KEY_OFF();
+	HAL_Delay(2000);
+	USR4G_POWER_KEY_ON();
+	lte_lpuart_send_string("LTE Module Power On Complete\n");
 }
 //##################################################################################################################
 void strcatArray(uint8_t *dest, uint8_t *src, uint8_t position, uint8_t srclen)

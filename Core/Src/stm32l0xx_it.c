@@ -22,6 +22,7 @@
 #include "stm32l0xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "cmsis_os.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,7 +42,13 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern __IO ITStatus rxCatch;
+extern __IO ITStatus txFiFoUnFlow;
+extern osMessageQId usartRxQueueHandle;
+extern osSemaphoreId rxBufferBinarySemHandle;
+extern osSemaphoreId usartIdleBinarySemHandle;
+extern osSemaphoreId dmaHTBinarySemHandle;
+extern osSemaphoreId dmaTCBinarySemHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -103,33 +110,6 @@ void HardFault_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles EXTI line 0 and line 1 interrupts.
-  */
-void EXTI0_1_IRQHandler(void)
-{
-  /* USER CODE BEGIN EXTI0_1_IRQn 0 */
-
-  /* USER CODE END EXTI0_1_IRQn 0 */
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_0) != RESET)
-  {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_0);
-    /* USER CODE BEGIN LL_EXTI_LINE_0 */
-
-    /* USER CODE END LL_EXTI_LINE_0 */
-  }
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_1) != RESET)
-  {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_1);
-    /* USER CODE BEGIN LL_EXTI_LINE_1 */
-
-    /* USER CODE END LL_EXTI_LINE_1 */
-  }
-  /* USER CODE BEGIN EXTI0_1_IRQn 1 */
-
-  /* USER CODE END EXTI0_1_IRQn 1 */
-}
-
-/**
   * @brief This function handles EXTI line 2 and line 3 interrupts.
   */
 void EXTI2_3_IRQHandler(void)
@@ -141,7 +121,7 @@ void EXTI2_3_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_3);
     /* USER CODE BEGIN LL_EXTI_LINE_3 */
-
+		rxCatch = SET;
     /* USER CODE END LL_EXTI_LINE_3 */
   }
   /* USER CODE BEGIN EXTI2_3_IRQn 1 */
@@ -161,7 +141,7 @@ void EXTI4_15_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
     /* USER CODE BEGIN LL_EXTI_LINE_4 */
-
+    txFiFoUnFlow = SET;
     /* USER CODE END LL_EXTI_LINE_4 */
   }
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
@@ -175,7 +155,22 @@ void EXTI4_15_IRQHandler(void)
 void DMA1_Channel2_3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 0 */
-
+	/* Events for DMA Channel 3 = USART DMA RX */
+	/* Check half-transfer complete interrupt */
+	uint32_t d = 1;
+	if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_HT3(DMA1))
+	{
+		LL_DMA_ClearFlag_HT3(DMA1);             /* Clear half-transfer complete flag */
+		osSemaphoreRelease(dmaHTBinarySemHandle);
+		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
+	}
+	/* Check transfer-complete interrupt */
+	if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_TC3(DMA1))
+	{
+		LL_DMA_ClearFlag_TC3(DMA1);             /* Clear transfer complete flag */
+		osSemaphoreRelease(dmaTCBinarySemHandle);
+		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
+	}
   /* USER CODE END DMA1_Channel2_3_IRQn 0 */
 
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 1 */
@@ -212,16 +207,23 @@ void TIM2_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USART1 global interrupt / USART1 wake-up interrupt through EXTI line 25.
+  * @brief This function handles LPUART1 global interrupt / LPUART1 wake-up interrupt through EXTI line 28.
   */
-void USART1_IRQHandler(void)
+void LPUART1_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART1_IRQn 0 */
+  /* USER CODE BEGIN LPUART1_IRQn 0 */
+	uint32_t d = 1;
+	if (LL_USART_IsEnabledIT_IDLE(LPUART1) && LL_USART_IsActiveFlag_IDLE(LPUART1))
+	{
+		LL_USART_ClearFlag_IDLE(LPUART1);        /* Clear IDLE line flag */
+		osSemaphoreRelease(usartIdleBinarySemHandle);
+		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
+		osSemaphoreRelease(rxBufferBinarySemHandle);
+	}
+  /* USER CODE END LPUART1_IRQn 0 */
+  /* USER CODE BEGIN LPUART1_IRQn 1 */
 
-  /* USER CODE END USART1_IRQn 0 */
-  /* USER CODE BEGIN USART1_IRQn 1 */
-
-  /* USER CODE END USART1_IRQn 1 */
+  /* USER CODE END LPUART1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

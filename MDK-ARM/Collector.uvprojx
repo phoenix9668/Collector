@@ -16,7 +16,7 @@
         <TargetCommonOption>
           <Device>STM32L051C8Tx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32L0xx_DFP.2.0.1</PackID>
+          <PackID>Keil.STM32L0xx_DFP.2.1.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000-0x20001FFF) IROM(0x8000000-0x800FFFF)  CLOCK(8000000) CPUTYPE("Cortex-M0+") TZ</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -196,7 +196,7 @@
             <RoSelD>3</RoSelD>
             <RwSelD>4</RwSelD>
             <CodeSel>0</CodeSel>
-            <OptFeed>0</OptFeed>
+            <OptFeed>1</OptFeed>
             <NoZi1>0</NoZi1>
             <NoZi2>0</NoZi2>
             <NoZi3>0</NoZi3>
@@ -313,7 +313,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>4</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -414,11 +414,6 @@
               <FilePath>../Core/Src/freertos.c</FilePath>
             </File>
             <File>
-              <FileName>adc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Core/Src/adc.c</FilePath>
-            </File>
-            <File>
               <FileName>crc.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/crc.c</FilePath>
@@ -479,14 +474,14 @@
               <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_ll_gpio.c</FilePath>
             </File>
             <File>
-              <FileName>stm32l0xx_hal_adc.c</FileName>
+              <FileName>stm32l0xx_hal_crc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_adc.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_crc.c</FilePath>
             </File>
             <File>
-              <FileName>stm32l0xx_hal_adc_ex.c</FileName>
+              <FileName>stm32l0xx_hal_crc_ex.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_adc_ex.c</FilePath>
+              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_crc_ex.c</FilePath>
             </File>
             <File>
               <FileName>stm32l0xx_hal.c</FileName>
@@ -572,16 +567,6 @@
               <FileName>stm32l0xx_ll_exti.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_ll_exti.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32l0xx_hal_crc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_crc.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32l0xx_hal_crc_ex.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Drivers/STM32L0xx_HAL_Driver/Src/stm32l0xx_hal_crc_ex.c</FilePath>
             </File>
             <File>
               <FileName>stm32l0xx_ll_dma.c</FileName>
