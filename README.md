@@ -1,7 +1,7 @@
 # Collector
-Collector code using freeRTOS on stm32f407.
-function include:
+Collector code using freeRTOS on stm32l051c8t6.
 
+Function Include:
 1. CC1101 drive;
-2. FRAM drive;
-3. smart command protocol.
+2. USART using DMA for efficient RX and TX transmission;
+3. I2C-Compatible Serial Interface for SGM58031.
