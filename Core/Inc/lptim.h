@@ -35,7 +35,7 @@ extern "C" {
 extern LPTIM_HandleTypeDef hlptim1;
 
 /* USER CODE BEGIN Private defines */
-
+extern ITStatus secITStatus;
 /* USER CODE END Private defines */
 
 void MX_LPTIM1_Init(void);

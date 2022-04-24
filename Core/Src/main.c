@@ -22,6 +22,7 @@
 #include "cmsis_os.h"
 #include "crc.h"
 #include "dma.h"
+#include "i2c.h"
 #include "iwdg.h"
 #include "lptim.h"
 #include "usart.h"
@@ -32,7 +33,6 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "cc1101.h"
-#include "fram.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -98,12 +98,13 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_USART1_UART_Init();
-  MX_LPUART1_UART_Init();
   MX_SPI1_Init();
   MX_IWDG_Init();
   MX_RTC_Init();
   MX_CRC_Init();
+  MX_LPUART1_UART_Init();
   MX_LPTIM1_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 	SystemInitial();
   /* USER CODE END 2 */
@@ -176,9 +177,11 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_LPUART1
-                              |RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_LPTIM1;
+                              |RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_RTC
+                              |RCC_PERIPHCLK_LPTIM1;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
   PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_PCLK1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
   PeriphClkInit.LptimClockSelection = RCC_LPTIM1CLKSOURCE_LSE;
 
@@ -210,7 +213,6 @@ void SystemInitial(void)
 	{
 		Error_Handler();
 	}
-	ShowMessage();
 }
 //##################################################################################################################
 void ShowMessage(void)
@@ -218,7 +220,7 @@ void ShowMessage(void)
 	/* Print Open Massage */
 	printf("####################################################################\n");
 	printf("Collector Program Start Running\n");
-	printf("CollectorID:%x\n",CollectorID);
+	printf("CollectorID:%08x\n",CollectorID);
 	printf("Using LPUART1,Configuration:%d 8-N-1\n",115200);
 	printf("USART RX Method: DMA HT & TC + USART IDLE LINE IRQ + RTOS processing\n");
 	printf("####################################################################\n");
@@ -229,7 +231,7 @@ void ModuleLtePowerOn(void)
 	USR4G_POWER_KEY_OFF();
 	HAL_Delay(2000);
 	USR4G_POWER_KEY_ON();
-	lte_lpuart_send_string("LTE Module Power On Complete\n");
+	printf("LTE Module Power On Complete\n");
 }
 //##################################################################################################################
 void strcatArray(uint8_t *dest, uint8_t *src, uint8_t position, uint8_t srclen)

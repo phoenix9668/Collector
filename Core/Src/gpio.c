@@ -69,6 +69,9 @@ void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
 
   /**/
+  LL_GPIO_ResetOutputPin(USR4G_RELOAD_GPIO_Port, USR4G_RELOAD_Pin);
+
+  /**/
   LL_GPIO_SetOutputPin(SPI1_CS_GPIO_Port, SPI1_CS_Pin);
 
   /**/
@@ -76,9 +79,6 @@ void MX_GPIO_Init(void)
 
   /**/
   LL_GPIO_SetOutputPin(USR4G_RESET_GPIO_Port, USR4G_RESET_Pin);
-
-  /**/
-  LL_GPIO_SetOutputPin(USR4G_RELOAD_GPIO_Port, USR4G_RELOAD_Pin);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_13;
@@ -202,21 +202,9 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = USR4G_RELOAD_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_OPENDRAIN;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   LL_GPIO_Init(USR4G_RELOAD_GPIO_Port, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_6;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /**/
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_7;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = LL_GPIO_PIN_8;

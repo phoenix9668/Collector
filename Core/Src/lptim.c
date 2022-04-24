@@ -21,7 +21,8 @@
 #include "lptim.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "sgm58031.h"
+ITStatus secITStatus;
 /* USER CODE END 0 */
 
 LPTIM_HandleTypeDef hlptim1;
@@ -94,5 +95,17 @@ void HAL_LPTIM_MspDeInit(LPTIM_HandleTypeDef* lptimHandle)
 }
 
 /* USER CODE BEGIN 1 */
+
+/**
+  * @brief  Autoreload match callback in non-blocking mode.
+  * @param  hlptim LPTIM handle
+  * @retval None
+  */
+void HAL_LPTIM_AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
+{
+  /* Prevent unused argument(s) compilation warning */
+  UNUSED(hlptim);
+	secITStatus = SET;
+}
 
 /* USER CODE END 1 */

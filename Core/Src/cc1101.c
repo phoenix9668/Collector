@@ -1,6 +1,6 @@
 /**
   ******************************************************************************
-  * @file    cc1101.h
+  * @file    cc1101.c
   * @author  phoenix
   * @version V1.0.0
   * @date    20-October-2017
@@ -15,9 +15,7 @@
 #include "spi.h"
 #include "gpio.h"
 #include "crc.h"
-#include "fram.h"
 
-extern __IO uint8_t RFID_init[RFID_SUM][FRAM_DATA_LENGTH];
 //10, 7, 5, 0, -5, -10, -15, -20, dbm output power
 uint8_t PaTabel[]={0xC0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};
 cc1101_t cc1101;
@@ -365,6 +363,7 @@ OUTPUT   : None
 */
 void CC1101SendPacket(uint8_t *txbuffer, uint8_t size, TX_DATA_MODE mode)
 {
+	uint32_t tickstart = 0U;
 	uint8_t address;
 	uint8_t tempbuffer[60];
 
@@ -394,19 +393,34 @@ void CC1101SendPacket(uint8_t *txbuffer, uint8_t size, TX_DATA_MODE mode)
 	{
 		CC1101WriteMultiReg(CC1101_TXFIFO, txbuffer, size);
 		CC1101SetTRMode(TX_MODE);
-		while(rxCatch != SET){}
+		/* Init tickstart for timeout managment */
+		tickstart = HAL_GetTick();
+		while(rxCatch != SET){
+			if ((HAL_GetTick() - tickstart) > 1000U)
+				break;
+		}
 		rxCatch = RESET;
 	}
 	else{
 		CC1101WriteMultiReg(CC1101_TXFIFO, txbuffer, 60);
 		CC1101SetTRMode(TX_MODE);
 		
-		while(txFiFoUnFlow != SET){}
+		/* Init tickstart for timeout managment */
+		tickstart = HAL_GetTick();
+		while(txFiFoUnFlow != SET){
+			if ((HAL_GetTick() - tickstart) > 1000U)
+				break;
+		}
 		rxCatch = RESET;
 		CC1101WriteMultiReg(CC1101_TXFIFO, tempbuffer, (size-60));
 	}
 
-	while(rxCatch != SET){}
+	/* Init tickstart for timeout managment */
+	tickstart = HAL_GetTick();
+	while(rxCatch != SET){
+		if ((HAL_GetTick() - tickstart) > 1000U)
+			break;
+	}
 	rxCatch = RESET;
 	//i = CC1101ReadStatus( CC1101_TXBYTES );//for test, TX status
 
@@ -465,6 +479,7 @@ OUTPUT   : 1:received count, 0:no data
 */
 uint8_t CC1101RecPacket(uint8_t *rxbuffer, uint8_t *addr, uint8_t *rssi)
 {
+	uint32_t tickstart = 0U;
 	uint8_t status[2];
 	uint8_t pktLen;
 
@@ -484,17 +499,32 @@ uint8_t CC1101RecPacket(uint8_t *rxbuffer, uint8_t *addr, uint8_t *rssi)
 			CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer, pktLen);	// Pull data
 		}
 		else{
-			while(txFiFoUnFlow != SET){}
+			/* Init tickstart for timeout managment */
+			tickstart = HAL_GetTick();
+			while(txFiFoUnFlow != SET){
+				if ((HAL_GetTick() - tickstart) > 1000U)
+					break;
+			}
 			txFiFoUnFlow = RESET;
 			CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer, 60);	// Pull data
 			
 			for(uint8_t i=0; i<(pktLen/60); i++){
 				if((i+1) == (pktLen/60)){
 					/*##-4- Wait for the end of the transfer ###################################*/   
-					while (rxCatch != SET){}
+					/* Init tickstart for timeout managment */
+					tickstart = HAL_GetTick();
+					while (rxCatch != SET){
+						if ((HAL_GetTick() - tickstart) > 1000U)
+							break;
+					}
 					CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer+(i+1)*60, (pktLen-(i+1)*60));    // Pull data
 				}else{
-					while(txFiFoUnFlow != SET){}
+					/* Init tickstart for timeout managment */
+					tickstart = HAL_GetTick();
+					while(txFiFoUnFlow != SET){
+						if ((HAL_GetTick() - tickstart) > 1000U)
+							break;
+					}
 					txFiFoUnFlow = RESET;
 					CC1101ReadMultiReg(CC1101_RXFIFO, rxbuffer+(i+1)*60, 60);    // Pull data
 				}
@@ -618,6 +648,8 @@ int16_t CC1101CalcRSSI_dBm(uint8_t rssi_dec)
 ============================================================================*/
 uint8_t	CC1101RecvHandler(void)
 {
+	uint32_t tickstart = 0U;
+	
 	if(rxCatch == SET)
 	{
 		/*##-1- Reset transmission flag ###################################*/
@@ -626,8 +658,14 @@ uint8_t	CC1101RecvHandler(void)
 		/*##-2- clear array ###################################*/
 		for (uint16_t i=0; i<sizeof(cc1101.recvBuffer); i++)
 		{ cc1101.recvBuffer[i] = 0;}
+		
 		/*##-3- Wait for the trigger of the threshold ###################################*/ 
-		while (txFiFoUnFlow != SET && rxCatch != SET){}
+    /* Init tickstart for timeout managment */
+    tickstart = HAL_GetTick();
+		while (txFiFoUnFlow != SET && rxCatch != SET){
+		  if ((HAL_GetTick() - tickstart) > 1000U)
+				break;
+		}
 		txFiFoUnFlow = RESET;
 		cc1101.length = CC1101RecPacket(cc1101.recvBuffer, &cc1101.addr, &cc1101.rssi);
 

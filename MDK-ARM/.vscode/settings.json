@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "sgm58031.h": "c",
+        "limits": "c",
+        "memory": "c",
+        "bit": "c",
+        "compare": "c",
+        "cstddef": "c",
+        "type_traits": "c",
+        "xutility": "c"
+    }
+}

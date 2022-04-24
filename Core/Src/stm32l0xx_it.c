@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "cmsis_os.h"
+#include "usart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -174,7 +175,14 @@ void DMA1_Channel2_3_IRQHandler(void)
   /* USER CODE END DMA1_Channel2_3_IRQn 0 */
 
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 1 */
-
+	/* Events for DMA Channel 2 = USART DMA TX */
+	/* Check transfer complete */
+	if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_2) && LL_DMA_IsActiveFlag_TC2(DMA1)) {
+		LL_DMA_ClearFlag_TC2(DMA1);             /* Clear transfer complete flag */
+		lwrb_skip(&lte_lpuart_tx_rb, lte_lpuart_tx_dma_current_len);/* Skip sent data, mark as read */
+		lte_lpuart_tx_dma_current_len = 0;           /* Clear length variable */
+		lte_lpuart_start_tx_dma_transfer();          /* Start sending more data */
+	}
   /* USER CODE END DMA1_Channel2_3_IRQn 1 */
 }
 

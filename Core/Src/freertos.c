@@ -32,7 +32,8 @@
 #include "usart.h"
 #include "crc.h"
 #include "cc1101.h"
-#include "fram.h"
+#include "sgm58031.h"
+#include "lptim.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,12 +52,7 @@
 static uint8_t collectorIDBuffer[_COLLECTOR_ID_SIZE];
 static uint8_t tailBuffer[2] = {0x0D, 0x0A};
 static uint8_t sendToCloudBuffer[_SEND_TO_CLOUD_BUFFERSIZE];
-static uint16_t TenMinutesCnt = 0;
-
-static uint8_t fifo[192];
-static short int xAxis[32];
-static short int yAxis[32];
-static short int zAxis[32];
+static uint16_t TwoHoursCnt = 0;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -69,8 +65,8 @@ static short int zAxis[32];
 
 /* USER CODE END Variables */
 osThreadId usartRxDmaTaskHandle;
-osThreadId rfidInputTaskHandle;
-osThreadId commandTaskHandle;
+osThreadId iicConvertTaskHandle;
+osThreadId usartRxCmdTaskHandle;
 osMessageQId usartRxQueueHandle;
 osSemaphoreId rxBufferBinarySemHandle;
 osSemaphoreId usartIdleBinarySemHandle;
@@ -85,8 +81,8 @@ void SendToCloud(uint8_t functionID, uint8_t length);
 /* USER CODE END FunctionPrototypes */
 
 void StartUsartRxDmaTask(void const * argument);
-void StartRFIDInputTask(void const * argument);
-void StartCommandTask(void const * argument);
+void StartIICConvertTask(void const * argument);
+void StartUsartRxCmdTask(void const * argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -182,23 +178,30 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of usartRxDmaTask */
-  osThreadDef(usartRxDmaTask, StartUsartRxDmaTask, osPriorityNormal, 0, 128);
+  osThreadDef(usartRxDmaTask, StartUsartRxDmaTask, osPriorityAboveNormal, 0, 128);
   usartRxDmaTaskHandle = osThreadCreate(osThread(usartRxDmaTask), NULL);
 
-  /* definition and creation of rfidInputTask */
-  osThreadDef(rfidInputTask, StartRFIDInputTask, osPriorityHigh, 0, 128);
-  rfidInputTaskHandle = osThreadCreate(osThread(rfidInputTask), NULL);
+  /* definition and creation of iicConvertTask */
+  osThreadDef(iicConvertTask, StartIICConvertTask, osPriorityBelowNormal, 0, 128);
+  iicConvertTaskHandle = osThreadCreate(osThread(iicConvertTask), NULL);
 
-  /* definition and creation of commandTask */
-  osThreadDef(commandTask, StartCommandTask, osPriorityBelowNormal, 0, 128);
-  commandTaskHandle = osThreadCreate(osThread(commandTask), NULL);
+  /* definition and creation of usartRxCmdTask */
+  osThreadDef(usartRxCmdTask, StartUsartRxCmdTask, osPriorityNormal, 0, 128);
+  usartRxCmdTaskHandle = osThreadCreate(osThread(usartRxCmdTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-	// follow code must be here!!!!!!
-	lte_lpuart_init();
-	memset(&lte,0,sizeof(lte));
-	Enable_LPUART1();
+  // follow code must be here!!!!!!
+  lte_lpuart_init();
+  memset(&lte,0,sizeof(lte));
+  Enable_LPUART1();
+  ShowMessage();
+  if (SGM58031_Init(SGM58031_ADDR) != SGM58031_OK)
+  {
+    /* Initialization Error */
+    Error_Handler();
+  }
+	HAL_LPTIM_Counter_Start_IT(&hlptim1, 0x3FF);
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -225,41 +228,70 @@ void StartUsartRxDmaTask(void const * argument)
   /* USER CODE END StartUsartRxDmaTask */
 }
 
-/* USER CODE BEGIN Header_StartRFIDInputTask */
+/* USER CODE BEGIN Header_StartIICConvertTask */
 /**
-* @brief Function implementing the rfidInputTask thread.
+* @brief Function implementing the iicConvertTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartRFIDInputTask */
-void StartRFIDInputTask(void const * argument)
+/* USER CODE END Header_StartIICConvertTask */
+void StartIICConvertTask(void const * argument)
 {
-  /* USER CODE BEGIN StartRFIDInputTask */
+  /* USER CODE BEGIN StartIICConvertTask */
+	uint16_t adcValue;
+	float adcfValue;
+	
   /* Infinite loop */
   for(;;)
   {
-		LED1_TOG();
-		TenMinutesCnt++;
-		if(TenMinutesCnt >= 720)
+		if(secITStatus == SET)
 		{
-			RFIDInitial(0x00, 0x1234, RX_MODE);
-			TenMinutesCnt = 0;
-		}
-	  osDelay(5000);
+      LED1_TOG();
+      TwoHoursCnt++;
+      if (TwoHoursCnt >= 1800)
+      {
+        RFIDInitial(0x00, 0x1234, RX_MODE);
+				ModuleLtePowerOn();
+        TwoHoursCnt = 0;
+      }
+
+      /*##-1- read the OS of Configuration Register #####################################*/
+	    if (SGM58031_ReadReg(SGM58031_ADDR, SGM58031_CONF_REG) >> 15 == 1)
+      {
+		    adcValue = SGM58031_ReadReg(SGM58031_ADDR, SGM58031_CONVERSION_REG);
+		    adcfValue = ((float)adcValue/32768)*4.096;
+		    debug_printf("adcValue = %.3f\n", adcfValue);
+      }
+
+      /*##-2- Initialise the SGM58031 peripheral ####################################*/
+      if (TwoHoursCnt % 2 == 1){
+        SGM58031_ConfigReg(Start_Single_Conversion, AINP_AIN0_AND_AINN_AIN1, FS_4_096V, Single_Shot_Mode, DR_800Hz_960Hz, Traditional_Comparator, Active_Low, Non_Latching, Disable_Comparator, DR_SEL0);  
+      }else{
+        SGM58031_ConfigReg(Start_Single_Conversion, AINP_AIN2_AND_AINN_AIN3, FS_4_096V, Single_Shot_Mode, DR_800Hz_960Hz, Traditional_Comparator, Active_Low, Non_Latching, Disable_Comparator, DR_SEL0);  
+      }
+
+      /*##-3- Set the Configuration Register #####################################*/
+      if (SGM58031_WriteReg(SGM58031_ADDR, SGM58031_CONF_REG, SGM58031_InitStructure.Config_Register_Value) != SGM58031_OK){
+        Error_Handler();
+      }
+
+			secITStatus = RESET;
+	  }
+		osDelay(1);
   }
-  /* USER CODE END StartRFIDInputTask */
+  /* USER CODE END StartIICConvertTask */
 }
 
-/* USER CODE BEGIN Header_StartCommandTask */
+/* USER CODE BEGIN Header_StartUsartRxCmdTask */
 /**
-* @brief Function implementing the commandTask thread.
+* @brief Function implementing the usartRxCmdTask thread.
 * @param argument: Not used
 * @retval None
 */
-/* USER CODE END Header_StartCommandTask */
-void StartCommandTask(void const * argument)
+/* USER CODE END Header_StartUsartRxCmdTask */
+void StartUsartRxCmdTask(void const * argument)
 {
-  /* USER CODE BEGIN StartCommandTask */
+  /* USER CODE BEGIN StartUsartRxCmdTask */
   /* Infinite loop */
   for(;;)
   {
@@ -282,7 +314,7 @@ void StartCommandTask(void const * argument)
 		memset(&lte,0,sizeof(lte));
     LED2_OFF();
   }
-  /* USER CODE END StartCommandTask */
+  /* USER CODE END StartUsartRxCmdTask */
 }
 
 /* Private application code --------------------------------------------------*/
@@ -304,7 +336,7 @@ void EepromCtrl(uint8_t *command)
 	}
 	else if(command[2] == 0x02)//read
 	{
-		printf("rxBuffer = %08x\n",DATAEEPROM_Read(EEPROM_START_ADDR + address));
+		printf("%08x\n",DATAEEPROM_Read(EEPROM_START_ADDR + address));
 		printf("Read Memory Complete\r\n");
 	}
 	else if(command[2] == 0x03)//erase
@@ -341,7 +373,7 @@ void FunctionCtrl(uint8_t *command)
 		SendToCloud(command[4], _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE + _TAIL_SIZE);
 	}
 	else
-		lte_lpuart_send_string("FunctionID Unused\r\n");
+		printf("FunctionID Unused\r\n");
 }
 
 /*===========================================================================
@@ -359,46 +391,6 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 		LED1_ON();
 		GetRTC(timeBuffer, dateBuffer);
 		
-//		memset(fifo, 0, sizeof(fifo));
-//		memset(xAxis, 0, sizeof(xAxis));
-//		memset(yAxis, 0, sizeof(yAxis));
-//		memset(zAxis, 0, sizeof(zAxis));
-//		
-//		for(uint8_t i=0; i < sizeof(fifo); i++)
-//			fifo[i] = cc1101.recvBuffer[i+6];
-//		// 1.To 16-bit complement
-//		for(uint16_t i=0; i < sizeof(fifo)/2; i++)
-//		{
-//			if ((fifo[2*i+1]>>6 & 0x03) == 0x0)
-//			{
-//				if ((fifo[2*i+1] & 0x08))
-//					xAxis[i/3] = (short int)(fifo[2*i] + (0x0f00 & (fifo[2*i+1]<<8)) + 0xf000);
-//				else
-//					xAxis[i/3] = (short int)(fifo[2*i] + (0x0f00 & (fifo[2*i+1]<<8)));
-////				debug_printf("X[%d] = %hd, %hx ", i/3, xAxis[i/3], xAxis[i/3]);
-//				debug_printf("samples[%d] :%hd,", i/3, xAxis[i/3]);
-//			}
-//			else if ((fifo[2*i+1]>>6 & 0x03) == 0x1)
-//			{
-//				if ((fifo[2*i+1] & 0x08))
-//					yAxis[i/3] = (short int)(fifo[2*i] + (0x0f00 & (fifo[2*i+1]<<8)) + 0xf000);
-//				else
-//					yAxis[i/3] = (short int)(fifo[2*i] + (0x0f00 & (fifo[2*i+1]<<8)));
-////				debug_printf("Y[%d] = %hd, %hx ", i/3, yAxis[i/3], yAxis[i/3]);
-//				debug_printf("%hd,", yAxis[i/3]);
-//			}
-//			else if ((fifo[2*i+1]>>6 & 0x03) == 0x2)
-//			{
-//				if ((fifo[2*i+1] & 0x08))
-//					zAxis[i/3] = (short int)(fifo[2*i] + (0x0f00 & (fifo[2*i+1]<<8)) + 0xf000);
-//				else
-//					zAxis[i/3] = (short int)(fifo[2*i] + (0x0f00 & (fifo[2*i+1]<<8)));
-////				debug_printf("Z[%d] = %hd, %hx\n", i/3, zAxis[i/3], zAxis[i/3]);
-//				debug_printf("%hd\n", zAxis[i/3]);
-//			}
-//		}
-		
-		
 //		strcatArray(sendToCloudBuffer, collectorIDBuffer, 0, 0);
 //		
 //		if (cc1101.recvBuffer[05] == 0x01){
@@ -413,7 +405,7 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 //	  strcatArray(sendToCloudBuffer, dateBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi), 0);
 //    strcatArray(sendToCloudBuffer, timeBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + sizeof(dateBuffer), 0);
 //		
-//		cc1101.crcValue = ~HAL_CRC_Calculate(&hcrc, (uint32_t *)sendToCloudBuffer, (uint32_t)(_COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + _UTC_TIME_SIZE));
+//		cc1101.crcValue = ~HAL_CRC_Calculate(&hcrc, (uint32_t *)sendTo CloudBuffer, (uint32_t)(_COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + _UTC_TIME_SIZE));
 //		debug_printf("BufferLength = %d\n",_COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + _UTC_TIME_SIZE);
 //		debug_printf("crcValue = %x\n",cc1101.crcValue);
 //		crcBuffer[0] = (uint8_t)(0xFF & cc1101.crcValue>>24);
@@ -441,7 +433,7 @@ void SendToCloud(uint8_t functionID, uint8_t length)
     strcatArray(sendToCloudBuffer, timeBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + sizeof(dateBuffer), 0);
 		strcatArray(sendToCloudBuffer, tailBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE, 0);	
 
-    lte_lpuart_send_data(sendToCloudBuffer,length);
+//    lte_lpuart_send_data(sendToCloudBuffer,length);
 		
 		for(uint8_t i=0; i<_COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE; i++){
 			debug_printf("%02x ",sendToCloudBuffer[i]);}
@@ -449,9 +441,9 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 		LED1_OFF();
 	}
 	else if(functionID == 0x01)
-	{	debug_printf("receive error or address filtering fail\r\n");}
+	{	printf("receive error or address filtering fail\r\n");}
 	else if(functionID == 0x02)
-	{	debug_printf("rfid receive crc error\r\n");}
+	{	printf("rfid receive crc error\r\n");}
 
 }
 /* USER CODE END Application */

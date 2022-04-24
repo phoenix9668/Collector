@@ -25,6 +25,13 @@
 extern osSemaphoreId usartIdleBinarySemHandle;
 extern osSemaphoreId dmaHTBinarySemHandle;
 extern osSemaphoreId dmaTCBinarySemHandle;
+
+uint8_t lte_lpuart_rx_dma_buffer[_LTE_RXSIZE];
+lwrb_t lte_lpuart_rx_rb;
+uint8_t lte_lpuart_rx_rb_data[_LTE_RBSIZE];
+lwrb_t lte_lpuart_tx_rb;
+uint8_t lte_lpuart_tx_rb_data[_LTE_RBSIZE];
+volatile size_t lte_lpuart_tx_dma_current_len;
 lte_t lte;
 
 #ifdef __GNUC__
@@ -91,6 +98,23 @@ void MX_LPUART1_UART_Init(void)
   LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PDATAALIGN_BYTE);
 
   LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MDATAALIGN_BYTE);
+
+  /* LPUART1_TX Init */
+  LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_2, LL_DMA_REQUEST_5);
+
+  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_2, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+
+  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PRIORITY_LOW);
+
+  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MODE_NORMAL);
+
+  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PERIPH_NOINCREMENT);
+
+  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MEMORY_INCREMENT);
+
+  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PDATAALIGN_BYTE);
+
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MDATAALIGN_BYTE);
 
   /* LPUART1 interrupt Init */
   NVIC_SetPriority(LPUART1_IRQn, 3);
@@ -199,28 +223,40 @@ int fputc(int ch,FILE *f)
 //##################################################################################################################
 void lte_lpuart_init(void)
 {
-	LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_3, (uint32_t)&_LTE_LPUART->RDR);
+	/* Initialize ringbuff for TX & RX */
+  lwrb_init(&lte_lpuart_tx_rb, lte_lpuart_tx_rb_data, sizeof(lte_lpuart_tx_rb_data));
+  lwrb_init(&lte_lpuart_rx_rb, lte_lpuart_rx_rb_data, sizeof(lte_lpuart_rx_rb_data));
+	
+	LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_3, LL_USART_DMA_GetRegAddr(_LTE_LPUART, LL_USART_DMA_REG_DATA_RECEIVE));
 	LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_3, (uint32_t)lte_lpuart_rx_dma_buffer);
 	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_3, ARRAY_LEN(lte_lpuart_rx_dma_buffer));
+	LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_2, LL_USART_DMA_GetRegAddr(_LTE_LPUART, LL_USART_DMA_REG_DATA_TRANSMIT));
 
-	/* Enable HT & TC interrupts */
+	/* Enable DMA RX HT & TC interrupts */
 	LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_3);
 	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_3);
-
+	/* Enable DMA TX TC interrupts */
+  LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_2);
+	
+  LL_USART_ConfigAsyncMode(_LTE_LPUART);
 	LL_USART_EnableDMAReq_RX(_LTE_LPUART);
+	LL_USART_EnableDMAReq_TX(_LTE_LPUART);
 	LL_USART_EnableIT_IDLE(_LTE_LPUART);
 	
-	/* Enable DMA */
+	/* Enable DMA RX*/
 	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3);
 }
 //##################################################################################################################
 void lte_lpuart_deinit(void)
 {
-	/* Disable HT & TC interrupts */
+	/* Disable DMA RX HT & TC interrupts */
 	LL_DMA_DisableIT_HT(DMA1, LL_DMA_CHANNEL_3);
 	LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_3);
-
+	/* Disable DMA TX TC interrupts */
+  LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_2);
+	
 	LL_USART_DisableDMAReq_RX(_LTE_LPUART);
+	LL_USART_DisableDMAReq_TX(_LTE_LPUART);
 	LL_USART_DisableIT_IDLE(_LTE_LPUART);
 	
 	/* Disable DMA */
@@ -233,42 +269,8 @@ void lte_lpuart_deinit(void)
  * \param[in]       data: Data to process
  * \param[in]       len: Length in units of bytes
  */
-bool lte_lpuart_process_data(const void* data, size_t len, uint8_t mode) {
-	const uint8_t* d = data;
-	if ((mode == 1) && (osSemaphoreWait(dmaHTBinarySemHandle, 0) == osOK)){
-		for (uint8_t i=0; i<len; i++, ++d)
-				lte.rxBuffer[i] = *d;
-		lte.rxCounter += len;
-		return true;
-	}
-	if ((mode == 2) && (osSemaphoreWait(dmaTCBinarySemHandle, 0) == osOK)){
-		for (uint8_t i=0; i<len; i++, ++d)
-				lte.rxBuffer[i] = *d;
-		lte.rxCounter += len;
-		return true;
-	}
-	if (osSemaphoreWait(usartIdleBinarySemHandle, 0) == osOK){
-		if (mode == 1){
-			if (lte.rxCounter == 0){
-				for (uint8_t i=0; i<len; i++, ++d)
-					lte.rxBuffer[i] = *d;
-				lte.rxCounter += len;
-			}
-			else{
-				for (uint8_t i=0; i<len; i++, ++d)
-					lte.rxBuffer[lte.rxCounter+i] = *d;
-				lte.rxCounter += len;
-			}
-			return true;
-		}
-		if (mode == 3){
-			for (uint8_t i=0; i<len; i++, ++d)
-				lte.rxBuffer[lte.rxCounter+i] = *d;
-			lte.rxCounter += len;
-			return true;
-		}
-	}
-	return false;
+void lte_lpuart_process_data(const void* data, size_t len) {
+  lwrb_write(&lte_lpuart_rx_rb, data, len);  /* Write data to receive buffer */
 }
 //##################################################################################################################
 /**
@@ -284,14 +286,14 @@ void lte_lpuart_rx_check(void) {
         if (pos > old_pos) {                    /* Current position is over previous one */
             /* We are in "linear" mode */
             /* Process data directly by subtracting "pointers" */
-            lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[old_pos], pos - old_pos, 1);
+            lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[old_pos], pos - old_pos);
         } else {
             /* We are in "overflow" mode */
             /* First process data to the end of buffer */\
-            lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[old_pos], ARRAY_LEN(lte_lpuart_rx_dma_buffer) - old_pos, 2);
+            lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[old_pos], ARRAY_LEN(lte_lpuart_rx_dma_buffer) - old_pos);
             /* Check and continue with beginning of buffer */
             if (pos > 0) {
-              lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[0], pos, 3);
+              lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[0], pos);
             }
         }
         old_pos = pos;                          /* Save current position as old */
@@ -299,25 +301,72 @@ void lte_lpuart_rx_check(void) {
 }
 //##################################################################################################################
 /**
- * \brief           Process received data over UART
- * \note            Either process them directly or copy to other bigger buffer
- * \param[in]       data: Data to process
- * \param[in]       len: Length in units of bytes
+ * \brief           Check if DMA is active and if not try to send data
+ * \return          `1` if transfer just started, `0` if on-going or no data to transmit
  */
-void lte_lpuart_send_data(const void* data, size_t len) {
-	const uint8_t* d = data;
-	/*
-	 * This function is called on DMA TC and HT events, aswell as on UART IDLE (if enabled) line event.
-	 * 
-	 * For the sake of this example, function does a loop-back data over UART in polling mode.
-	 * Check ringbuff RX-based example for implementation with TX & RX DMA transfer.
-	 */
+uint8_t lte_lpuart_start_tx_dma_transfer(void) {
+    uint32_t primask;
+    uint8_t started = 0;
 
-	for (; len > 0; --len, ++d) {
-			LL_USART_TransmitData8(_LTE_LPUART, *d);
-			while (!LL_USART_IsActiveFlag_TXE(_LTE_LPUART)) {}
-	}
-	while (!LL_USART_IsActiveFlag_TC(_LTE_LPUART)) {}
+    /*
+     * First check if transfer is currently in-active,
+     * by examining the value of usart_tx_dma_current_len variable.
+     *
+     * This variable is set before DMA transfer is started and cleared in DMA TX complete interrupt.
+     *
+     * It is not necessary to disable the interrupts before checking the variable:
+     *
+     * When usart_tx_dma_current_len == 0
+     *    - This function is called by either application or TX DMA interrupt
+     *    - When called from interrupt, it was just reset before the call,
+     *         indicating transfer just completed and ready for more
+     *    - When called from an application, transfer was previously already in-active
+     *         and immediate call from interrupt cannot happen at this moment
+     *
+     * When usart_tx_dma_current_len != 0
+     *    - This function is called only by an application.
+     *    - It will never be called from interrupt with usart_tx_dma_current_len != 0 condition
+     *
+     * Disabling interrupts before checking for next transfer is advised
+     * only if multiple operating system threads can access to this function w/o
+     * exclusive access protection (mutex) configured,
+     * or if application calls this function from multiple interrupts.
+     *
+     * This example assumes worst use case scenario,
+     * hence interrupts are disabled prior every check
+     */
+    primask = __get_PRIMASK();
+    __disable_irq();
+    if (lte_lpuart_tx_dma_current_len == 0
+            && (lte_lpuart_tx_dma_current_len = lwrb_get_linear_block_read_length(&lte_lpuart_tx_rb)) > 0) {
+        /* Disable channel if enabled */
+        LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_2);
+
+        /* Clear all flags */
+        LL_DMA_ClearFlag_TC2(DMA1);
+        LL_DMA_ClearFlag_HT2(DMA1);
+        LL_DMA_ClearFlag_GI2(DMA1);
+        LL_DMA_ClearFlag_TE2(DMA1);
+
+        /* Prepare DMA data and length */
+        LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, lte_lpuart_tx_dma_current_len);
+        LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_2, (uint32_t)lwrb_get_linear_block_read_address(&lte_lpuart_tx_rb));
+
+        /* Start transfer */
+        LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_2);
+        started = 1;
+    }
+    __set_PRIMASK(primask);
+    return started;
+}
+//##################################################################################################################
+/**
+ * \brief           Send string over USART
+ * \param[in]       str: String to send
+ */
+void lte_lpuart_send_string(const char* str) {
+    lwrb_write(&lte_lpuart_tx_rb, str, strlen(str));   /* Write data to transmit buffer */
+    lte_lpuart_start_tx_dma_transfer();
 }
 //##################################################################################################################
 /**
@@ -340,14 +389,6 @@ void ec600x_usart_send_data(const void* data, size_t len) {
 			while (!LL_USART_IsActiveFlag_TXE(_EC600X_USART)) {}
 	}
 	while (!LL_USART_IsActiveFlag_TC(_EC600X_USART)) {}
-}
-//##################################################################################################################
-/**
- * \brief           Send string to USART
- * \param[in]       str: String to send
- */
-void lte_lpuart_send_string(const char* str) {
-    lte_lpuart_send_data((uint8_t*)str, strlen(str));
 }
 //##################################################################################################################
 /**
