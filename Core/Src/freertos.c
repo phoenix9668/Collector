@@ -45,6 +45,7 @@
 /* USER CODE BEGIN PD */
 #define EEPROM_DATA_LENGTH	16	// buffer length
 #define	_SEND_TO_CLOUD_BUFFERSIZE  256 // tx buffer size
+#define	_ADC_VALUE_BUFFERSIZE      9   // ADC value buffer size
 #define	_COLLECTOR_ID_SIZE         4   // collectorID size
 #define	_FUNCTION_ID_SIZE          1   // functionID size
 #define	_UTC_TIME_SIZE             7   // UTC time size
@@ -52,6 +53,7 @@
 static uint8_t collectorIDBuffer[_COLLECTOR_ID_SIZE];
 static uint8_t tailBuffer[2] = {0x0D, 0x0A};
 static uint8_t sendToCloudBuffer[_SEND_TO_CLOUD_BUFFERSIZE];
+static uint8_t adcValueBuffer[_ADC_VALUE_BUFFERSIZE];
 static uint16_t TwoHoursCnt = 0;
 /* USER CODE END PD */
 
@@ -69,9 +71,6 @@ osThreadId iicConvertTaskHandle;
 osThreadId usartRxCmdTaskHandle;
 osMessageQId usartRxQueueHandle;
 osSemaphoreId rxBufferBinarySemHandle;
-osSemaphoreId usartIdleBinarySemHandle;
-osSemaphoreId dmaHTBinarySemHandle;
-osSemaphoreId dmaTCBinarySemHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -147,18 +146,6 @@ void MX_FREERTOS_Init(void) {
   osSemaphoreDef(rxBufferBinarySem);
   rxBufferBinarySemHandle = osSemaphoreCreate(osSemaphore(rxBufferBinarySem), 1);
 
-  /* definition and creation of usartIdleBinarySem */
-  osSemaphoreDef(usartIdleBinarySem);
-  usartIdleBinarySemHandle = osSemaphoreCreate(osSemaphore(usartIdleBinarySem), 1);
-
-  /* definition and creation of dmaHTBinarySem */
-  osSemaphoreDef(dmaHTBinarySem);
-  dmaHTBinarySemHandle = osSemaphoreCreate(osSemaphore(dmaHTBinarySem), 1);
-
-  /* definition and creation of dmaTCBinarySem */
-  osSemaphoreDef(dmaTCBinarySem);
-  dmaTCBinarySemHandle = osSemaphoreCreate(osSemaphore(dmaTCBinarySem), 1);
-
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
@@ -178,11 +165,11 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of usartRxDmaTask */
-  osThreadDef(usartRxDmaTask, StartUsartRxDmaTask, osPriorityAboveNormal, 0, 128);
+  osThreadDef(usartRxDmaTask, StartUsartRxDmaTask, osPriorityHigh, 0, 128);
   usartRxDmaTaskHandle = osThreadCreate(osThread(usartRxDmaTask), NULL);
 
   /* definition and creation of iicConvertTask */
-  osThreadDef(iicConvertTask, StartIICConvertTask, osPriorityBelowNormal, 0, 128);
+  osThreadDef(iicConvertTask, StartIICConvertTask, osPriorityLow, 0, 128);
   iicConvertTaskHandle = osThreadCreate(osThread(iicConvertTask), NULL);
 
   /* definition and creation of usartRxCmdTask */
@@ -239,7 +226,6 @@ void StartIICConvertTask(void const * argument)
 {
   /* USER CODE BEGIN StartIICConvertTask */
 	uint16_t adcValue;
-	float adcfValue;
 	
   /* Infinite loop */
   for(;;)
@@ -259,8 +245,23 @@ void StartIICConvertTask(void const * argument)
 	    if (SGM58031_ReadReg(SGM58031_ADDR, SGM58031_CONF_REG) >> 15 == 1)
       {
 		    adcValue = SGM58031_ReadReg(SGM58031_ADDR, SGM58031_CONVERSION_REG);
-		    adcfValue = ((float)adcValue/32768)*4.096;
-		    debug_printf("adcValue = %.3f\n", adcfValue);
+//				debug_printf("adcValue = %.3f\n", ((float)adcValue/32768)*4.096);
+				
+			  strcatArray(adcValueBuffer, collectorIDBuffer, 0, 0);
+			  adcValueBuffer[4] = 0xB2;
+				if(TwoHoursCnt % 2 == 1){
+					adcValueBuffer[5] = (uint8_t)(adcValue>>8);
+					adcValueBuffer[6] = (uint8_t)adcValue;
+				}else{
+					adcValueBuffer[7] = (uint8_t)(adcValue>>8);
+					adcValueBuffer[8] = (uint8_t)adcValue;
+				}
+				
+//				for(uint8_t i=0; i<_ADC_VALUE_BUFFERSIZE; i++){
+//			    printf("%02x ",adcValueBuffer[i]);}
+//		    printf("\r\n");
+				
+//				lte_lpuart_send_string((const char*)adcValueBuffer);
       }
 
       /*##-2- Initialise the SGM58031 peripheral ####################################*/
@@ -298,17 +299,20 @@ void StartUsartRxCmdTask(void const * argument)
 		osSemaphoreWait(rxBufferBinarySemHandle, osWaitForever);
 
 		LED2_ON();
+    lwrb_read(&lte_lpuart_rx_rb, lte.rxBuffer, lte.rxCounter);
+
 		debug_printf("rxBuffer = %s\n",lte.rxBuffer);
 		debug_printf("rxCounter = %d\n",lte.rxCounter);
+		lte.rxCounter = 0;
 
 		if(lte.rxBuffer[0] == 0xE5 && lte.rxBuffer[1] == 0x5E)
 		{
-			lte_lpuart_send_string("Header Right\r\n");
+			printf("##Header Right##\r\n");
 			EepromCtrl(lte.rxBuffer);
 		}
 		else if(lte.rxBuffer[0] == (uint8_t)(0xFF & CollectorID>>24) && lte.rxBuffer[1] == (uint8_t)(0xFF & CollectorID>>16) && lte.rxBuffer[2] == (uint8_t)(0xFF & CollectorID>>8) && lte.rxBuffer[3] == (uint8_t)(0xFF & CollectorID))
 		{
-			lte_lpuart_send_string("CollectorID Right\r\n");
+			printf("##CollectorID Right##\r\n");
 			FunctionCtrl(lte.rxBuffer);
 		}
 		memset(&lte,0,sizeof(lte));
@@ -332,17 +336,17 @@ void EepromCtrl(uint8_t *command)
 	if(command[2] == 0x01)//write
 	{
 		DATAEEPROM_Program(EEPROM_START_ADDR + address, data);
-		printf("Write Memory Complete\r\n");
+		printf("##Write Memory Complete##\r\n");
 	}
 	else if(command[2] == 0x02)//read
 	{
 		printf("%08x\n",DATAEEPROM_Read(EEPROM_START_ADDR + address));
-		printf("Read Memory Complete\r\n");
+		printf("##Read Memory Complete##\r\n");
 	}
 	else if(command[2] == 0x03)//erase
 	{
 		DATAEEPROM_Program(EEPROM_START_ADDR + address, 0);
-		printf("Erase Memory Complete\r\n");
+		printf("##Erase Memory Complete##\r\n");
 	}
 }
 
@@ -357,6 +361,7 @@ void FunctionCtrl(uint8_t *command)
 	/*A8:configure time information*/
 	/*A9:read time information*/
 	if(command[4] == 0xA0){
+		printf("##System Reset##\r\n");
 		__disable_irq();
 		NVIC_SystemReset();
 	}
@@ -373,7 +378,7 @@ void FunctionCtrl(uint8_t *command)
 		SendToCloud(command[4], _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE + _TAIL_SIZE);
 	}
 	else
-		printf("FunctionID Unused\r\n");
+		printf("##FunctionID Unused##\r\n");
 }
 
 /*===========================================================================

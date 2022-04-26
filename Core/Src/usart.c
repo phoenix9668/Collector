@@ -22,9 +22,6 @@
 
 /* USER CODE BEGIN 0 */
 #include "cmsis_os.h"
-extern osSemaphoreId usartIdleBinarySemHandle;
-extern osSemaphoreId dmaHTBinarySemHandle;
-extern osSemaphoreId dmaTCBinarySemHandle;
 
 uint8_t lte_lpuart_rx_dma_buffer[_LTE_RXSIZE];
 lwrb_t lte_lpuart_rx_rb;
@@ -270,6 +267,7 @@ void lte_lpuart_deinit(void)
  * \param[in]       len: Length in units of bytes
  */
 void lte_lpuart_process_data(const void* data, size_t len) {
+	lte.rxCounter += len;
   lwrb_write(&lte_lpuart_rx_rb, data, len);  /* Write data to receive buffer */
 }
 //##################################################################################################################

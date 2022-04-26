@@ -47,9 +47,6 @@ extern __IO ITStatus rxCatch;
 extern __IO ITStatus txFiFoUnFlow;
 extern osMessageQId usartRxQueueHandle;
 extern osSemaphoreId rxBufferBinarySemHandle;
-extern osSemaphoreId usartIdleBinarySemHandle;
-extern osSemaphoreId dmaHTBinarySemHandle;
-extern osSemaphoreId dmaTCBinarySemHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -162,14 +159,12 @@ void DMA1_Channel2_3_IRQHandler(void)
 	if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_HT3(DMA1))
 	{
 		LL_DMA_ClearFlag_HT3(DMA1);             /* Clear half-transfer complete flag */
-		osSemaphoreRelease(dmaHTBinarySemHandle);
 		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
 	}
 	/* Check transfer-complete interrupt */
 	if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_TC3(DMA1))
 	{
 		LL_DMA_ClearFlag_TC3(DMA1);             /* Clear transfer complete flag */
-		osSemaphoreRelease(dmaTCBinarySemHandle);
 		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
 	}
   /* USER CODE END DMA1_Channel2_3_IRQn 0 */
@@ -224,7 +219,6 @@ void LPUART1_IRQHandler(void)
 	if (LL_USART_IsEnabledIT_IDLE(LPUART1) && LL_USART_IsActiveFlag_IDLE(LPUART1))
 	{
 		LL_USART_ClearFlag_IDLE(LPUART1);        /* Clear IDLE line flag */
-		osSemaphoreRelease(usartIdleBinarySemHandle);
 		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
 		osSemaphoreRelease(rxBufferBinarySemHandle);
 	}

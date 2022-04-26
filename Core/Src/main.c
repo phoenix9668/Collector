@@ -99,7 +99,7 @@ int main(void)
   MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_SPI1_Init();
-  MX_IWDG_Init();
+//  MX_IWDG_Init();
   MX_RTC_Init();
   MX_CRC_Init();
   MX_LPUART1_UART_Init();
@@ -218,12 +218,12 @@ void SystemInitial(void)
 void ShowMessage(void)
 {
 	/* Print Open Massage */
-	printf("####################################################################\n");
-	printf("Collector Program Start Running\n");
-	printf("CollectorID:%08x\n",CollectorID);
-	printf("Using LPUART1,Configuration:%d 8-N-1\n",115200);
-	printf("USART RX Method: DMA HT & TC + USART IDLE LINE IRQ + RTOS processing\n");
-	printf("####################################################################\n");
+	printf("######################################################################\n");
+	printf("#------------------Collector Program Start Running-------------------#\n");
+	printf("#------------------------CollectorID:%08x------------------------#\n",CollectorID);
+	printf("#--------------Using LPUART1,Configuration:%d 8-N-1--------------#\n",115200);
+	printf("#USART RX Method: DMA HT & TC + USART IDLE LINE IRQ + RTOS processing#\n");
+	printf("######################################################################\n");
 }
 //##################################################################################################################
 void ModuleLtePowerOn(void)
@@ -231,7 +231,7 @@ void ModuleLtePowerOn(void)
 	USR4G_POWER_KEY_OFF();
 	HAL_Delay(2000);
 	USR4G_POWER_KEY_ON();
-	printf("LTE Module Power On Complete\n");
+	printf("##LTE Module Power On Complete##\n");
 }
 //##################################################################################################################
 void strcatArray(uint8_t *dest, uint8_t *src, uint8_t position, uint8_t srclen)

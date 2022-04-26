@@ -126,7 +126,8 @@ SGM58031_StatusTypeDef SGM58031_Init(uint8_t DeviceAddr)
 
   /*##-2- Read_CHIP_ID ############################*/
   tmp = SGM58031_ReadReg(DeviceAddr, SGM58031_CHIP_ID_REG);
-  debug_printf("CHIP_ID = %x\n",tmp);
+	printf("######################################################################\n");
+  printf("#----------------------------CHIP_ID = %x----------------------------#\n",tmp);
 	if(tmp != 0x80)
 		return SGM58031_ERROR;
 
@@ -136,7 +137,7 @@ SGM58031_StatusTypeDef SGM58031_Init(uint8_t DeviceAddr)
 	
   /*##-4- read the Configuration Register #####################################*/
   tmp = SGM58031_ReadReg(DeviceAddr, SGM58031_CONF_REG);
-	debug_printf("CONF_REG = %x\n",tmp);
+	printf("#--------------------------CONF_REG = %x---------------------------#\n",tmp);
 	if((tmp & 0x7FFF) != (SGM58031_InitStructure.Config_Register_Value & 0x7FFF))
 		return SGM58031_ERROR;
 	
@@ -146,7 +147,7 @@ SGM58031_StatusTypeDef SGM58031_Init(uint8_t DeviceAddr)
 	
   /*##-6- read the Configuration1 Register #####################################*/
   tmp = SGM58031_ReadReg(DeviceAddr, SGM58031_CONF1_REG);
-	debug_printf("CONF1_REG = %x\n",tmp);
+	printf("#----------------------------CONF1_REG = %x---------------------------#\n",tmp);
 	if(tmp != SGM58031_InitStructure.Config1_Register_Value)
 		return SGM58031_ERROR;
   
@@ -156,21 +157,22 @@ SGM58031_StatusTypeDef SGM58031_Init(uint8_t DeviceAddr)
 	
   /*##-8- read the Low Thresh Register #####################################*/
   tmp = SGM58031_ReadReg(DeviceAddr, SGM58031_LOW_THRESH_REG);
-	debug_printf("Low_Thresh_Register = %x\n",tmp);
+	printf("#---------------------Low_Thresh_Register = %x---------------------#\n",tmp);
 	if(tmp != SGM58031_InitStructure.Low_Thresh_Register)
 		return SGM58031_ERROR;
 
   /*##-9- Set the High Thresh ######################################*/
   if( SGM58031_WriteReg(DeviceAddr, SGM58031_HIGH_THRESH_REG, SGM58031_InitStructure.High_Thresh_Register) != HAL_OK)
 	  return SGM58031_ERROR;
-	
+
   /*##-10- read the High Thresh Register #####################################*/
   tmp = SGM58031_ReadReg(DeviceAddr, SGM58031_HIGH_THRESH_REG);
-	debug_printf("High_Thresh_Register = %x\n",tmp);
+	printf("#--------------------High_Thresh_Register = %x---------------------#\n",tmp);
 	if(tmp != SGM58031_InitStructure.High_Thresh_Register)
 		return SGM58031_ERROR;
 
-  printf("sgm58031 initial completed~!\n");
+  printf("#--------------------sgm58031 initial completed~!--------------------#\n");
+	printf("######################################################################\n");
   /* Return status OK*/
   return SGM58031_OK;
 }
