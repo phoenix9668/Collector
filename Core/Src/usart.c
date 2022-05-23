@@ -32,11 +32,11 @@ volatile size_t lte_lpuart_tx_dma_current_len;
 lte_t lte;
 
 #ifdef __GNUC__
-/* With GCC, small printf (option LD Linker->Libraries->Small printf
-   set to 'Yes') calls __io_putchar() */
-#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+    /* With GCC, small printf (option LD Linker->Libraries->Small printf
+    set to 'Yes') calls __io_putchar() */
+    #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
-#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+    #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif /* __GNUC__ */
 /* USER CODE END 0 */
 
@@ -45,91 +45,91 @@ lte_t lte;
 void MX_LPUART1_UART_Init(void)
 {
 
-  /* USER CODE BEGIN LPUART1_Init 0 */
+    /* USER CODE BEGIN LPUART1_Init 0 */
 
-  /* USER CODE END LPUART1_Init 0 */
+    /* USER CODE END LPUART1_Init 0 */
 
-  LL_LPUART_InitTypeDef LPUART_InitStruct = {0};
+    LL_LPUART_InitTypeDef LPUART_InitStruct = {0};
 
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  /* Peripheral clock enable */
-  LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_LPUART1);
+    /* Peripheral clock enable */
+    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_LPUART1);
 
-  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
-  /**LPUART1 GPIO Configuration
-  PB10   ------> LPUART1_TX
-  PB11   ------> LPUART1_RX
-  */
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOB);
+    /**LPUART1 GPIO Configuration
+    PB10   ------> LPUART1_TX
+    PB11   ------> LPUART1_RX
+    */
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+    GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
+    LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_11;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
-  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_11;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+    GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
+    LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /* LPUART1 DMA Init */
+    /* LPUART1 DMA Init */
 
-  /* LPUART1_RX Init */
-  LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_3, LL_DMA_REQUEST_5);
+    /* LPUART1_RX Init */
+    LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_3, LL_DMA_REQUEST_5);
 
-  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_3, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+    LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_3, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
 
-  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PRIORITY_LOW);
+    LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PRIORITY_LOW);
 
-  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MODE_CIRCULAR);
+    LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MODE_CIRCULAR);
 
-  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PERIPH_NOINCREMENT);
+    LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PERIPH_NOINCREMENT);
 
-  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MEMORY_INCREMENT);
+    LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MEMORY_INCREMENT);
 
-  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PDATAALIGN_BYTE);
+    LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PDATAALIGN_BYTE);
 
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MDATAALIGN_BYTE);
+    LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MDATAALIGN_BYTE);
 
-  /* LPUART1_TX Init */
-  LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_2, LL_DMA_REQUEST_5);
+    /* LPUART1_TX Init */
+    LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_2, LL_DMA_REQUEST_5);
 
-  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_2, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+    LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_2, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
 
-  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PRIORITY_LOW);
+    LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PRIORITY_LOW);
 
-  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MODE_NORMAL);
+    LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MODE_NORMAL);
 
-  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PERIPH_NOINCREMENT);
+    LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PERIPH_NOINCREMENT);
 
-  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MEMORY_INCREMENT);
+    LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MEMORY_INCREMENT);
 
-  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PDATAALIGN_BYTE);
+    LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PDATAALIGN_BYTE);
 
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MDATAALIGN_BYTE);
+    LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MDATAALIGN_BYTE);
 
-  /* LPUART1 interrupt Init */
-  NVIC_SetPriority(LPUART1_IRQn, 3);
-  NVIC_EnableIRQ(LPUART1_IRQn);
+    /* LPUART1 interrupt Init */
+    NVIC_SetPriority(LPUART1_IRQn, 3);
+    NVIC_EnableIRQ(LPUART1_IRQn);
 
-  /* USER CODE BEGIN LPUART1_Init 1 */
+    /* USER CODE BEGIN LPUART1_Init 1 */
 
-  /* USER CODE END LPUART1_Init 1 */
-  LPUART_InitStruct.BaudRate = 115200;
-  LPUART_InitStruct.DataWidth = LL_LPUART_DATAWIDTH_8B;
-  LPUART_InitStruct.StopBits = LL_LPUART_STOPBITS_1;
-  LPUART_InitStruct.Parity = LL_LPUART_PARITY_NONE;
-  LPUART_InitStruct.TransferDirection = LL_LPUART_DIRECTION_TX_RX;
-  LPUART_InitStruct.HardwareFlowControl = LL_LPUART_HWCONTROL_NONE;
-  LL_LPUART_Init(LPUART1, &LPUART_InitStruct);
-  /* USER CODE BEGIN LPUART1_Init 2 */
+    /* USER CODE END LPUART1_Init 1 */
+    LPUART_InitStruct.BaudRate = 115200;
+    LPUART_InitStruct.DataWidth = LL_LPUART_DATAWIDTH_8B;
+    LPUART_InitStruct.StopBits = LL_LPUART_STOPBITS_1;
+    LPUART_InitStruct.Parity = LL_LPUART_PARITY_NONE;
+    LPUART_InitStruct.TransferDirection = LL_LPUART_DIRECTION_TX_RX;
+    LPUART_InitStruct.HardwareFlowControl = LL_LPUART_HWCONTROL_NONE;
+    LL_LPUART_Init(LPUART1, &LPUART_InitStruct);
+    /* USER CODE BEGIN LPUART1_Init 2 */
 
-  /* USER CODE END LPUART1_Init 2 */
+    /* USER CODE END LPUART1_Init 2 */
 
 }
 /* USART1 init function */
@@ -137,54 +137,54 @@ void MX_LPUART1_UART_Init(void)
 void MX_USART1_UART_Init(void)
 {
 
-  /* USER CODE BEGIN USART1_Init 0 */
+    /* USER CODE BEGIN USART1_Init 0 */
 
-  /* USER CODE END USART1_Init 0 */
+    /* USER CODE END USART1_Init 0 */
 
-  LL_USART_InitTypeDef USART_InitStruct = {0};
+    LL_USART_InitTypeDef USART_InitStruct = {0};
 
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+    LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  /* Peripheral clock enable */
-  LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
+    /* Peripheral clock enable */
+    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
 
-  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
-  /**USART1 GPIO Configuration
-  PA9   ------> USART1_TX
-  PA10   ------> USART1_RX
-  */
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOA);
+    /**USART1 GPIO Configuration
+    PA9   ------> USART1_TX
+    PA10   ------> USART1_RX
+    */
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_9;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+    GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
+    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
-  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
-  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    GPIO_InitStruct.Pin = LL_GPIO_PIN_10;
+    GPIO_InitStruct.Mode = LL_GPIO_MODE_ALTERNATE;
+    GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+    GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+    GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
+    LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /* USER CODE BEGIN USART1_Init 1 */
+    /* USER CODE BEGIN USART1_Init 1 */
 
-  /* USER CODE END USART1_Init 1 */
-  USART_InitStruct.BaudRate = 115200;
-  USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
-  USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
-  USART_InitStruct.Parity = LL_USART_PARITY_NONE;
-  USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX_RX;
-  USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
-  USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
-  LL_USART_Init(USART1, &USART_InitStruct);
-  LL_USART_ConfigAsyncMode(USART1);
-  LL_USART_Enable(USART1);
-  /* USER CODE BEGIN USART1_Init 2 */
+    /* USER CODE END USART1_Init 1 */
+    USART_InitStruct.BaudRate = 115200;
+    USART_InitStruct.DataWidth = LL_USART_DATAWIDTH_8B;
+    USART_InitStruct.StopBits = LL_USART_STOPBITS_1;
+    USART_InitStruct.Parity = LL_USART_PARITY_NONE;
+    USART_InitStruct.TransferDirection = LL_USART_DIRECTION_TX_RX;
+    USART_InitStruct.HardwareFlowControl = LL_USART_HWCONTROL_NONE;
+    USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
+    LL_USART_Init(USART1, &USART_InitStruct);
+    LL_USART_ConfigAsyncMode(USART1);
+    LL_USART_Enable(USART1);
+    /* USER CODE BEGIN USART1_Init 2 */
 
-  /* USER CODE END USART1_Init 2 */
+    /* USER CODE END USART1_Init 2 */
 
 }
 
@@ -197,12 +197,12 @@ void MX_USART1_UART_Init(void)
   */
 void Enable_LPUART1(void)
 {
-  /* Enable LPUART1 */
-	LL_LPUART_Enable(LPUART1);
-	
-	/* Polling USART initialisation */
-  while((!(LL_LPUART_IsActiveFlag_TEACK(LPUART1))) || (!(LL_LPUART_IsActiveFlag_REACK(LPUART1))))
-  {}
+    /* Enable LPUART1 */
+    LL_LPUART_Enable(LPUART1);
+
+    /* Polling USART initialisation */
+    while((!(LL_LPUART_IsActiveFlag_TEACK(LPUART1))) || (!(LL_LPUART_IsActiveFlag_REACK(LPUART1))))
+    {}
 }
 //##################################################################################################################
 /**
@@ -210,54 +210,56 @@ void Enable_LPUART1(void)
   * @param  None
   * @retval None
   */
-int fputc(int ch,FILE *f)
+int fputc(int ch, FILE *f)
 {
-	_LTE_LPUART->TDR = ch;
-	while(!(_LTE_LPUART->ISR&USART_ISR_TXE))
-	{;}
-	return ch;
+    _LTE_LPUART->TDR = ch;
+
+    while(!(_LTE_LPUART->ISR & USART_ISR_TXE))
+    {;}
+
+    return ch;
 }
 //##################################################################################################################
 void lte_lpuart_init(void)
 {
-	/* Initialize ringbuff for TX & RX */
-  lwrb_init(&lte_lpuart_tx_rb, lte_lpuart_tx_rb_data, sizeof(lte_lpuart_tx_rb_data));
-  lwrb_init(&lte_lpuart_rx_rb, lte_lpuart_rx_rb_data, sizeof(lte_lpuart_rx_rb_data));
-	
-	LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_3, LL_USART_DMA_GetRegAddr(_LTE_LPUART, LL_USART_DMA_REG_DATA_RECEIVE));
-	LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_3, (uint32_t)lte_lpuart_rx_dma_buffer);
-	LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_3, ARRAY_LEN(lte_lpuart_rx_dma_buffer));
-	LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_2, LL_USART_DMA_GetRegAddr(_LTE_LPUART, LL_USART_DMA_REG_DATA_TRANSMIT));
+    /* Initialize ringbuff for TX & RX */
+    lwrb_init(&lte_lpuart_tx_rb, lte_lpuart_tx_rb_data, sizeof(lte_lpuart_tx_rb_data));
+    lwrb_init(&lte_lpuart_rx_rb, lte_lpuart_rx_rb_data, sizeof(lte_lpuart_rx_rb_data));
 
-	/* Enable DMA RX HT & TC interrupts */
-	LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_3);
-	LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_3);
-	/* Enable DMA TX TC interrupts */
-  LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_2);
-	
-  LL_USART_ConfigAsyncMode(_LTE_LPUART);
-	LL_USART_EnableDMAReq_RX(_LTE_LPUART);
-	LL_USART_EnableDMAReq_TX(_LTE_LPUART);
-	LL_USART_EnableIT_IDLE(_LTE_LPUART);
-	
-	/* Enable DMA RX*/
-	LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3);
+    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_3, LL_USART_DMA_GetRegAddr(_LTE_LPUART, LL_USART_DMA_REG_DATA_RECEIVE));
+    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_3, (uint32_t)lte_lpuart_rx_dma_buffer);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_3, ARRAY_LEN(lte_lpuart_rx_dma_buffer));
+    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_2, LL_USART_DMA_GetRegAddr(_LTE_LPUART, LL_USART_DMA_REG_DATA_TRANSMIT));
+
+    /* Enable DMA RX HT & TC interrupts */
+    LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_3);
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_3);
+    /* Enable DMA TX TC interrupts */
+    LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_2);
+
+    LL_USART_ConfigAsyncMode(_LTE_LPUART);
+    LL_USART_EnableDMAReq_RX(_LTE_LPUART);
+    LL_USART_EnableDMAReq_TX(_LTE_LPUART);
+    LL_USART_EnableIT_IDLE(_LTE_LPUART);
+
+    /* Enable DMA RX*/
+    LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3);
 }
 //##################################################################################################################
 void lte_lpuart_deinit(void)
 {
-	/* Disable DMA RX HT & TC interrupts */
-	LL_DMA_DisableIT_HT(DMA1, LL_DMA_CHANNEL_3);
-	LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_3);
-	/* Disable DMA TX TC interrupts */
-  LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_2);
-	
-	LL_USART_DisableDMAReq_RX(_LTE_LPUART);
-	LL_USART_DisableDMAReq_TX(_LTE_LPUART);
-	LL_USART_DisableIT_IDLE(_LTE_LPUART);
-	
-	/* Disable DMA */
-	LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_3);
+    /* Disable DMA RX HT & TC interrupts */
+    LL_DMA_DisableIT_HT(DMA1, LL_DMA_CHANNEL_3);
+    LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_3);
+    /* Disable DMA TX TC interrupts */
+    LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_2);
+
+    LL_USART_DisableDMAReq_RX(_LTE_LPUART);
+    LL_USART_DisableDMAReq_TX(_LTE_LPUART);
+    LL_USART_DisableIT_IDLE(_LTE_LPUART);
+
+    /* Disable DMA */
+    LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_3);
 }
 //##################################################################################################################
 /**
@@ -266,34 +268,44 @@ void lte_lpuart_deinit(void)
  * \param[in]       data: Data to process
  * \param[in]       len: Length in units of bytes
  */
-void lte_lpuart_process_data(const void* data, size_t len) {
-	lte.rxCounter += len;
-  lwrb_write(&lte_lpuart_rx_rb, data, len);  /* Write data to receive buffer */
+void lte_lpuart_process_data(const void* data, size_t len)
+{
+    lte.rxCounter += len;
+    lwrb_write(&lte_lpuart_rx_rb, data, len);  /* Write data to receive buffer */
 }
 //##################################################################################################################
 /**
  * \brief           Check for new data received with DMA
  */
-void lte_lpuart_rx_check(void) {
+void lte_lpuart_rx_check(void)
+{
     static size_t old_pos;
     size_t pos;
 
     /* Calculate current position in buffer */
     pos = ARRAY_LEN(lte_lpuart_rx_dma_buffer) - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_3);
-    if (pos != old_pos) {                       /* Check change in received data */
-        if (pos > old_pos) {                    /* Current position is over previous one */
+
+    if (pos != old_pos)                         /* Check change in received data */
+    {
+        if (pos > old_pos)                      /* Current position is over previous one */
+        {
             /* We are in "linear" mode */
             /* Process data directly by subtracting "pointers" */
             lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[old_pos], pos - old_pos);
-        } else {
+        }
+        else
+        {
             /* We are in "overflow" mode */
             /* First process data to the end of buffer */\
             lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[old_pos], ARRAY_LEN(lte_lpuart_rx_dma_buffer) - old_pos);
+
             /* Check and continue with beginning of buffer */
-            if (pos > 0) {
-              lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[0], pos);
+            if (pos > 0)
+            {
+                lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[0], pos);
             }
         }
+
         old_pos = pos;                          /* Save current position as old */
     }
 }
@@ -302,7 +314,8 @@ void lte_lpuart_rx_check(void) {
  * \brief           Check if DMA is active and if not try to send data
  * \return          `1` if transfer just started, `0` if on-going or no data to transmit
  */
-uint8_t lte_lpuart_start_tx_dma_transfer(void) {
+uint8_t lte_lpuart_start_tx_dma_transfer(void)
+{
     uint32_t primask;
     uint8_t started = 0;
 
@@ -335,8 +348,10 @@ uint8_t lte_lpuart_start_tx_dma_transfer(void) {
      */
     primask = __get_PRIMASK();
     __disable_irq();
+
     if (lte_lpuart_tx_dma_current_len == 0
-            && (lte_lpuart_tx_dma_current_len = lwrb_get_linear_block_read_length(&lte_lpuart_tx_rb)) > 0) {
+            && (lte_lpuart_tx_dma_current_len = lwrb_get_linear_block_read_length(&lte_lpuart_tx_rb)) > 0)
+    {
         /* Disable channel if enabled */
         LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_2);
 
@@ -354,6 +369,7 @@ uint8_t lte_lpuart_start_tx_dma_transfer(void) {
         LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_2);
         started = 1;
     }
+
     __set_PRIMASK(primask);
     return started;
 }
@@ -362,7 +378,8 @@ uint8_t lte_lpuart_start_tx_dma_transfer(void) {
  * \brief           Send string over USART
  * \param[in]       str: String to send
  */
-void lte_lpuart_send_string(const char* str) {
+void lte_lpuart_send_string(const char* str)
+{
     lwrb_write(&lte_lpuart_tx_rb, str, strlen(str));   /* Write data to transmit buffer */
     lte_lpuart_start_tx_dma_transfer();
 }
@@ -373,27 +390,32 @@ void lte_lpuart_send_string(const char* str) {
  * \param[in]       data: Data to process
  * \param[in]       len: Length in units of bytes
  */
-void ec600x_usart_send_data(const void* data, size_t len) {
-	const uint8_t* d = data;
-	/*
-	 * This function is called on DMA TC and HT events, aswell as on UART IDLE (if enabled) line event.
-	 * 
-	 * For the sake of this example, function does a loop-back data over UART in polling mode.
-	 * Check ringbuff RX-based example for implementation with TX & RX DMA transfer.
-	 */
+void ec600x_usart_send_data(const void* data, size_t len)
+{
+    const uint8_t* d = data;
+    /*
+     * This function is called on DMA TC and HT events, aswell as on UART IDLE (if enabled) line event.
+     *
+     * For the sake of this example, function does a loop-back data over UART in polling mode.
+     * Check ringbuff RX-based example for implementation with TX & RX DMA transfer.
+     */
 
-	for (; len > 0; --len, ++d) {
-			LL_USART_TransmitData8(_EC600X_USART, *d);
-			while (!LL_USART_IsActiveFlag_TXE(_EC600X_USART)) {}
-	}
-	while (!LL_USART_IsActiveFlag_TC(_EC600X_USART)) {}
+    for (; len > 0; --len, ++d)
+    {
+        LL_USART_TransmitData8(_EC600X_USART, *d);
+
+        while (!LL_USART_IsActiveFlag_TXE(_EC600X_USART)) {}
+    }
+
+    while (!LL_USART_IsActiveFlag_TC(_EC600X_USART)) {}
 }
 //##################################################################################################################
 /**
  * \brief           Send string to USART
  * \param[in]       str: String to send
  */
-void ec600x_usart_send_string(const char* str) {
+void ec600x_usart_send_string(const char* str)
+{
     ec600x_usart_send_data((uint8_t*)str, strlen(str));
 }
 //##################################################################################################################

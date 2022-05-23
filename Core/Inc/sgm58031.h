@@ -59,14 +59,14 @@ typedef enum
   */
 typedef enum
 {
-  AINP_AIN0_AND_AINN_AIN1          = ((uint16_t)0x00),    /*!< 000 = AINP = AIN0 and AINN = AIN1 (default) */
-  AINP_AIN0_AND_AINN_AIN3          = ((uint16_t)0x01),    /*!< 001 = AINP = AIN0 and AINN = AIN3 */
-  AINP_AIN1_AND_AINN_AIN3          = ((uint16_t)0x02),    /*!< 010 = AINP = AIN1 and AINN = AIN3 */
-  AINP_AIN2_AND_AINN_AIN3          = ((uint16_t)0x03),    /*!< 011 = AINP = AIN2 and AINN = AIN3 */
-  AINP_AIN0_AND_AINN_GND           = ((uint16_t)0x04),    /*!< 100 = AINP = AIN0 and AINN = GND */
-	AINP_AIN1_AND_AINN_GND           = ((uint16_t)0x05),    /*!< 100 = AINP = AIN1 and AINN = GND */
-	AINP_AIN2_AND_AINN_GND           = ((uint16_t)0x06),    /*!< 100 = AINP = AIN2 and AINN = GND */
-	AINP_AIN3_AND_AINN_GND           = ((uint16_t)0x07),    /*!< 100 = AINP = AIN3 and AINN = GND */
+    AINP_AIN0_AND_AINN_AIN1          = ((uint16_t)0x00),    /*!< 000 = AINP = AIN0 and AINN = AIN1 (default) */
+    AINP_AIN0_AND_AINN_AIN3          = ((uint16_t)0x01),    /*!< 001 = AINP = AIN0 and AINN = AIN3 */
+    AINP_AIN1_AND_AINN_AIN3          = ((uint16_t)0x02),    /*!< 010 = AINP = AIN1 and AINN = AIN3 */
+    AINP_AIN2_AND_AINN_AIN3          = ((uint16_t)0x03),    /*!< 011 = AINP = AIN2 and AINN = AIN3 */
+    AINP_AIN0_AND_AINN_GND           = ((uint16_t)0x04),    /*!< 100 = AINP = AIN0 and AINN = GND */
+	AINP_AIN1_AND_AINN_GND           = ((uint16_t)0x05),    /*!< 101 = AINP = AIN1 and AINN = GND */
+	AINP_AIN2_AND_AINN_GND           = ((uint16_t)0x06),    /*!< 110 = AINP = AIN2 and AINN = GND */
+	AINP_AIN3_AND_AINN_GND           = ((uint16_t)0x07),    /*!< 111 = AINP = AIN3 and AINN = GND */
 	
 }MUX_SelTypeDef;
 
@@ -75,11 +75,11 @@ typedef enum
   */
 typedef enum
 {
-  FS_6_144V                        = ((uint16_t)0x00),    /*!< 000 = FS = +/-6.144V */
-  FS_4_096V                        = ((uint16_t)0x01),    /*!< 001 = FS = +/-4.096V */
-  FS_2_048V                        = ((uint16_t)0x02),    /*!< 010 = FS = +/-2.048V (default) */
-  FS_1_024V                        = ((uint16_t)0x03),    /*!< 011 = FS = +/-1.024V */
-  FS_0_512V                        = ((uint16_t)0x04),    /*!< 100 = FS = +/-0.512V */
+    FS_6_144V                        = ((uint16_t)0x00),    /*!< 000 = FS = +/-6.144V */
+    FS_4_096V                        = ((uint16_t)0x01),    /*!< 001 = FS = +/-4.096V */
+    FS_2_048V                        = ((uint16_t)0x02),    /*!< 010 = FS = +/-2.048V (default) */
+    FS_1_024V                        = ((uint16_t)0x03),    /*!< 011 = FS = +/-1.024V */
+    FS_0_512V                        = ((uint16_t)0x04),    /*!< 100 = FS = +/-0.512V */
 	FS_0_256V                        = ((uint16_t)0x05),    /*!< 101 = FS = +/-0.256V */
 	
 }PGA_SelTypeDef;
@@ -89,8 +89,8 @@ typedef enum
   */
 typedef enum
 {
-  Continuous_Conversion_Mode       = ((uint16_t)0x00),    /*!< 0 = Continuous conversion mode  */
-  Single_Shot_Mode                 = ((uint16_t)0x01),    /*!< 1 = Power-down single-shot mode (default) */
+    Continuous_Conversion_Mode       = ((uint16_t)0x00),    /*!< 0 = Continuous conversion mode  */
+    Single_Shot_Mode                 = ((uint16_t)0x01),    /*!< 1 = Power-down single-shot mode (default) */
 	
 }MODE_SelTypeDef;
 
@@ -101,14 +101,14 @@ typedef enum
 {
 	                                 	                     /*!<| DR[2:0] Bits        | DR_SEL Bit in Config1 Register | */
                                    	                     /*!<| in Config Register  | DR_SEL = 0     | DR_SEL = 1    | */
-  DR_6_25Hz_7_5Hz                  = ((uint16_t)0x00),    /*!<| 000                 | 6.25Hz         | 7.5Hz         | */
-  DR_12_5Hz_15Hz                   = ((uint16_t)0x01),    /*!<| 001                 | 12.5Hz         | 15Hz          | */
-  DR_25Hz_30Hz                     = ((uint16_t)0x02),    /*!<| 010                 | 25Hz           | 30Hz          | */
-  DR_50Hz_60Hz                     = ((uint16_t)0x03),    /*!<| 011                 | 50Hz           | 60Hz          | */
-  DR_100Hz_120Hz                   = ((uint16_t)0x04),    /*!<| 100                 | 100Hz          | 120Hz         | */
-  DR_200Hz_240Hz                   = ((uint16_t)0x05),    /*!<| 101                 | 200Hz          | 240Hz         | */
-  DR_400Hz_480Hz                   = ((uint16_t)0x06),    /*!<| 110                 | 400Hz          | 480Hz         | */
-  DR_800Hz_960Hz                   = ((uint16_t)0x07),    /*!<| 111                 | 800Hz          | 960HZ         | */
+    DR_6_25Hz_7_5Hz                  = ((uint16_t)0x00),    /*!<| 000                 | 6.25Hz         | 7.5Hz         | */
+    DR_12_5Hz_15Hz                   = ((uint16_t)0x01),    /*!<| 001                 | 12.5Hz         | 15Hz          | */
+    DR_25Hz_30Hz                     = ((uint16_t)0x02),    /*!<| 010                 | 25Hz           | 30Hz          | */
+    DR_50Hz_60Hz                     = ((uint16_t)0x03),    /*!<| 011                 | 50Hz           | 60Hz          | */
+    DR_100Hz_120Hz                   = ((uint16_t)0x04),    /*!<| 100                 | 100Hz          | 120Hz         | */
+    DR_200Hz_240Hz                   = ((uint16_t)0x05),    /*!<| 101                 | 200Hz          | 240Hz         | */
+    DR_400Hz_480Hz                   = ((uint16_t)0x06),    /*!<| 110                 | 400Hz          | 480Hz         | */
+    DR_800Hz_960Hz                   = ((uint16_t)0x07),    /*!<| 111                 | 800Hz          | 960HZ         | */
 	
 }DR_SelTypeDef;
 
@@ -117,8 +117,8 @@ typedef enum
   */
 typedef enum
 {
-  Traditional_Comparator           = ((uint16_t)0x00),    /*!< 0 = A traditional comparator with hysteresis (default) */
-  Window_Comparator                = ((uint16_t)0x01),    /*!< 1 = A window comparator */
+    Traditional_Comparator           = ((uint16_t)0x00),    /*!< 0 = A traditional comparator with hysteresis (default) */
+    Window_Comparator                = ((uint16_t)0x01),    /*!< 1 = A window comparator */
 	
 }COMP_MODE_SelTypeDef;
 
@@ -127,8 +127,8 @@ typedef enum
   */
 typedef enum
 {
-  Active_Low                       = ((uint16_t)0x00),    /*!< 0 = Active low (default) */
-  Active_High                      = ((uint16_t)0x01),    /*!< 1 = Active high */
+    Active_Low                       = ((uint16_t)0x00),    /*!< 0 = Active low (default) */
+    Active_High                      = ((uint16_t)0x01),    /*!< 1 = Active high */
 	
 }COMP_POL_SelTypeDef;
 
@@ -137,8 +137,8 @@ typedef enum
   */
 typedef enum
 {
-  Non_Latching                     = ((uint16_t)0x00),    /*!< 0 = Non-latching comparator (default) */
-  Latching                         = ((uint16_t)0x01),    /*!< 1 = Latching comparator */
+    Non_Latching                     = ((uint16_t)0x00),    /*!< 0 = Non-latching comparator (default) */
+    Latching                         = ((uint16_t)0x01),    /*!< 1 = Latching comparator */
 	
 }COMP_LAT_SelTypeDef;
 
@@ -147,8 +147,8 @@ typedef enum
   */
 typedef enum
 {
-  Assert_After_One_Conversion      = ((uint16_t)0x00),    /*!< 00 = Assert after one conversion */
-  Assert_After_Two_Conversions     = ((uint16_t)0x01),    /*!< 01 = Assert after two conversions */
+    Assert_After_One_Conversion      = ((uint16_t)0x00),    /*!< 00 = Assert after one conversion */
+    Assert_After_Two_Conversions     = ((uint16_t)0x01),    /*!< 01 = Assert after two conversions */
 	Assert_After_Four_Conversions    = ((uint16_t)0x02),    /*!< 10 = Assert after four conversions */
 	Disable_Comparator               = ((uint16_t)0x03),    /*!< 11 = Disable comparator (default) */
 	
@@ -159,8 +159,8 @@ typedef enum
   */
 typedef enum
 {
-  DR_SEL0                          = ((uint16_t)0x00),    /*!< 0 = DR[2:0] = 000 ~ 111 for conversion rate of 6.25Hz, 12.5Hz, 25Hz, 50Hz, 100Hz, 200Hz, 400Hz and 800Hz (default)  */
-  DR_SEL1                          = ((uint16_t)0x01),    /*!< 1 = DR[2:0] = 000 ~ 111 for conversion rate of 7.5Hz, 15Hz, 30Hz, 60Hz, 120Hz, 240Hz, 480Hz and 960Hz*/
+    DR_SEL0                          = ((uint16_t)0x00),    /*!< 0 = DR[2:0] = 000 ~ 111 for conversion rate of 6.25Hz, 12.5Hz, 25Hz, 50Hz, 100Hz, 200Hz, 400Hz and 800Hz (default)  */
+    DR_SEL1                          = ((uint16_t)0x01),    /*!< 1 = DR[2:0] = 000 ~ 111 for conversion rate of 7.5Hz, 15Hz, 30Hz, 60Hz, 120Hz, 240Hz, 480Hz and 960Hz*/
 
 }DR_SEL_SelTypeDef;	
 	
@@ -175,7 +175,7 @@ typedef struct
                                    For a read status: 
                                    0 = The chip is doing a conversion 
                                    1 = The chip isn't doing a conversion */
-  uint8_t MUX;                  /* Input Multiplexer (MUX) Configuration 
+    uint8_t MUX;                  /* Input Multiplexer (MUX) Configuration 
                                    000 = AINP = AIN0 and AINN = AIN1 (default) 
                                    001 = AINP = AIN0 and AINN = AIN3 
                                    010 = AINP = AIN1 and AINN = AIN3 
@@ -233,7 +233,7 @@ typedef struct
 
 typedef struct
 {
-  uint8_t PD;                   /* Writing '1' to PD powers down this part, and this PD bit is automatically cleared 
+    uint8_t PD;                   /* Writing '1' to PD powers down this part, and this PD bit is automatically cleared 
                                    internally. Another continuous/single conversion can be carried out again without 
                                    the need to clear this bit. */
 
@@ -259,10 +259,10 @@ typedef struct
 typedef struct
 {
 	uint16_t                        Conversion_Register;       /*!< The ADC conversion result is 16-bit two's complement format (Read-Only) */
-  Config_Register_InitTypeDef     Config_Register;           /*!< The configuration register (Read/Write) */
+    Config_Register_InitTypeDef     Config_Register;           /*!< The configuration register (Read/Write) */
 	uint16_t                        Config_Register_Value;
-  uint16_t                        Low_Thresh_Register;       /*!< Low_Thresh Register (Read/Write) */
-  uint16_t                        High_Thresh_Register;      /*!< High_Thresh Register (Read/Write) */
+    uint16_t                        Low_Thresh_Register;       /*!< Low_Thresh Register (Read/Write) */
+    uint16_t                        High_Thresh_Register;      /*!< High_Thresh Register (Read/Write) */
 	Config1_Register_InitTypeDef    Config1_Register;          /*!< The configuration register (Read/Write) */
 	uint16_t                        Config1_Register_Value;
 	uint16_t                        Chip_ID_Register;          /*!< 16-Bit Chip_ID Register for Identifying Chip ID and Its Subversions (Read-Only) */

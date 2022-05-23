@@ -77,14 +77,15 @@ extern TIM_HandleTypeDef htim1;
   */
 void NMI_Handler(void)
 {
-  /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
+    /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
 
-  /* USER CODE END NonMaskableInt_IRQn 0 */
-  /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
-  while (1)
-  {
-  }
-  /* USER CODE END NonMaskableInt_IRQn 1 */
+    /* USER CODE END NonMaskableInt_IRQn 0 */
+    /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
+    while (1)
+    {
+    }
+
+    /* USER CODE END NonMaskableInt_IRQn 1 */
 }
 
 /**
@@ -92,14 +93,14 @@ void NMI_Handler(void)
   */
 void HardFault_Handler(void)
 {
-  /* USER CODE BEGIN HardFault_IRQn 0 */
+    /* USER CODE BEGIN HardFault_IRQn 0 */
 
-  /* USER CODE END HardFault_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_HardFault_IRQn 0 */
-    /* USER CODE END W1_HardFault_IRQn 0 */
-  }
+    /* USER CODE END HardFault_IRQn 0 */
+    while (1)
+    {
+        /* USER CODE BEGIN W1_HardFault_IRQn 0 */
+        /* USER CODE END W1_HardFault_IRQn 0 */
+    }
 }
 
 /**
@@ -107,14 +108,14 @@ void HardFault_Handler(void)
   */
 void MemManage_Handler(void)
 {
-  /* USER CODE BEGIN MemoryManagement_IRQn 0 */
+    /* USER CODE BEGIN MemoryManagement_IRQn 0 */
 
-  /* USER CODE END MemoryManagement_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
-    /* USER CODE END W1_MemoryManagement_IRQn 0 */
-  }
+    /* USER CODE END MemoryManagement_IRQn 0 */
+    while (1)
+    {
+        /* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
+        /* USER CODE END W1_MemoryManagement_IRQn 0 */
+    }
 }
 
 /**
@@ -122,14 +123,14 @@ void MemManage_Handler(void)
   */
 void BusFault_Handler(void)
 {
-  /* USER CODE BEGIN BusFault_IRQn 0 */
+    /* USER CODE BEGIN BusFault_IRQn 0 */
 
-  /* USER CODE END BusFault_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_BusFault_IRQn 0 */
-    /* USER CODE END W1_BusFault_IRQn 0 */
-  }
+    /* USER CODE END BusFault_IRQn 0 */
+    while (1)
+    {
+        /* USER CODE BEGIN W1_BusFault_IRQn 0 */
+        /* USER CODE END W1_BusFault_IRQn 0 */
+    }
 }
 
 /**
@@ -137,14 +138,14 @@ void BusFault_Handler(void)
   */
 void UsageFault_Handler(void)
 {
-  /* USER CODE BEGIN UsageFault_IRQn 0 */
+    /* USER CODE BEGIN UsageFault_IRQn 0 */
 
-  /* USER CODE END UsageFault_IRQn 0 */
-  while (1)
-  {
-    /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
-    /* USER CODE END W1_UsageFault_IRQn 0 */
-  }
+    /* USER CODE END UsageFault_IRQn 0 */
+    while (1)
+    {
+        /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
+        /* USER CODE END W1_UsageFault_IRQn 0 */
+    }
 }
 
 /**
@@ -152,12 +153,12 @@ void UsageFault_Handler(void)
   */
 void DebugMon_Handler(void)
 {
-  /* USER CODE BEGIN DebugMonitor_IRQn 0 */
+    /* USER CODE BEGIN DebugMonitor_IRQn 0 */
 
-  /* USER CODE END DebugMonitor_IRQn 0 */
-  /* USER CODE BEGIN DebugMonitor_IRQn 1 */
+    /* USER CODE END DebugMonitor_IRQn 0 */
+    /* USER CODE BEGIN DebugMonitor_IRQn 1 */
 
-  /* USER CODE END DebugMonitor_IRQn 1 */
+    /* USER CODE END DebugMonitor_IRQn 1 */
 }
 
 /******************************************************************************/
@@ -172,13 +173,13 @@ void DebugMon_Handler(void)
   */
 void EXTI0_IRQHandler(void)
 {
-  /* USER CODE BEGIN EXTI0_IRQn 0 */
+    /* USER CODE BEGIN EXTI0_IRQn 0 */
 
-  /* USER CODE END EXTI0_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GDO0_Pin);
-  /* USER CODE BEGIN EXTI0_IRQn 1 */
-	rxCatch = SET;
-  /* USER CODE END EXTI0_IRQn 1 */
+    /* USER CODE END EXTI0_IRQn 0 */
+    HAL_GPIO_EXTI_IRQHandler(GDO0_Pin);
+    /* USER CODE BEGIN EXTI0_IRQn 1 */
+    rxCatch = SET;
+    /* USER CODE END EXTI0_IRQn 1 */
 }
 
 /**
@@ -186,13 +187,13 @@ void EXTI0_IRQHandler(void)
   */
 void EXTI1_IRQHandler(void)
 {
-  /* USER CODE BEGIN EXTI1_IRQn 0 */
+    /* USER CODE BEGIN EXTI1_IRQn 0 */
 
-  /* USER CODE END EXTI1_IRQn 0 */
-  HAL_GPIO_EXTI_IRQHandler(GDO2_Pin);
-  /* USER CODE BEGIN EXTI1_IRQn 1 */
-	txFiFoUnFlow = SET;
-  /* USER CODE END EXTI1_IRQn 1 */
+    /* USER CODE END EXTI1_IRQn 0 */
+    HAL_GPIO_EXTI_IRQHandler(GDO2_Pin);
+    /* USER CODE BEGIN EXTI1_IRQn 1 */
+    txFiFoUnFlow = SET;
+    /* USER CODE END EXTI1_IRQn 1 */
 }
 
 /**
@@ -200,28 +201,31 @@ void EXTI1_IRQHandler(void)
   */
 void DMA1_Stream1_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
-	/* Events for DMA Stream1 1 = USART DMA RX */
-	/* Check half-transfer complete interrupt */
-	uint32_t d = 1;
-	if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_HT1(DMA1))
-	{
-		LL_DMA_ClearFlag_HT1(DMA1);             /* Clear half-transfer complete flag */
-		osSemaphoreRelease(dmaHTBinarySemHandle);
-		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
-	}
-	/* Check transfer-complete interrupt */
-	if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_TC1(DMA1))
-	{
-		LL_DMA_ClearFlag_TC1(DMA1);             /* Clear transfer complete flag */
-		osSemaphoreRelease(dmaTCBinarySemHandle);
-		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
-	}
-  /* USER CODE END DMA1_Stream1_IRQn 0 */
+    /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
+    /* Events for DMA Stream1 1 = USART DMA RX */
+    /* Check half-transfer complete interrupt */
+    uint32_t d = 1;
 
-  /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
+    if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_HT1(DMA1))
+    {
+        LL_DMA_ClearFlag_HT1(DMA1);             /* Clear half-transfer complete flag */
+        osSemaphoreRelease(dmaHTBinarySemHandle);
+        osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
+    }
 
-  /* USER CODE END DMA1_Stream1_IRQn 1 */
+    /* Check transfer-complete interrupt */
+    if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_STREAM_1) && LL_DMA_IsActiveFlag_TC1(DMA1))
+    {
+        LL_DMA_ClearFlag_TC1(DMA1);             /* Clear transfer complete flag */
+        osSemaphoreRelease(dmaTCBinarySemHandle);
+        osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
+    }
+
+    /* USER CODE END DMA1_Stream1_IRQn 0 */
+
+    /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
+
+    /* USER CODE END DMA1_Stream1_IRQn 1 */
 }
 
 /**
@@ -229,13 +233,13 @@ void DMA1_Stream1_IRQHandler(void)
   */
 void TIM1_UP_TIM10_IRQHandler(void)
 {
-  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
+    /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
 
-  /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim1);
-  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 1 */
+    /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
+    HAL_TIM_IRQHandler(&htim1);
+    /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 1 */
 
-  /* USER CODE END TIM1_UP_TIM10_IRQn 1 */
+    /* USER CODE END TIM1_UP_TIM10_IRQn 1 */
 }
 
 /**
@@ -243,20 +247,22 @@ void TIM1_UP_TIM10_IRQHandler(void)
   */
 void USART3_IRQHandler(void)
 {
-  /* USER CODE BEGIN USART3_IRQn 0 */
-	/* Check for IDLE line interrupt */
-	uint32_t d = 1;
-	if (LL_USART_IsEnabledIT_IDLE(USART3) && LL_USART_IsActiveFlag_IDLE(USART3))
-	{
-		LL_USART_ClearFlag_IDLE(USART3);        /* Clear IDLE line flag */
-		osSemaphoreRelease(usartIdleBinarySemHandle);
-		osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
-		osSemaphoreRelease(rxBufferBinarySemHandle);
-	}
-  /* USER CODE END USART3_IRQn 0 */
-  /* USER CODE BEGIN USART3_IRQn 1 */
+    /* USER CODE BEGIN USART3_IRQn 0 */
+    /* Check for IDLE line interrupt */
+    uint32_t d = 1;
 
-  /* USER CODE END USART3_IRQn 1 */
+    if (LL_USART_IsEnabledIT_IDLE(USART3) && LL_USART_IsActiveFlag_IDLE(USART3))
+    {
+        LL_USART_ClearFlag_IDLE(USART3);        /* Clear IDLE line flag */
+        osSemaphoreRelease(usartIdleBinarySemHandle);
+        osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
+        osSemaphoreRelease(rxBufferBinarySemHandle);
+    }
+
+    /* USER CODE END USART3_IRQn 0 */
+    /* USER CODE BEGIN USART3_IRQn 1 */
+
+    /* USER CODE END USART3_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

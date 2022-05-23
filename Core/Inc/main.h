@@ -54,6 +54,7 @@ extern "C" {
 /* USER CODE BEGIN ET */
 extern __IO uint32_t CollectorID;
 #define	_DEBUG    1 //  use printf debug
+#define	_SGM58031    0 //  enable sgm58031
 
 #if (_DEBUG == 1)
 #define debug_printf(...)     			printf(__VA_ARGS__)
@@ -65,7 +66,7 @@ extern __IO uint32_t CollectorID;
 #define debug_info(format,...)     	{};
 #define debug_error(format,...)    	{};
 #endif
-	
+
 #define	_Error_Handler(__FILE__, __LINE__)	printf("[error] %s %d \r\n",__FILE__,__LINE__)
 
 /* USER CODE END ET */
@@ -108,10 +109,6 @@ void Error_Handler(void);
 #define LED_GREEN_GPIO_Port GPIOA
 #define USR4G_POWER_KEY_Pin LL_GPIO_PIN_3
 #define USR4G_POWER_KEY_GPIO_Port GPIOB
-#define USR4G_RESET_Pin LL_GPIO_PIN_4
-#define USR4G_RESET_GPIO_Port GPIOB
-#define USR4G_RELOAD_Pin LL_GPIO_PIN_5
-#define USR4G_RELOAD_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 void SystemInitial(void);
 void ShowMessage(void);
