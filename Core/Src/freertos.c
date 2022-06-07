@@ -130,55 +130,54 @@ void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
   * @param  None
   * @retval None
   */
-void MX_FREERTOS_Init(void)
-{
-    /* USER CODE BEGIN Init */
+void MX_FREERTOS_Init(void) {
+  /* USER CODE BEGIN Init */
     collectorIDBuffer[0] = (uint8_t)(0xFF & CollectorID >> 24);
     collectorIDBuffer[1] = (uint8_t)(0xFF & CollectorID >> 16);
     collectorIDBuffer[2] = (uint8_t)(0xFF & CollectorID >> 8);
     collectorIDBuffer[3] = (uint8_t)(0xFF & CollectorID);
-    /* USER CODE END Init */
+  /* USER CODE END Init */
 
-    /* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
     /* add mutexes, ... */
-    /* USER CODE END RTOS_MUTEX */
+  /* USER CODE END RTOS_MUTEX */
 
-    /* Create the semaphores(s) */
-    /* definition and creation of rxBufferBinarySem */
-    osSemaphoreDef(rxBufferBinarySem);
-    rxBufferBinarySemHandle = osSemaphoreCreate(osSemaphore(rxBufferBinarySem), 1);
+  /* Create the semaphores(s) */
+  /* definition and creation of rxBufferBinarySem */
+  osSemaphoreDef(rxBufferBinarySem);
+  rxBufferBinarySemHandle = osSemaphoreCreate(osSemaphore(rxBufferBinarySem), 1);
 
-    /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
     /* add semaphores, ... */
-    /* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE END RTOS_SEMAPHORES */
 
-    /* USER CODE BEGIN RTOS_TIMERS */
+  /* USER CODE BEGIN RTOS_TIMERS */
     /* start timers, add new ones, ... */
-    /* USER CODE END RTOS_TIMERS */
+  /* USER CODE END RTOS_TIMERS */
 
-    /* Create the queue(s) */
-    /* definition and creation of usartRxQueue */
-    osMessageQDef(usartRxQueue, 16, uint32_t);
-    usartRxQueueHandle = osMessageCreate(osMessageQ(usartRxQueue), NULL);
+  /* Create the queue(s) */
+  /* definition and creation of usartRxQueue */
+  osMessageQDef(usartRxQueue, 16, uint32_t);
+  usartRxQueueHandle = osMessageCreate(osMessageQ(usartRxQueue), NULL);
 
-    /* USER CODE BEGIN RTOS_QUEUES */
+  /* USER CODE BEGIN RTOS_QUEUES */
     /* add queues, ... */
-    /* USER CODE END RTOS_QUEUES */
+  /* USER CODE END RTOS_QUEUES */
 
-    /* Create the thread(s) */
-    /* definition and creation of usartRxDmaTask */
-    osThreadDef(usartRxDmaTask, StartUsartRxDmaTask, osPriorityHigh, 0, 128);
-    usartRxDmaTaskHandle = osThreadCreate(osThread(usartRxDmaTask), NULL);
+  /* Create the thread(s) */
+  /* definition and creation of usartRxDmaTask */
+  osThreadDef(usartRxDmaTask, StartUsartRxDmaTask, osPriorityHigh, 0, 128);
+  usartRxDmaTaskHandle = osThreadCreate(osThread(usartRxDmaTask), NULL);
 
-    /* definition and creation of iicConvertTask */
-    osThreadDef(iicConvertTask, StartIICConvertTask, osPriorityLow, 0, 128);
-    iicConvertTaskHandle = osThreadCreate(osThread(iicConvertTask), NULL);
+  /* definition and creation of iicConvertTask */
+  osThreadDef(iicConvertTask, StartIICConvertTask, osPriorityLow, 0, 128);
+  iicConvertTaskHandle = osThreadCreate(osThread(iicConvertTask), NULL);
 
-    /* definition and creation of usartRxCmdTask */
-    osThreadDef(usartRxCmdTask, StartUsartRxCmdTask, osPriorityNormal, 0, 128);
-    usartRxCmdTaskHandle = osThreadCreate(osThread(usartRxCmdTask), NULL);
+  /* definition and creation of usartRxCmdTask */
+  osThreadDef(usartRxCmdTask, StartUsartRxCmdTask, osPriorityNormal, 0, 128);
+  usartRxCmdTaskHandle = osThreadCreate(osThread(usartRxCmdTask), NULL);
 
-    /* USER CODE BEGIN RTOS_THREADS */
+  /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
     // follow code must be here!!!!!!
     lte_lpuart_init();
@@ -197,7 +196,7 @@ void MX_FREERTOS_Init(void)
     #endif
 
     HAL_LPTIM_Counter_Start_IT(&hlptim1, 0x3FF);
-    /* USER CODE END RTOS_THREADS */
+  /* USER CODE END RTOS_THREADS */
 
 }
 
@@ -210,7 +209,7 @@ void MX_FREERTOS_Init(void)
 /* USER CODE END Header_StartUsartRxDmaTask */
 void StartUsartRxDmaTask(void const * argument)
 {
-    /* USER CODE BEGIN StartUsartRxDmaTask */
+  /* USER CODE BEGIN StartUsartRxDmaTask */
     /* Infinite loop */
     for(;;)
     {
@@ -221,7 +220,7 @@ void StartUsartRxDmaTask(void const * argument)
         lte_lpuart_rx_check();
     }
 
-    /* USER CODE END StartUsartRxDmaTask */
+  /* USER CODE END StartUsartRxDmaTask */
 }
 
 /* USER CODE BEGIN Header_StartIICConvertTask */
@@ -233,7 +232,7 @@ void StartUsartRxDmaTask(void const * argument)
 /* USER CODE END Header_StartIICConvertTask */
 void StartIICConvertTask(void const * argument)
 {
-    /* USER CODE BEGIN StartIICConvertTask */
+  /* USER CODE BEGIN StartIICConvertTask */
     uint16_t adcValue;
 
     /* Infinite loop */
@@ -246,6 +245,9 @@ void StartIICConvertTask(void const * argument)
 
             if (TwoHoursCnt >= 1800)
             {
+				CC1101_POWER_DOWN();
+				osDelay(100);
+				CC1101_POWER_ON();
                 RFIDInitial(0x00, 0x1234, RX_MODE);
                 ModuleLtePowerOn();
                 TwoHoursCnt = 0;
@@ -304,7 +306,7 @@ void StartIICConvertTask(void const * argument)
         osDelay(1);
     }
 
-    /* USER CODE END StartIICConvertTask */
+  /* USER CODE END StartIICConvertTask */
 }
 
 /* USER CODE BEGIN Header_StartUsartRxCmdTask */
@@ -316,7 +318,7 @@ void StartIICConvertTask(void const * argument)
 /* USER CODE END Header_StartUsartRxCmdTask */
 void StartUsartRxCmdTask(void const * argument)
 {
-    /* USER CODE BEGIN StartUsartRxCmdTask */
+  /* USER CODE BEGIN StartUsartRxCmdTask */
     /* Infinite loop */
     for(;;)
     {
@@ -349,7 +351,7 @@ void StartUsartRxCmdTask(void const * argument)
         LED2_OFF();
     }
 
-    /* USER CODE END StartUsartRxCmdTask */
+  /* USER CODE END StartUsartRxCmdTask */
 }
 
 /* Private application code --------------------------------------------------*/
@@ -453,7 +455,7 @@ void SendToCloud(uint8_t functionID, uint8_t length)
         strcatArray(sendToCloudBuffer, crcBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + _UTC_TIME_SIZE, 0);
         strcatArray(sendToCloudBuffer, tailBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE, 0);
 
-//        lte_usart_send_data((uint8_t*)sendToCloudBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE + _TAIL_SIZE);
+        lte_usart_send_data((uint8_t*)sendToCloudBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE + _TAIL_SIZE);
 
 //        for(uint8_t i = 0; i < _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE + _TAIL_SIZE; i++)
 //        {
@@ -464,9 +466,9 @@ void SendToCloud(uint8_t functionID, uint8_t length)
 
 //        for(uint8_t i = 0; i < _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE; i++)
 //        {
-//            debug_printf("%02x ", sendToCloudBuffer[i]);
+//            printf("%02x ", sendToCloudBuffer[i]);
 //        }
-//        debug_printf("\r\n");
+//        printf("\r\n");
         LED1_OFF();
     }
     else if(functionID == 0xA8 || functionID == 0xA9)
@@ -480,15 +482,14 @@ void SendToCloud(uint8_t functionID, uint8_t length)
         strcatArray(sendToCloudBuffer, timeBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + sizeof(dateBuffer), 0);
         strcatArray(sendToCloudBuffer, tailBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE, 0);
 
-//    lte_lpuart_send_data(sendToCloudBuffer,length);
+		lte_usart_send_data(sendToCloudBuffer,length);
         ec600x_usart_send_data(sendToCloudBuffer, length);
 
-        for(uint8_t i = 0; i < _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE; i++)
-        {
-            debug_printf("%02x ", sendToCloudBuffer[i]);
-        }
-
-        debug_printf("\r\n");
+//        for(uint8_t i = 0; i < _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE; i++)
+//        {
+//            printf("%02x ", sendToCloudBuffer[i]);
+//        }
+//        printf("\r\n");
         LED1_OFF();
     }
     else if(functionID == 0x01)

@@ -45,6 +45,8 @@ extern "C" {
 #define LED2_OFF()					  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET)
 #define LED2_TOG()					  HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin)
 
+#define CC1101_POWER_DOWN()		HAL_GPIO_WritePin(PA15_GPIO_Port, PA15_Pin, GPIO_PIN_RESET)
+#define CC1101_POWER_ON()		  HAL_GPIO_WritePin(PA15_GPIO_Port, PA15_Pin, GPIO_PIN_SET)
 #define TX_EN_LOW()			      HAL_GPIO_WritePin(TX_EN_GPIO_Port, TX_EN_Pin, GPIO_PIN_RESET)
 #define TX_EN_HIGH()			    HAL_GPIO_WritePin(TX_EN_GPIO_Port, TX_EN_Pin, GPIO_PIN_SET)
 #define RX_EN_LOW()			      HAL_GPIO_WritePin(RX_EN_GPIO_Port, RX_EN_Pin, GPIO_PIN_RESET)

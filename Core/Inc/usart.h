@@ -97,6 +97,7 @@ void lte_lpuart_deinit(void);
 void lte_lpuart_rx_check(void);
 void lte_lpuart_send_string(const char* str);
 uint8_t lte_lpuart_start_tx_dma_transfer(void);
+void lte_usart_send_data(const void* data, size_t len);
 
 void ec600x_usart_send_data(const void* data, size_t len);
 void ec600x_usart_send_string(const char* str);
