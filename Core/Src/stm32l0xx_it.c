@@ -179,9 +179,9 @@ void DMA1_Channel2_3_IRQHandler(void)
     if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_2) && LL_DMA_IsActiveFlag_TC2(DMA1))
     {
         LL_DMA_ClearFlag_TC2(DMA1);             /* Clear transfer complete flag */
-        lwrb_skip(&lte_lpuart_tx_rb, lte_lpuart_tx_dma_current_len);/* Skip sent data, mark as read */
-        lte_lpuart_tx_dma_current_len = 0;           /* Clear length variable */
-        lte_lpuart_start_tx_dma_transfer();          /* Start sending more data */
+        lwrb_skip(&ec600x_usart_tx_rb, ec600x_usart_tx_dma_current_len);/* Skip sent data, mark as read */
+        ec600x_usart_tx_dma_current_len = 0;           /* Clear length variable */
+        ec600x_usart_start_tx_dma_transfer();          /* Start sending more data */
     }
 
   /* USER CODE END DMA1_Channel2_3_IRQn 1 */
@@ -216,24 +216,24 @@ void TIM2_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles LPUART1 global interrupt / LPUART1 wake-up interrupt through EXTI line 28.
+  * @brief This function handles USART1 global interrupt / USART1 wake-up interrupt through EXTI line 25.
   */
-void LPUART1_IRQHandler(void)
+void USART1_IRQHandler(void)
 {
-  /* USER CODE BEGIN LPUART1_IRQn 0 */
+  /* USER CODE BEGIN USART1_IRQn 0 */
     uint32_t d = 1;
 
-    if (LL_USART_IsEnabledIT_IDLE(LPUART1) && LL_USART_IsActiveFlag_IDLE(LPUART1))
+    if (LL_USART_IsEnabledIT_IDLE(USART1) && LL_USART_IsActiveFlag_IDLE(USART1))
     {
-        LL_USART_ClearFlag_IDLE(LPUART1);        /* Clear IDLE line flag */
+        LL_USART_ClearFlag_IDLE(USART1);        /* Clear IDLE line flag */
         osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
         osSemaphoreRelease(rxBufferBinarySemHandle);
     }
 
-  /* USER CODE END LPUART1_IRQn 0 */
-  /* USER CODE BEGIN LPUART1_IRQn 1 */
+  /* USER CODE END USART1_IRQn 0 */
+  /* USER CODE BEGIN USART1_IRQn 1 */
 
-  /* USER CODE END LPUART1_IRQn 1 */
+  /* USER CODE END USART1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

@@ -23,12 +23,12 @@
 /* USER CODE BEGIN 0 */
 #include "cmsis_os.h"
 
-uint8_t lte_lpuart_rx_dma_buffer[_LTE_RXSIZE];
-lwrb_t lte_lpuart_rx_rb;
-uint8_t lte_lpuart_rx_rb_data[_LTE_RBSIZE];
-lwrb_t lte_lpuart_tx_rb;
-uint8_t lte_lpuart_tx_rb_data[_LTE_RBSIZE];
-volatile size_t lte_lpuart_tx_dma_current_len;
+uint8_t ec600x_usart_rx_dma_buffer[_EC600X_RXSIZE];
+lwrb_t ec600x_usart_rx_rb;
+uint8_t ec600x_usart_rx_rb_data[_EC600X_RBSIZE];
+lwrb_t ec600x_usart_tx_rb;
+uint8_t ec600x_usart_tx_rb_data[_EC600X_RBSIZE];
+volatile size_t ec600x_usart_tx_dma_current_len;
 lte_t lte;
 
 #ifdef __GNUC__
@@ -76,46 +76,6 @@ void MX_LPUART1_UART_Init(void)
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
   GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* LPUART1 DMA Init */
-
-  /* LPUART1_RX Init */
-  LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_3, LL_DMA_REQUEST_5);
-
-  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_3, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
-
-  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PRIORITY_LOW);
-
-  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MODE_CIRCULAR);
-
-  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PERIPH_NOINCREMENT);
-
-  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MEMORY_INCREMENT);
-
-  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PDATAALIGN_BYTE);
-
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MDATAALIGN_BYTE);
-
-  /* LPUART1_TX Init */
-  LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_2, LL_DMA_REQUEST_5);
-
-  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_2, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
-
-  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PRIORITY_LOW);
-
-  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MODE_NORMAL);
-
-  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PERIPH_NOINCREMENT);
-
-  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MEMORY_INCREMENT);
-
-  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PDATAALIGN_BYTE);
-
-  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MDATAALIGN_BYTE);
-
-  /* LPUART1 interrupt Init */
-  NVIC_SetPriority(LPUART1_IRQn, 3);
-  NVIC_EnableIRQ(LPUART1_IRQn);
 
   /* USER CODE BEGIN LPUART1_Init 1 */
 
@@ -169,6 +129,46 @@ void MX_USART1_UART_Init(void)
   GPIO_InitStruct.Alternate = LL_GPIO_AF_4;
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /* USART1 DMA Init */
+
+  /* USART1_RX Init */
+  LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_3, LL_DMA_REQUEST_3);
+
+  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_3, LL_DMA_DIRECTION_PERIPH_TO_MEMORY);
+
+  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PRIORITY_LOW);
+
+  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MODE_CIRCULAR);
+
+  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PERIPH_NOINCREMENT);
+
+  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MEMORY_INCREMENT);
+
+  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_PDATAALIGN_BYTE);
+
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_3, LL_DMA_MDATAALIGN_BYTE);
+
+  /* USART1_TX Init */
+  LL_DMA_SetPeriphRequest(DMA1, LL_DMA_CHANNEL_2, LL_DMA_REQUEST_3);
+
+  LL_DMA_SetDataTransferDirection(DMA1, LL_DMA_CHANNEL_2, LL_DMA_DIRECTION_MEMORY_TO_PERIPH);
+
+  LL_DMA_SetChannelPriorityLevel(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PRIORITY_LOW);
+
+  LL_DMA_SetMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MODE_NORMAL);
+
+  LL_DMA_SetPeriphIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PERIPH_NOINCREMENT);
+
+  LL_DMA_SetMemoryIncMode(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MEMORY_INCREMENT);
+
+  LL_DMA_SetPeriphSize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_PDATAALIGN_BYTE);
+
+  LL_DMA_SetMemorySize(DMA1, LL_DMA_CHANNEL_2, LL_DMA_MDATAALIGN_BYTE);
+
+  /* USART1 interrupt Init */
+  NVIC_SetPriority(USART1_IRQn, 3);
+  NVIC_EnableIRQ(USART1_IRQn);
+
   /* USER CODE BEGIN USART1_Init 1 */
 
   /* USER CODE END USART1_Init 1 */
@@ -212,24 +212,24 @@ void Enable_LPUART1(void)
   */
 int fputc(int ch, FILE *f)
 {
-    _LTE_LPUART->TDR = ch;
+    _EC600X_USART->TDR = ch;
 
-    while(!(_LTE_LPUART->ISR & USART_ISR_TXE))
+    while(!(_EC600X_USART->ISR & USART_ISR_TXE))
     {;}
 
     return ch;
 }
 //##################################################################################################################
-void lte_lpuart_init(void)
+void ec600x_usart_init(void)
 {
     /* Initialize ringbuff for TX & RX */
-    lwrb_init(&lte_lpuart_tx_rb, lte_lpuart_tx_rb_data, sizeof(lte_lpuart_tx_rb_data));
-    lwrb_init(&lte_lpuart_rx_rb, lte_lpuart_rx_rb_data, sizeof(lte_lpuart_rx_rb_data));
+    lwrb_init(&ec600x_usart_tx_rb, ec600x_usart_tx_rb_data, sizeof(ec600x_usart_tx_rb_data));
+    lwrb_init(&ec600x_usart_rx_rb, ec600x_usart_rx_rb_data, sizeof(ec600x_usart_rx_rb_data));
 
-    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_3, LL_USART_DMA_GetRegAddr(_LTE_LPUART, LL_USART_DMA_REG_DATA_RECEIVE));
-    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_3, (uint32_t)lte_lpuart_rx_dma_buffer);
-    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_3, ARRAY_LEN(lte_lpuart_rx_dma_buffer));
-    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_2, LL_USART_DMA_GetRegAddr(_LTE_LPUART, LL_USART_DMA_REG_DATA_TRANSMIT));
+    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_3, LL_USART_DMA_GetRegAddr(_EC600X_USART, LL_USART_DMA_REG_DATA_RECEIVE));
+    LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_3, (uint32_t)ec600x_usart_rx_dma_buffer);
+    LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_3, ARRAY_LEN(ec600x_usart_rx_dma_buffer));
+    LL_DMA_SetPeriphAddress(DMA1, LL_DMA_CHANNEL_2, LL_USART_DMA_GetRegAddr(_EC600X_USART, LL_USART_DMA_REG_DATA_TRANSMIT));
 
     /* Enable DMA RX HT & TC interrupts */
     LL_DMA_EnableIT_HT(DMA1, LL_DMA_CHANNEL_3);
@@ -237,16 +237,16 @@ void lte_lpuart_init(void)
     /* Enable DMA TX TC interrupts */
     LL_DMA_EnableIT_TC(DMA1, LL_DMA_CHANNEL_2);
 
-    LL_USART_ConfigAsyncMode(_LTE_LPUART);
-    LL_USART_EnableDMAReq_RX(_LTE_LPUART);
-    LL_USART_EnableDMAReq_TX(_LTE_LPUART);
-    LL_USART_EnableIT_IDLE(_LTE_LPUART);
+    LL_USART_ConfigAsyncMode(_EC600X_USART);
+    LL_USART_EnableDMAReq_RX(_EC600X_USART);
+    LL_USART_EnableDMAReq_TX(_EC600X_USART);
+    LL_USART_EnableIT_IDLE(_EC600X_USART);
 
     /* Enable DMA RX*/
     LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3);
 }
 //##################################################################################################################
-void lte_lpuart_deinit(void)
+void ec600x_usart_deinit(void)
 {
     /* Disable DMA RX HT & TC interrupts */
     LL_DMA_DisableIT_HT(DMA1, LL_DMA_CHANNEL_3);
@@ -254,9 +254,9 @@ void lte_lpuart_deinit(void)
     /* Disable DMA TX TC interrupts */
     LL_DMA_DisableIT_TC(DMA1, LL_DMA_CHANNEL_2);
 
-    LL_USART_DisableDMAReq_RX(_LTE_LPUART);
-    LL_USART_DisableDMAReq_TX(_LTE_LPUART);
-    LL_USART_DisableIT_IDLE(_LTE_LPUART);
+    LL_USART_DisableDMAReq_RX(_EC600X_USART);
+    LL_USART_DisableDMAReq_TX(_EC600X_USART);
+    LL_USART_DisableIT_IDLE(_EC600X_USART);
 
     /* Disable DMA */
     LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_3);
@@ -268,22 +268,22 @@ void lte_lpuart_deinit(void)
  * \param[in]       data: Data to process
  * \param[in]       len: Length in units of bytes
  */
-void lte_lpuart_process_data(const void* data, size_t len)
+void ec600x_usart_process_data(const void* data, size_t len)
 {
     lte.rxCounter += len;
-    lwrb_write(&lte_lpuart_rx_rb, data, len);  /* Write data to receive buffer */
+    lwrb_write(&ec600x_usart_rx_rb, data, len);  /* Write data to receive buffer */
 }
 //##################################################################################################################
 /**
  * \brief           Check for new data received with DMA
  */
-void lte_lpuart_rx_check(void)
+void ec600x_usart_rx_check(void)
 {
     static size_t old_pos;
     size_t pos;
 
     /* Calculate current position in buffer */
-    pos = ARRAY_LEN(lte_lpuart_rx_dma_buffer) - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_3);
+    pos = ARRAY_LEN(ec600x_usart_rx_dma_buffer) - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_3);
 
     if (pos != old_pos)                         /* Check change in received data */
     {
@@ -291,18 +291,18 @@ void lte_lpuart_rx_check(void)
         {
             /* We are in "linear" mode */
             /* Process data directly by subtracting "pointers" */
-            lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[old_pos], pos - old_pos);
+            ec600x_usart_process_data(&ec600x_usart_rx_dma_buffer[old_pos], pos - old_pos);
         }
         else
         {
             /* We are in "overflow" mode */
             /* First process data to the end of buffer */\
-            lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[old_pos], ARRAY_LEN(lte_lpuart_rx_dma_buffer) - old_pos);
+            ec600x_usart_process_data(&ec600x_usart_rx_dma_buffer[old_pos], ARRAY_LEN(ec600x_usart_rx_dma_buffer) - old_pos);
 
             /* Check and continue with beginning of buffer */
             if (pos > 0)
             {
-                lte_lpuart_process_data(&lte_lpuart_rx_dma_buffer[0], pos);
+                ec600x_usart_process_data(&ec600x_usart_rx_dma_buffer[0], pos);
             }
         }
 
@@ -314,7 +314,7 @@ void lte_lpuart_rx_check(void)
  * \brief           Check if DMA is active and if not try to send data
  * \return          `1` if transfer just started, `0` if on-going or no data to transmit
  */
-uint8_t lte_lpuart_start_tx_dma_transfer(void)
+uint8_t ec600x_usart_start_tx_dma_transfer(void)
 {
     uint32_t primask;
     uint8_t started = 0;
@@ -349,8 +349,8 @@ uint8_t lte_lpuart_start_tx_dma_transfer(void)
     primask = __get_PRIMASK();
     __disable_irq();
 
-    if (lte_lpuart_tx_dma_current_len == 0
-            && (lte_lpuart_tx_dma_current_len = lwrb_get_linear_block_read_length(&lte_lpuart_tx_rb)) > 0)
+    if (ec600x_usart_tx_dma_current_len == 0
+            && (ec600x_usart_tx_dma_current_len = lwrb_get_linear_block_read_length(&ec600x_usart_tx_rb)) > 0)
     {
         /* Disable channel if enabled */
         LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_2);
@@ -362,8 +362,8 @@ uint8_t lte_lpuart_start_tx_dma_transfer(void)
         LL_DMA_ClearFlag_TE2(DMA1);
 
         /* Prepare DMA data and length */
-        LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, lte_lpuart_tx_dma_current_len);
-        LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_2, (uint32_t)lwrb_get_linear_block_read_address(&lte_lpuart_tx_rb));
+        LL_DMA_SetDataLength(DMA1, LL_DMA_CHANNEL_2, ec600x_usart_tx_dma_current_len);
+        LL_DMA_SetMemoryAddress(DMA1, LL_DMA_CHANNEL_2, (uint32_t)lwrb_get_linear_block_read_address(&ec600x_usart_tx_rb));
 
         /* Start transfer */
         LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_2);
@@ -378,10 +378,10 @@ uint8_t lte_lpuart_start_tx_dma_transfer(void)
  * \brief           Send string over USART
  * \param[in]       str: String to send
  */
-void lte_lpuart_send_string(const char* str)
+void ec600x_usart_send_string(const char* str)
 {
-    lwrb_write(&lte_lpuart_tx_rb, str, strlen(str));   /* Write data to transmit buffer */
-    lte_lpuart_start_tx_dma_transfer();
+    lwrb_write(&ec600x_usart_tx_rb, str, strlen(str));   /* Write data to transmit buffer */
+    ec600x_usart_start_tx_dma_transfer();
 }
 //##################################################################################################################
 /**
@@ -416,7 +416,7 @@ void ec600x_usart_send_data(const void* data, size_t len)
  * \param[in]       data: Data to process
  * \param[in]       len: Length in units of bytes
  */
-void lte_usart_send_data(const void* data, size_t len)
+void lte_lpuart_send_data(const void* data, size_t len)
 {
     const uint8_t* d = data;
     /*
@@ -440,9 +440,9 @@ void lte_usart_send_data(const void* data, size_t len)
  * \brief           Send string to USART
  * \param[in]       str: String to send
  */
-void ec600x_usart_send_string(const char* str)
+void lte_lpuart_send_string(const char* str)
 {
-    ec600x_usart_send_data((uint8_t*)str, strlen(str));
+    lte_lpuart_send_data((uint8_t*)str, strlen(str));
 }
 //##################################################################################################################
 /* USER CODE END 1 */

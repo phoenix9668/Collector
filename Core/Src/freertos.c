@@ -180,7 +180,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
     // follow code must be here!!!!!!
-    lte_lpuart_init();
+    ec600x_usart_init();
     memset(&lte, 0, sizeof(lte));
     Enable_LPUART1();
     ShowMessage();
@@ -217,7 +217,7 @@ void StartUsartRxDmaTask(void const * argument)
         osMessageGet(usartRxQueueHandle, osWaitForever);
 
         /* Simply call processing function */
-        lte_lpuart_rx_check();
+        ec600x_usart_rx_check();
     }
 
   /* USER CODE END StartUsartRxDmaTask */
@@ -245,9 +245,9 @@ void StartIICConvertTask(void const * argument)
 
             if (TwoHoursCnt >= 1800)
             {
-				CC1101_POWER_DOWN();
-				osDelay(100);
-				CC1101_POWER_ON();
+                CC1101_POWER_DOWN();
+                osDelay(100);
+                CC1101_POWER_ON();
                 RFIDInitial(0x00, 0x1234, RX_MODE);
                 ModuleLtePowerOn();
                 TwoHoursCnt = 0;
@@ -325,7 +325,7 @@ void StartUsartRxCmdTask(void const * argument)
         osSemaphoreWait(rxBufferBinarySemHandle, osWaitForever);
 
         LED2_ON();
-        lwrb_read(&lte_lpuart_rx_rb, lte.rxBuffer, lte.rxCounter);
+        lwrb_read(&ec600x_usart_rx_rb, lte.rxBuffer, lte.rxCounter);
 
         debug_printf("rxBuffer =");
 
@@ -336,15 +336,25 @@ void StartUsartRxCmdTask(void const * argument)
 
         debug_printf("\nrxCounter = %d\n", lte.rxCounter);
 
-        if(lte.rxBuffer[0] == 0xE5 && lte.rxBuffer[1] == 0x5E)
+        if(AsciiToHex(lte.rxBuffer, lte.rxHexBuffer, lte.rxCounter) == 0)
         {
-            printf("##Header Right##\r\n");
-            EepromCtrl(lte.rxBuffer);
-        }
-        else if((lte.rxBuffer[0] == collectorIDBuffer[0]) && (lte.rxBuffer[1] == collectorIDBuffer[1]) && (lte.rxBuffer[2] == collectorIDBuffer[2]) && (lte.rxBuffer[3] == collectorIDBuffer[3]))
-        {
-            printf("##CollectorID Right##\r\n");
-            FunctionCtrl(lte.rxBuffer);
+            debug_printf("rxHexBuffer =");
+
+            for(uint8_t i = 0; i < lte.rxCounter / 2; i++)
+            {
+                debug_printf(" %x", lte.rxHexBuffer[i]);
+            }
+
+            if(lte.rxHexBuffer[0] == 0xE5 && lte.rxHexBuffer[1] == 0x5E)
+            {
+                printf("##Header Right##\r\n");
+                EepromCtrl(lte.rxHexBuffer);
+            }
+            else if((lte.rxHexBuffer[0] == collectorIDBuffer[0]) && (lte.rxHexBuffer[1] == collectorIDBuffer[1]) && (lte.rxHexBuffer[2] == collectorIDBuffer[2]) && (lte.rxHexBuffer[3] == collectorIDBuffer[3]))
+            {
+                printf("##CollectorID Right##\r\n");
+                FunctionCtrl(lte.rxHexBuffer);
+            }
         }
 
         memset(&lte, 0, sizeof(lte));
@@ -412,11 +422,13 @@ void FunctionCtrl(uint8_t *command)
         }
 
         SetRTC(timeBuffer, dateBuffer);
-        SendToCloud(command[4], _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE + _TAIL_SIZE);
+				GetRTC(timeBuffer, dateBuffer);
+//        SendToCloud(command[4], _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE + _TAIL_SIZE);
     }
     else if(command[4] == 0xA9)
     {
-        SendToCloud(command[4], _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE + _TAIL_SIZE);
+				GetRTC(timeBuffer, dateBuffer);
+//        SendToCloud(command[4], _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE + _TAIL_SIZE);
     }
     else
         printf("##FunctionID Unused##\r\n");
@@ -455,14 +467,14 @@ void SendToCloud(uint8_t functionID, uint8_t length)
         strcatArray(sendToCloudBuffer, crcBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length - sizeof(cc1101.crcValue) + sizeof(cc1101.rssi) + _UTC_TIME_SIZE, 0);
         strcatArray(sendToCloudBuffer, tailBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE, 0);
 
-        lte_usart_send_data((uint8_t*)sendToCloudBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE + _TAIL_SIZE);
+        ec600x_usart_send_data((uint8_t*)sendToCloudBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE + _TAIL_SIZE);
 
 //        for(uint8_t i = 0; i < _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE + _TAIL_SIZE; i++)
 //        {
 //            sendToCloudBuffer[i] = i;
 //        }
 
-        ec600x_usart_send_data((uint8_t*)sendToCloudBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE + _TAIL_SIZE);
+        lte_lpuart_send_data((uint8_t*)sendToCloudBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE + _TAIL_SIZE);
 
 //        for(uint8_t i = 0; i < _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + length + sizeof(cc1101.rssi) + _UTC_TIME_SIZE; i++)
 //        {
@@ -482,8 +494,8 @@ void SendToCloud(uint8_t functionID, uint8_t length)
         strcatArray(sendToCloudBuffer, timeBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + sizeof(dateBuffer), 0);
         strcatArray(sendToCloudBuffer, tailBuffer, _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE, 0);
 
-		lte_usart_send_data(sendToCloudBuffer,length);
         ec600x_usart_send_data(sendToCloudBuffer, length);
+        lte_lpuart_send_data(sendToCloudBuffer, length);
 
 //        for(uint8_t i = 0; i < _COLLECTOR_ID_SIZE + _FUNCTION_ID_SIZE + _UTC_TIME_SIZE; i++)
 //        {

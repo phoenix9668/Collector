@@ -116,6 +116,7 @@ void SystemInitial(void);
 void ShowMessage(void);
 void ModuleLtePowerOn(void);
 void strcatArray(uint8_t *dest, uint8_t *src, uint8_t position, uint8_t srclength);
+uint8_t AsciiToHex(uint8_t * pAscii, uint8_t * pHex, uint16_t nLen);
 void DATAEEPROM_Program(uint32_t Address, uint32_t Data);
 uint32_t DATAEEPROM_Read(uint32_t Address);
 void LED_Blinking(uint32_t Period);

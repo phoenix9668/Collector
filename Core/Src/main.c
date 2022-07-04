@@ -96,15 +96,15 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_SPI1_Init();
   MX_IWDG_Init();
   MX_RTC_Init();
-  MX_DMA_Init();
   MX_CRC_Init();
   MX_LPUART1_UART_Init();
-  MX_LPTIM1_Init();
   MX_I2C1_Init();
+  MX_LPTIM1_Init();
   /* USER CODE BEGIN 2 */
     SystemInitial();
   /* USER CODE END 2 */
@@ -205,7 +205,7 @@ void SystemInitial(void)
 
     ModuleLtePowerOn();
     CollectorID = DATAEEPROM_Read(EEPROM_START_ADDR);
-	CC1101_POWER_ON();
+    CC1101_POWER_ON();
     RFIDInitial(0x00, 0x1234, RX_MODE);
     HAL_Delay(10000);
 
@@ -253,6 +253,43 @@ void strcatArray(uint8_t *dest, uint8_t *src, uint8_t position, uint8_t srclen)
         for(uint8_t i = 0; i < srclen; i++)
             dest[i + position] = src[i];
     }
+}
+//##################################################################################################################
+uint8_t AsciiToHex(uint8_t * pAscii, uint8_t * pHex, uint16_t nLen)
+{
+    uint16_t nHexLen = nLen / 2;
+    uint8_t Nibble[2] = {0};
+    uint16_t i = 0;
+    uint16_t j = 0;
+
+    if (nLen % 2)
+    {
+        return 1;
+    }
+
+    for (i = 0; i < nHexLen; i ++)
+    {
+        Nibble[0] = *pAscii ++;
+        Nibble[1] = *pAscii ++;
+
+        for (j = 0; j < 2; j ++)
+        {
+            if (Nibble[j] <= 'F' && Nibble[j] >= 'A')
+                Nibble[j] = Nibble[j] - 'A' + 10;
+            else if (Nibble[j] <= 'f' && Nibble[j] >= 'a')
+                Nibble[j] = Nibble[j] - 'a' + 10;
+            else if (Nibble[j] >= '0' && Nibble[j] <= '9')
+                Nibble [j] = Nibble[j] - '0';
+            else
+                return 1;//Nibble[j] = Nibble[j] - 'a' + 10;
+
+        }	// for (int j = ...)
+
+        pHex[i] = Nibble[0] << 4;	// Set the high nibble
+        pHex[i] |= Nibble[1];	//Set the low nibble
+    }	// for (int i = ...)
+
+    return 0;
 }
 //##################################################################################################################
 void DATAEEPROM_Program(uint32_t Address, uint32_t Data)
