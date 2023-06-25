@@ -210,25 +210,25 @@ void Enable_LPUART1(void)
   * @param  None
   * @retval None
   */
-//int fputc(int ch, FILE *f)
-//{
-//    _EC600X_USART->TDR = ch;
-
-//    while(!(_EC600X_USART->ISR & USART_ISR_TXE))
-//    {;}
-
-//    return ch;
-//}
-
 int fputc(int ch, FILE *f)
 {
-    _LTE_LPUART->TDR = ch;
+    _EC600X_USART->TDR = ch;
 
-    while(!(_LTE_LPUART->ISR & USART_ISR_TXE))
+    while(!(_EC600X_USART->ISR & USART_ISR_TXE))
     {;}
 
     return ch;
 }
+
+//int fputc(int ch, FILE *f)
+//{
+//    _LTE_LPUART->TDR = ch;
+
+//    while(!(_LTE_LPUART->ISR & USART_ISR_TXE))
+//    {;}
+
+//    return ch;
+//}
 //##################################################################################################################
 void ec600x_usart_init(void)
 {

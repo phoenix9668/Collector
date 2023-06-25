@@ -1,3 +1,9 @@
+# user-defined files
+*._2i
+*.axf
+*.fed
+*.l2p
+
 # git ignore file for Keil 碌Vision Project
 
 # 碌Vision 5 and 碌Vision 4 Project screen layout file
