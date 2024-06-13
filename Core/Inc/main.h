@@ -54,7 +54,7 @@ extern "C" {
 /* USER CODE BEGIN ET */
 extern __IO uint32_t CollectorID;
 #define	_DEBUG    	 0 //  use printf debug
-#define	_SGM58031    0 //  enable sgm58031
+#define	_SGM58031    1 //  enable sgm58031
 
 #if (_DEBUG == 1)
 #define debug_printf(...)     			printf(__VA_ARGS__)
