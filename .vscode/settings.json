@@ -1,6 +1,7 @@
 {
-    "Codegeex.RepoIndex": true,
-    "files.associations": {
-        "main.h": "c"
-    }
+  "Codegeex.RepoIndex": true,
+  "files.associations": {
+    "main.h": "c",
+    "gpio.h": "c"
+  }
 }

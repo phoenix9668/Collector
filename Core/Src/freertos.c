@@ -34,6 +34,7 @@
 #include "cc1101.h"
 #include "sgm58031.h"
 #include "lptim.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +58,8 @@ static uint8_t adcValueBuffer[_ADC_VALUE_BUFFERSIZE];
 static uint16_t TwoHoursCnt = 0;
 static uint16_t TwentyMinutesCnt = 0;
 static bool flip_sign = true;
+#define HEARTBEAT_TIMEOUT_MS (12 * 60 * 1000) // 12分钟
+static uint32_t lastHeartbeatTick = 0;
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -81,6 +84,7 @@ uint8_t fifo[_FIFO_SAMPLES_LEN];
 osThreadId usartRxDmaTaskHandle;
 osThreadId iicConvertTaskHandle;
 osThreadId usartRxCmdTaskHandle;
+osThreadId heartbeatTaskHandle;
 osMessageQId usartRxQueueHandle;
 osSemaphoreId rxBufferBinarySemHandle;
 
@@ -92,19 +96,27 @@ void SendToCloud(uint8_t functionID, uint8_t length);
 void FireWater(uint8_t length);
 /* USER CODE END FunctionPrototypes */
 
-void StartUsartRxDmaTask(void const * argument);
-void StartIICConvertTask(void const * argument);
-void StartUsartRxCmdTask(void const * argument);
+void StartUsartRxDmaTask(void const *argument);
+void StartIICConvertTask(void const *argument);
+void StartUsartRxCmdTask(void const *argument);
+void StartHeartbeatMonitorTask(void const *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* GetIdleTaskMemory prototype (linked to static allocation support) */
-void vApplicationGetIdleTaskMemory( StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize );
+void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize);
 
 /* Hook prototypes */
 void vApplicationIdleHook(void);
 
 /* USER CODE BEGIN 2 */
+// 判断是否为心跳包（"Heartbeat"）
+static int isHeartbeatPacket(const uint8_t *buf, uint16_t len)
+{
+    const char heartbeat[] = "Heartbeat";
+    return (len == strlen(heartbeat) && memcmp(buf, heartbeat, strlen(heartbeat)) == 0);
+}
+
 __weak void vApplicationIdleHook(void)
 {
     /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
@@ -139,62 +151,67 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer, StackTyp
 /* USER CODE END GET_IDLE_TASK_MEMORY */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
-void MX_FREERTOS_Init(void) {
-  /* USER CODE BEGIN Init */
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
+void MX_FREERTOS_Init(void)
+{
+    /* USER CODE BEGIN Init */
     collectorIDBuffer[0] = (uint8_t)(0xFF & CollectorID >> 24);
     collectorIDBuffer[1] = (uint8_t)(0xFF & CollectorID >> 16);
     collectorIDBuffer[2] = (uint8_t)(0xFF & CollectorID >> 8);
     collectorIDBuffer[3] = (uint8_t)(0xFF & CollectorID);
-  /* USER CODE END Init */
+    /* USER CODE END Init */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
+    /* USER CODE BEGIN RTOS_MUTEX */
     /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+    /* USER CODE END RTOS_MUTEX */
 
-  /* Create the semaphores(s) */
-  /* definition and creation of rxBufferBinarySem */
-  osSemaphoreDef(rxBufferBinarySem);
-  rxBufferBinarySemHandle = osSemaphoreCreate(osSemaphore(rxBufferBinarySem), 1);
+    /* Create the semaphores(s) */
+    /* definition and creation of rxBufferBinarySem */
+    osSemaphoreDef(rxBufferBinarySem);
+    rxBufferBinarySemHandle = osSemaphoreCreate(osSemaphore(rxBufferBinarySem), 1);
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
+    /* USER CODE BEGIN RTOS_SEMAPHORES */
     /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
+    /* USER CODE END RTOS_SEMAPHORES */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
+    /* USER CODE BEGIN RTOS_TIMERS */
     /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
+    /* USER CODE END RTOS_TIMERS */
 
-  /* Create the queue(s) */
-  /* definition and creation of usartRxQueue */
-  osMessageQDef(usartRxQueue, 16, uint32_t);
-  usartRxQueueHandle = osMessageCreate(osMessageQ(usartRxQueue), NULL);
+    /* Create the queue(s) */
+    /* definition and creation of usartRxQueue */
+    osMessageQDef(usartRxQueue, 16, uint32_t);
+    usartRxQueueHandle = osMessageCreate(osMessageQ(usartRxQueue), NULL);
 
-  /* USER CODE BEGIN RTOS_QUEUES */
+    /* USER CODE BEGIN RTOS_QUEUES */
     /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
+    /* USER CODE END RTOS_QUEUES */
 
-  /* Create the thread(s) */
-  /* definition and creation of usartRxDmaTask */
-  osThreadDef(usartRxDmaTask, StartUsartRxDmaTask, osPriorityHigh, 0, 128);
-  usartRxDmaTaskHandle = osThreadCreate(osThread(usartRxDmaTask), NULL);
+    /* Create the thread(s) */
+    /* definition and creation of usartRxDmaTask */
+    osThreadDef(usartRxDmaTask, StartUsartRxDmaTask, osPriorityHigh, 0, 128);
+    usartRxDmaTaskHandle = osThreadCreate(osThread(usartRxDmaTask), NULL);
 
-  /* definition and creation of iicConvertTask */
-  osThreadDef(iicConvertTask, StartIICConvertTask, osPriorityLow, 0, 128);
-  iicConvertTaskHandle = osThreadCreate(osThread(iicConvertTask), NULL);
+    /* definition and creation of iicConvertTask */
+    osThreadDef(iicConvertTask, StartIICConvertTask, osPriorityLow, 0, 128);
+    iicConvertTaskHandle = osThreadCreate(osThread(iicConvertTask), NULL);
 
-  /* definition and creation of usartRxCmdTask */
-  osThreadDef(usartRxCmdTask, StartUsartRxCmdTask, osPriorityNormal, 0, 128);
-  usartRxCmdTaskHandle = osThreadCreate(osThread(usartRxCmdTask), NULL);
+    /* definition and creation of usartRxCmdTask */
+    osThreadDef(usartRxCmdTask, StartUsartRxCmdTask, osPriorityNormal, 0, 128);
+    usartRxCmdTaskHandle = osThreadCreate(osThread(usartRxCmdTask), NULL);
 
-  /* USER CODE BEGIN RTOS_THREADS */
+    /* definition and creation of heartbeatTask */
+    osThreadDef(heartbeatTask, StartHeartbeatMonitorTask, osPriorityLow, 0, 128);
+    heartbeatTaskHandle = osThreadCreate(osThread(heartbeatTask), NULL);
+
+    /* USER CODE BEGIN RTOS_THREADS */
     /* add threads, ... */
     // follow code must be here!!!!!!
     ec600x_usart_init();
-		Enable_LPUART1();
+    Enable_LPUART1();
     memset(&lte, 0, sizeof(lte));
     ShowMessage();
 
@@ -211,8 +228,7 @@ void MX_FREERTOS_Init(void) {
 #endif
 
     HAL_LPTIM_Counter_Start_IT(&hlptim1, 0x3FF);
-  /* USER CODE END RTOS_THREADS */
-
+    /* USER CODE END RTOS_THREADS */
 }
 
 /* USER CODE BEGIN Header_StartUsartRxDmaTask */
@@ -222,9 +238,9 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartUsartRxDmaTask */
-void StartUsartRxDmaTask(void const * argument)
+void StartUsartRxDmaTask(void const *argument)
 {
-  /* USER CODE BEGIN StartUsartRxDmaTask */
+    /* USER CODE BEGIN StartUsartRxDmaTask */
     /* Infinite loop */
     for (;;)
     {
@@ -235,7 +251,7 @@ void StartUsartRxDmaTask(void const * argument)
         ec600x_usart_rx_check();
     }
 
-  /* USER CODE END StartUsartRxDmaTask */
+    /* USER CODE END StartUsartRxDmaTask */
 }
 
 /* USER CODE BEGIN Header_StartIICConvertTask */
@@ -245,9 +261,9 @@ void StartUsartRxDmaTask(void const * argument)
  * @retval None
  */
 /* USER CODE END Header_StartIICConvertTask */
-void StartIICConvertTask(void const * argument)
+void StartIICConvertTask(void const *argument)
 {
-  /* USER CODE BEGIN StartIICConvertTask */
+    /* USER CODE BEGIN StartIICConvertTask */
     uint16_t adcValue;
 
     /* Infinite loop */
@@ -334,7 +350,7 @@ void StartIICConvertTask(void const * argument)
         osDelay(1);
     }
 
-  /* USER CODE END StartIICConvertTask */
+    /* USER CODE END StartIICConvertTask */
 }
 
 /* USER CODE BEGIN Header_StartUsartRxCmdTask */
@@ -344,9 +360,9 @@ void StartIICConvertTask(void const * argument)
  * @retval None
  */
 /* USER CODE END Header_StartUsartRxCmdTask */
-void StartUsartRxCmdTask(void const * argument)
+void StartUsartRxCmdTask(void const *argument)
 {
-  /* USER CODE BEGIN StartUsartRxCmdTask */
+    /* USER CODE BEGIN StartUsartRxCmdTask */
     for (;;)
     {
         debug_printf("[DEBUG] 等待rxBufferBinarySemHandle信号量...\n");
@@ -363,6 +379,14 @@ void StartUsartRxCmdTask(void const * argument)
         }
 
         debug_printf("\nrxCounter = %d\n", lte.rxCounter);
+
+        // ####################### 新增心跳包超时重启逻辑 BEGIN #######################
+        if (isHeartbeatPacket(lte.rxBuffer, lte.rxCounter))
+        {
+            lastHeartbeatTick = xTaskGetTickCount();
+            debug_printf("[DEBUG] 收到心跳包，重置心跳定时器\n");
+        }
+        // ####################### 新增心跳包超时重启逻辑 END #######################
 
         if (AsciiToHex(lte.rxBuffer, lte.rxHexBuffer, lte.rxCounter) == 0)
         {
@@ -389,7 +413,37 @@ void StartUsartRxCmdTask(void const * argument)
         LED2_OFF();
     }
 
-  /* USER CODE END StartUsartRxCmdTask */
+    /* USER CODE END StartUsartRxCmdTask */
+}
+
+/* USER CODE BEGIN Header_StartHeartbeatMonitorTask */
+/**
+ * @brief Function implementing the heartbeatTask thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header_StartHeartbeatMonitorTask */
+void StartHeartbeatMonitorTask(void const *argument)
+{
+    /* USER CODE BEGIN StartHeartbeatMonitorTask */
+    // 启动时就开始计时
+    lastHeartbeatTick = xTaskGetTickCount();
+    /* Infinite loop */
+    for (;;)
+    {
+        uint32_t now = xTaskGetTickCount();
+        if ((now - lastHeartbeatTick) > (HEARTBEAT_TIMEOUT_MS / portTICK_PERIOD_MS))
+        {
+            debug_printf("[DEBUG] 超过12分钟未收到心跳包，触发EC600X_RST_OFF()\n");
+            EC600X_RST_OFF();
+            osDelay(500);
+            EC600X_RST_ON();
+            lastHeartbeatTick = now; // 防止重复触发
+        }
+        osDelay(1000); // 每秒检查一次
+
+        /* USER CODE END StartHeartbeatMonitorTask */
+    }
 }
 
 /* Private application code --------------------------------------------------*/
@@ -618,4 +672,3 @@ void FireWater(uint8_t length)
     }
 }
 /* USER CODE END Application */
-
