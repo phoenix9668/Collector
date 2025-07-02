@@ -41,12 +41,13 @@ TIM_HandleTypeDef        htim2;
 HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
 {
   RCC_ClkInitTypeDef    clkconfig;
-  uint32_t              uwTimclock = 0;
-  uint32_t              uwPrescalerValue = 0;
+  uint32_t              uwTimclock, uwAPB1Prescaler;
+  uint32_t              uwPrescalerValue;
   uint32_t              pFLatency;
+
+  HAL_StatusTypeDef     status;
   /*Configure the TIM2 IRQ priority */
   HAL_NVIC_SetPriority(TIM2_IRQn, TickPriority ,0);
-
   /* Enable the TIM2 global Interrupt */
   HAL_NVIC_EnableIRQ(TIM2_IRQn);
 
@@ -56,8 +57,18 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   /* Get clock configuration */
   HAL_RCC_GetClockConfig(&clkconfig, &pFLatency);
 
+  /* Get APB1 prescaler */
+  uwAPB1Prescaler = clkconfig.APB1CLKDivider;
   /* Compute TIM2 clock */
-  uwTimclock = HAL_RCC_GetPCLK1Freq();
+  if (uwAPB1Prescaler == RCC_HCLK_DIV1)
+  {
+    uwTimclock = HAL_RCC_GetPCLK1Freq();
+  }
+  else
+  {
+    uwTimclock = 2UL * HAL_RCC_GetPCLK1Freq();
+  }
+
   /* Compute the prescaler value to have TIM2 counter clock equal to 1MHz */
   uwPrescalerValue = (uint32_t) ((uwTimclock / 1000000U) - 1U);
 
@@ -65,24 +76,38 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   htim2.Instance = TIM2;
 
   /* Initialize TIMx peripheral as follow:
-  + Period = [(TIM2CLK/1000) - 1]. to have a (1/1000) s time base.
-  + Prescaler = (uwTimclock/1000000 - 1) to have a 1MHz counter clock.
-  + ClockDivision = 0
-  + Counter direction = Up
-  */
+   * Period = [(TIM2CLK/1000) - 1]. to have a (1/1000) s time base.
+   * Prescaler = (uwTimclock/1000000 - 1) to have a 1MHz counter clock.
+   * ClockDivision = 0
+   * Counter direction = Up
+   */
   htim2.Init.Period = (1000000U / 1000U) - 1U;
   htim2.Init.Prescaler = uwPrescalerValue;
   htim2.Init.ClockDivision = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
 
-  if(HAL_TIM_Base_Init(&htim2) == HAL_OK)
+  status = HAL_TIM_Base_Init(&htim2);
+  if (status == HAL_OK)
   {
     /* Start the TIM time Base generation in interrupt mode */
-    return HAL_TIM_Base_Start_IT(&htim2);
+    status = HAL_TIM_Base_Start_IT(&htim2);
+    if (status == HAL_OK)
+    {
+      if (TickPriority < (1UL << __NVIC_PRIO_BITS))
+      {
+        /* Configure the TIM IRQ priority */
+        HAL_NVIC_SetPriority(TIM2_IRQn, TickPriority, 0U);
+        uwTickPrio = TickPriority;
+      }
+      else
+      {
+        status = HAL_ERROR;
+      }
+    }
   }
 
-  /* Return function status */
-  return HAL_ERROR;
+ /* Return function status */
+  return status;
 }
 
 /**

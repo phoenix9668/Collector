@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    usart.c
-  * @brief   This file provides code for the configuration
-  *          of the USART instances.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    usart.c
+ * @brief   This file provides code for the configuration
+ *          of the USART instances.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2022 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
@@ -32,11 +32,11 @@ volatile size_t ec600x_usart_tx_dma_current_len;
 lte_t lte;
 
 #ifdef __GNUC__
-    /* With GCC, small printf (option LD Linker->Libraries->Small printf
-    set to 'Yes') calls __io_putchar() */
-    #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+/* With GCC, small printf (option LD Linker->Libraries->Small printf
+set to 'Yes') calls __io_putchar() */
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
-    #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif /* __GNUC__ */
 /* USER CODE END 0 */
 
@@ -181,55 +181,57 @@ void MX_USART1_UART_Init(void)
   USART_InitStruct.OverSampling = LL_USART_OVERSAMPLING_16;
   LL_USART_Init(USART1, &USART_InitStruct);
   LL_USART_ConfigAsyncMode(USART1);
-  LL_USART_Enable(USART1);
   /* USER CODE BEGIN USART1_Init 2 */
-
+	// must delete LL_USART_Enable(USART1);
   /* USER CODE END USART1_Init 2 */
 
 }
 
 /* USER CODE BEGIN 1 */
-//##################################################################################################################
+// ##################################################################################################################
 /**
-  * @brief  This function Enable LPUART1
-  * @param  None
-  * @retval None
-  */
+ * @brief  This function Enable LPUART1
+ * @param  None
+ * @retval None
+ */
 void Enable_LPUART1(void)
 {
     /* Enable LPUART1 */
     LL_LPUART_Enable(LPUART1);
 
     /* Polling USART initialisation */
-    while((!(LL_LPUART_IsActiveFlag_TEACK(LPUART1))) || (!(LL_LPUART_IsActiveFlag_REACK(LPUART1))))
-    {}
+    while ((!(LL_LPUART_IsActiveFlag_TEACK(LPUART1))) || (!(LL_LPUART_IsActiveFlag_REACK(LPUART1))))
+    {
+    }
 }
-//##################################################################################################################
+// ##################################################################################################################
 /**
-  * @brief  Retargets the C library printf function to the USART.
-  * @param  None
-  * @retval None
-  */
-int fputc(int ch, FILE *f)
-{
-    _EC600X_USART->TDR = ch;
-
-    while(!(_EC600X_USART->ISR & USART_ISR_TXE))
-    {;}
-
-    return ch;
-}
-
-//int fputc(int ch, FILE *f)
+ * @brief  Retargets the C library printf function to the USART.
+ * @param  None
+ * @retval None
+ */
+// int fputc(int ch, FILE *f)
 //{
-//    _LTE_LPUART->TDR = ch;
+//     _EC600X_USART->TDR = ch;
 
-//    while(!(_LTE_LPUART->ISR & USART_ISR_TXE))
+//    while(!(_EC600X_USART->ISR & USART_ISR_TXE))
 //    {;}
 
 //    return ch;
 //}
-//##################################################################################################################
+
+int fputc(int ch, FILE *f)
+{
+    _LTE_LPUART->TDR = ch;
+
+    while (!(_LTE_LPUART->ISR & USART_ISR_TXE))
+    {
+        ;
+    }
+
+    return ch;
+}
+// ##################################################################################################################
 void ec600x_usart_init(void)
 {
     /* Initialize ringbuff for TX & RX */
@@ -254,8 +256,20 @@ void ec600x_usart_init(void)
 
     /* Enable DMA RX*/
     LL_DMA_EnableChannel(DMA1, LL_DMA_CHANNEL_3);
+    LL_USART_Enable(USART1);
+
+    if (LL_DMA_IsEnabledChannel(DMA1, LL_DMA_CHANNEL_3))
+    {
+        debug_printf("[DEBUG] DMA1 Channel 3 已经使能\n");
+    }
+    else
+    {
+        debug_printf("[DEBUG] DMA1 Channel 3 未使能!!!\n");
+    }
+
+    debug_printf("[DEBUG] ec600x_usart_init已调用\n");
 }
-//##################################################################################################################
+// ##################################################################################################################
 void ec600x_usart_deinit(void)
 {
     /* Disable DMA RX HT & TC interrupts */
@@ -271,19 +285,20 @@ void ec600x_usart_deinit(void)
     /* Disable DMA */
     LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_3);
 }
-//##################################################################################################################
+// ##################################################################################################################
 /**
  * \brief           Process received data over UART
  * Data are written to RX ringbuffer for application processing at latter stage
  * \param[in]       data: Data to process
  * \param[in]       len: Length in units of bytes
  */
-void ec600x_usart_process_data(const void* data, size_t len)
+void ec600x_usart_process_data(const void *data, size_t len)
 {
     lte.rxCounter += len;
-    lwrb_write(&ec600x_usart_rx_rb, data, len);  /* Write data to receive buffer */
+    lwrb_write(&ec600x_usart_rx_rb, data, len);
+    debug_printf("[DEBUG] 写入环形缓冲区: len=%d, rxCounter=%d\n", (int)len, lte.rxCounter);
 }
-//##################################################################################################################
+// ##################################################################################################################
 /**
  * \brief           Check for new data received with DMA
  */
@@ -295,9 +310,10 @@ void ec600x_usart_rx_check(void)
     /* Calculate current position in buffer */
     pos = ARRAY_LEN(ec600x_usart_rx_dma_buffer) - LL_DMA_GetDataLength(DMA1, LL_DMA_CHANNEL_3);
 
-    if (pos != old_pos)                         /* Check change in received data */
+    if (pos != old_pos) /* Check change in received data */
     {
-        if (pos > old_pos)                      /* Current position is over previous one */
+        debug_printf("[DEBUG] DMA缓冲区有新数据: old_pos=%d, pos=%d\n", (int)old_pos, (int)pos);
+        if (pos > old_pos) /* Current position is over previous one */
         {
             /* We are in "linear" mode */
             /* Process data directly by subtracting "pointers" */
@@ -306,7 +322,7 @@ void ec600x_usart_rx_check(void)
         else
         {
             /* We are in "overflow" mode */
-            /* First process data to the end of buffer */\
+            /* First process data to the end of buffer */
             ec600x_usart_process_data(&ec600x_usart_rx_dma_buffer[old_pos], ARRAY_LEN(ec600x_usart_rx_dma_buffer) - old_pos);
 
             /* Check and continue with beginning of buffer */
@@ -316,10 +332,10 @@ void ec600x_usart_rx_check(void)
             }
         }
 
-        old_pos = pos;                          /* Save current position as old */
+        old_pos = pos; /* Save current position as old */
     }
 }
-//##################################################################################################################
+// ##################################################################################################################
 /**
  * \brief           Check if DMA is active and if not try to send data
  * \return          `1` if transfer just started, `0` if on-going or no data to transmit
@@ -359,8 +375,7 @@ uint8_t ec600x_usart_start_tx_dma_transfer(void)
     primask = __get_PRIMASK();
     __disable_irq();
 
-    if (ec600x_usart_tx_dma_current_len == 0
-            && (ec600x_usart_tx_dma_current_len = lwrb_get_linear_block_read_length(&ec600x_usart_tx_rb)) > 0)
+    if (ec600x_usart_tx_dma_current_len == 0 && (ec600x_usart_tx_dma_current_len = lwrb_get_linear_block_read_length(&ec600x_usart_tx_rb)) > 0)
     {
         /* Disable channel if enabled */
         LL_DMA_DisableChannel(DMA1, LL_DMA_CHANNEL_2);
@@ -383,26 +398,26 @@ uint8_t ec600x_usart_start_tx_dma_transfer(void)
     __set_PRIMASK(primask);
     return started;
 }
-//##################################################################################################################
+// ##################################################################################################################
 /**
  * \brief           Send string over USART
  * \param[in]       str: String to send
  */
-void ec600x_usart_send_string(const char* str)
+void ec600x_usart_send_string(const char *str)
 {
-    lwrb_write(&ec600x_usart_tx_rb, str, strlen(str));   /* Write data to transmit buffer */
+    lwrb_write(&ec600x_usart_tx_rb, str, strlen(str)); /* Write data to transmit buffer */
     ec600x_usart_start_tx_dma_transfer();
 }
-//##################################################################################################################
+// ##################################################################################################################
 /**
  * \brief           Process received data over UART
  * \note            Either process them directly or copy to other bigger buffer
  * \param[in]       data: Data to process
  * \param[in]       len: Length in units of bytes
  */
-void ec600x_usart_send_data(const void* data, size_t len)
+void ec600x_usart_send_data(const void *data, size_t len)
 {
-    const uint8_t* d = data;
+    const uint8_t *d = data;
     /*
      * This function is called on DMA TC and HT events, aswell as on UART IDLE (if enabled) line event.
      *
@@ -414,21 +429,25 @@ void ec600x_usart_send_data(const void* data, size_t len)
     {
         LL_USART_TransmitData8(_EC600X_USART, *d);
 
-        while (!LL_USART_IsActiveFlag_TXE(_EC600X_USART)) {}
+        while (!LL_USART_IsActiveFlag_TXE(_EC600X_USART))
+        {
+        }
     }
 
-    while (!LL_USART_IsActiveFlag_TC(_EC600X_USART)) {}
+    while (!LL_USART_IsActiveFlag_TC(_EC600X_USART))
+    {
+    }
 }
-//##################################################################################################################
+// ##################################################################################################################
 /**
  * \brief           Process received data over UART
  * \note            Either process them directly or copy to other bigger buffer
  * \param[in]       data: Data to process
  * \param[in]       len: Length in units of bytes
  */
-void lte_lpuart_send_data(const void* data, size_t len)
+void lte_lpuart_send_data(const void *data, size_t len)
 {
-    const uint8_t* d = data;
+    const uint8_t *d = data;
     /*
      * This function is called on DMA TC and HT events, aswell as on UART IDLE (if enabled) line event.
      *
@@ -440,19 +459,23 @@ void lte_lpuart_send_data(const void* data, size_t len)
     {
         LL_USART_TransmitData8(_LTE_LPUART, *d);
 
-        while (!LL_USART_IsActiveFlag_TXE(_LTE_LPUART)) {}
+        while (!LL_USART_IsActiveFlag_TXE(_LTE_LPUART))
+        {
+        }
     }
 
-    while (!LL_USART_IsActiveFlag_TC(_LTE_LPUART)) {}
+    while (!LL_USART_IsActiveFlag_TC(_LTE_LPUART))
+    {
+    }
 }
-//##################################################################################################################
+// ##################################################################################################################
 /**
  * \brief           Send string to USART
  * \param[in]       str: String to send
  */
-void lte_lpuart_send_string(const char* str)
+void lte_lpuart_send_string(const char *str)
 {
-    lte_lpuart_send_data((uint8_t*)str, strlen(str));
+    lte_lpuart_send_data((uint8_t *)str, strlen(str));
 }
-//##################################################################################################################
+// ##################################################################################################################
 /* USER CODE END 1 */

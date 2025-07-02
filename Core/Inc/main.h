@@ -53,8 +53,8 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 extern __IO uint32_t CollectorID;
-#define	_DEBUG    	 0 //  use printf debug
-#define	_SGM58031    1 //  enable sgm58031
+#define	_DEBUG    	 1 //  use printf debug
+#define	_SGM58031    0 //  enable sgm58031
 
 #if (_DEBUG == 1)
 #define debug_printf(...)     			printf(__VA_ARGS__)
@@ -111,6 +111,7 @@ void Error_Handler(void);
 #define PA15_GPIO_Port GPIOA
 #define USR4G_POWER_KEY_Pin LL_GPIO_PIN_3
 #define USR4G_POWER_KEY_GPIO_Port GPIOB
+
 /* USER CODE BEGIN Private defines */
 void SystemInitial(void);
 void ShowMessage(void);

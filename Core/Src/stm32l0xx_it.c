@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file    stm32l0xx_it.c
-  * @brief   Interrupt Service Routines.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file    stm32l0xx_it.c
+ * @brief   Interrupt Service Routines.
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2022 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -79,9 +79,9 @@ void NMI_Handler(void)
 
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
-    while (1)
-    {
-    }
+  while (1)
+  {
+  }
 
   /* USER CODE END NonMaskableInt_IRQn 1 */
 }
@@ -120,7 +120,7 @@ void EXTI2_3_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_3);
     /* USER CODE BEGIN LL_EXTI_LINE_3 */
-        rxCatch = SET;
+    rxCatch = SET;
     /* USER CODE END LL_EXTI_LINE_3 */
   }
   /* USER CODE BEGIN EXTI2_3_IRQn 1 */
@@ -140,7 +140,7 @@ void EXTI4_15_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
     /* USER CODE BEGIN LL_EXTI_LINE_4 */
-        txFiFoUnFlow = SET;
+    txFiFoUnFlow = SET;
     /* USER CODE END LL_EXTI_LINE_4 */
   }
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
@@ -154,35 +154,32 @@ void EXTI4_15_IRQHandler(void)
 void DMA1_Channel2_3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 0 */
-    /* Events for DMA Channel 3 = USART DMA RX */
-    /* Check half-transfer complete interrupt */
-    uint32_t d = 1;
+  uint32_t d = 1;
 
-    if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_HT3(DMA1))
-    {
-        LL_DMA_ClearFlag_HT3(DMA1);             /* Clear half-transfer complete flag */
-        osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
-    }
+  if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_HT3(DMA1))
+  {
+    LL_DMA_ClearFlag_HT3(DMA1);
+    osMessagePut(usartRxQueueHandle, d, 0);
+    debug_printf("[DEBUG] DMA HT中断触发\n");
+  }
 
-    /* Check transfer-complete interrupt */
-    if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_TC3(DMA1))
-    {
-        LL_DMA_ClearFlag_TC3(DMA1);             /* Clear transfer complete flag */
-        osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
-    }
-
+  if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_TC3(DMA1))
+  {
+    LL_DMA_ClearFlag_TC3(DMA1);
+    osMessagePut(usartRxQueueHandle, d, 0);
+    debug_printf("[DEBUG] DMA TC中断触发\n");
+  }
   /* USER CODE END DMA1_Channel2_3_IRQn 0 */
-
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 1 */
-    /* Events for DMA Channel 2 = USART DMA TX */
-    /* Check transfer complete */
-    if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_2) && LL_DMA_IsActiveFlag_TC2(DMA1))
-    {
-        LL_DMA_ClearFlag_TC2(DMA1);             /* Clear transfer complete flag */
-        lwrb_skip(&ec600x_usart_tx_rb, ec600x_usart_tx_dma_current_len);/* Skip sent data, mark as read */
-        ec600x_usart_tx_dma_current_len = 0;           /* Clear length variable */
-        ec600x_usart_start_tx_dma_transfer();          /* Start sending more data */
-    }
+  /* Events for DMA Channel 2 = USART DMA TX */
+  /* Check transfer complete */
+  if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_2) && LL_DMA_IsActiveFlag_TC2(DMA1))
+  {
+    LL_DMA_ClearFlag_TC2(DMA1);                                      /* Clear transfer complete flag */
+    lwrb_skip(&ec600x_usart_tx_rb, ec600x_usart_tx_dma_current_len); /* Skip sent data, mark as read */
+    ec600x_usart_tx_dma_current_len = 0;                             /* Clear length variable */
+    ec600x_usart_start_tx_dma_transfer();                            /* Start sending more data */
+  }
 
   /* USER CODE END DMA1_Channel2_3_IRQn 1 */
 }
@@ -221,14 +218,23 @@ void TIM2_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-    uint32_t d = 1;
+  uint32_t d = 1;
 
-    if (LL_USART_IsEnabledIT_IDLE(USART1) && LL_USART_IsActiveFlag_IDLE(USART1))
+  if (LL_USART_IsEnabledIT_IDLE(USART1) && LL_USART_IsActiveFlag_IDLE(USART1))
+  {
+    LL_USART_ClearFlag_IDLE(USART1);
+    osMessagePut(usartRxQueueHandle, d, 0);
+    osSemaphoreRelease(rxBufferBinarySemHandle);
+    debug_printf("[DEBUG] USART1 IDLE中断触发\n");
+
+    // 打印DMA缓冲区前16字节内容
+    debug_printf("[DEBUG] DMA缓冲区内容: ");
+    for (int i = 0; i < 16; i++)
     {
-        LL_USART_ClearFlag_IDLE(USART1);        /* Clear IDLE line flag */
-        osMessagePut(usartRxQueueHandle, d, 0); /* Write data to queue. Do not use wait function! */
-        osSemaphoreRelease(rxBufferBinarySemHandle);
+      debug_printf("%02X ", ec600x_usart_rx_dma_buffer[i]);
     }
+    debug_printf("\n");
+  }
 
   /* USER CODE END USART1_IRQn 0 */
   /* USER CODE BEGIN USART1_IRQn 1 */
