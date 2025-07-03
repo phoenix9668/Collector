@@ -58,7 +58,7 @@ static uint8_t adcValueBuffer[_ADC_VALUE_BUFFERSIZE];
 static uint16_t TwoHoursCnt = 0;
 static uint16_t TwentyMinutesCnt = 0;
 static bool flip_sign = true;
-#define HEARTBEAT_TIMEOUT_MS (12 * 60 * 1000) // 12分钟
+#define HEARTBEAT_TIMEOUT_MS (10 * 60 * 1000) // 10分钟
 static uint32_t lastHeartbeatTick = 0;
 /* USER CODE END PD */
 
@@ -434,7 +434,7 @@ void StartHeartbeatMonitorTask(void const *argument)
         uint32_t now = xTaskGetTickCount();
         if ((now - lastHeartbeatTick) > (HEARTBEAT_TIMEOUT_MS / portTICK_PERIOD_MS))
         {
-            debug_printf("[DEBUG] 超过12分钟未收到心跳包，触发EC600X_RST_OFF()\n");
+            debug_printf("[DEBUG] 超过10分钟未收到心跳包，触发EC600X_RST_OFF()\n");
             EC600X_RST_OFF();
             osDelay(500);
             EC600X_RST_ON();
