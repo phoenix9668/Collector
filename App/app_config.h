@@ -16,11 +16,15 @@
  * Feature switches
  * ------------------------------------------------------------------------- */
 
-/* Read the SGM58031 on the power management board and send B2 frames.
- * Safe without the I2C jumper: the board reports "##SGM58031 not found##"
- * once and keeps running. */
+/* Read the SGM58031 on the power management board and send B2 frames, as
+ * the RS485 local-station setup needs (Collector-QuecPython, branch
+ * feature/rs485-local: the ESP32 adapter has no I2C, so only this board can
+ * report battery and supply voltages).
+ * Safe without the I2C jumper on the power board: the board reports
+ * "##SGM58031 not found##" once and keeps running. Before 2.0.0 enabling it
+ * without the jumper made the board reset every 20 minutes. */
 #ifndef APP_SGM58031_ENABLE
-#define APP_SGM58031_ENABLE 0
+#define APP_SGM58031_ENABLE 1
 #endif
 
 /* Mirror every B0 frame on LPUART1 (PB10), as the firmware always did. */
