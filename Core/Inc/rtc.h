@@ -35,8 +35,7 @@ extern "C" {
 extern RTC_HandleTypeDef hrtc;
 
 /* USER CODE BEGIN Private defines */
-void GetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer);
-void SetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer);
+
 /* USER CODE END Private defines */
 
 void MX_RTC_Init(void);
