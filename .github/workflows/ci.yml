@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  firmware:
+    name: Firmware (${{ matrix.preset }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        preset: [Debug, Release, DebugLog]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Arm GNU toolchain
+        uses: carlosperate/arm-none-eabi-gcc-action@v1
+        with:
+          release: '14.2.Rel1'
+
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - name: Build
+        run: |
+          cmake --preset ${{ matrix.preset }}
+          cmake --build --preset ${{ matrix.preset }}
+
+      - name: Check memory budget
+        run: python3 Tools/check_size.py build/${{ matrix.preset }}/Collector.elf
+
+      - name: Upload images
+        if: matrix.preset == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Collector-${{ github.sha }}
+          path: |
+            build/Release/Collector.elf
+            build/Release/Collector.hex
+            build/Release/Collector.bin
+            build/Release/Collector.map
+
+  host-tests:
+    name: Host unit tests
+    runs-on: ubuntu-24.04
+    env:
+      # Optional: a read-only token for the private Collector-QuecPython
+      # repository enables the frame cross-check against its parser.
+      HAS_QUECPYTHON_TOKEN: ${{ secrets.QUECPYTHON_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out Collector-QuecPython (feature/rs485-local)
+        if: env.HAS_QUECPYTHON_TOKEN == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: phoenix9668/Collector-QuecPython
+          ref: feature/rs485-local
+          token: ${{ secrets.QUECPYTHON_TOKEN }}
+          path: quecpython
+
+      - name: Install Ninja
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
+
+      - name: Build and run
+        run: |
+          QUEC=""
+          if [ -d quecpython/src ]; then QUEC="$PWD/quecpython"; fi
+          cmake -S Tests -B Tests/build/host -G Ninja -DCMAKE_BUILD_TYPE=Debug -DQUECPYTHON_DIR="$QUEC"
+          cmake --build Tests/build/host
+          ctest --test-dir Tests/build/host --output-on-failure
