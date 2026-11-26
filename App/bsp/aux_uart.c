@@ -52,7 +52,7 @@ bool aux_uart_wait(void)
     }
     /* 115200 baud moves a byte every 87 us. */
     uint32_t timeout_ms = (uint32_t)(s_tx_len / 8u) + 20u;
-    uint32_t flags = osThreadFlagsWait(APP_FLAG_AUX_TX_DONE, osFlagsWaitAny, timeout_ms);
+    uint32_t flags = app_flags_wait(APP_FLAG_AUX_TX_DONE, timeout_ms);
     bool ok = !app_flags_error(flags);
     if (!ok)
     {

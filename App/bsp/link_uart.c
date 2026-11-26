@@ -108,7 +108,7 @@ bool link_uart_write(const void *data, size_t len)
 
     /* 115200 baud moves a byte every 87 us. */
     uint32_t timeout_ms = (uint32_t)(len / 8u) + 20u;
-    uint32_t flags = osThreadFlagsWait(APP_FLAG_LINK_TX_DONE, osFlagsWaitAny, timeout_ms);
+    uint32_t flags = app_flags_wait(APP_FLAG_LINK_TX_DONE, timeout_ms);
     bool ok = !app_flags_error(flags);
     if (ok)
     {
@@ -193,7 +193,7 @@ size_t link_uart_receive(const uint8_t **frame, uint32_t timeout_ms)
         s_frame_handed_out = false;
     }
 
-    uint32_t flags = osThreadFlagsWait(APP_FLAG_LINK_RX | APP_FLAG_LINK_IDLE, osFlagsWaitAny, timeout_ms);
+    uint32_t flags = app_flags_wait(APP_FLAG_LINK_RX | APP_FLAG_LINK_IDLE, timeout_ms);
     if (app_flags_error(flags))
     {
         rx_health_check();

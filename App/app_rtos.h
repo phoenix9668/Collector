@@ -39,4 +39,15 @@ static inline int app_flags_error(uint32_t flags)
     return (flags & 0x80000000u) != 0u;
 }
 
+/* Waits for any of `flags`; use instead of osThreadFlagsWait().
+ * FreeRTOS wakes a notification wait only for a notification sent after the
+ * task's previous wait returned, so a flag set while the task was blocked
+ * waiting for other flags (e.g. RF_START during a USART1 send) would otherwise
+ * sit unseen. Querying the value counts as a notification and closes that gap. */
+static inline uint32_t app_flags_wait(uint32_t flags, uint32_t timeout_ms)
+{
+    (void)osThreadFlagsGet();
+    return osThreadFlagsWait(flags, osFlagsWaitAny, timeout_ms);
+}
+
 #endif /* APP_RTOS_H */

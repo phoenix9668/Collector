@@ -129,7 +129,7 @@ static bool wait_rf(uint32_t deadline)
         return false;
     }
     uint32_t t = (uint32_t)left < RF_POLL_MS ? (uint32_t)left : RF_POLL_MS;
-    (void)osThreadFlagsWait(APP_FLAG_RF_END | APP_FLAG_RF_FIFO, osFlagsWaitAny, t);
+    (void)app_flags_wait(APP_FLAG_RF_END | APP_FLAG_RF_FIFO, t);
     return true;
 }
 
@@ -315,7 +315,7 @@ void Radio_Task(void *argument)
             reinit_due = osKernelGetTickCount() + (ok ? APP_RF_REINIT_PERIOD_MS : APP_RF_RETRY_MS);
         }
 
-        uint32_t flags = osThreadFlagsWait(APP_FLAG_RF_START, osFlagsWaitAny, RF_IDLE_WAIT_MS);
+        uint32_t flags = app_flags_wait(APP_FLAG_RF_START, RF_IDLE_WAIT_MS);
         if (app_flags_error(flags))
         {
             keep_listening();
