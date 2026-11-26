@@ -46,6 +46,10 @@
   adding work to a task.
 - No `printf`/`malloc`: use `util/fmt.h` and `util/log.h`. Log functions
   block on the USART1 mutex: task context only, never in an ISR.
+- Wait for thread flags with `app_flags_wait()` (`App/app_rtos.h`), never a
+  bare `osThreadFlagsWait()`: FreeRTOS does not wake a wait for a flag that
+  was set while the task was blocked waiting for a different flag.
+- Flag bits are global (`APP_FLAG_*`); give every new event its own bit.
 
 ## Compatibility (do not change without the 4G / station side)
 
