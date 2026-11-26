@@ -31,11 +31,19 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
 
+# Debug builds use -Og instead of the -O0 from cmake/gcc-arm-none-eabi.cmake
+# (CubeMX-owned): still debuggable, but the task stacks sized for the 8 KB of
+# RAM hold and the image stays well inside 64 KB of flash.
+set(CMAKE_C_FLAGS_DEBUG "-Og -g3")
+
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
+
+# Application layer (App/), see App/CMakeLists.txt
+add_subdirectory(App)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -45,9 +53,6 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    Core/Src/cc1101.c
-    Core/Src/lwrb.c
-    Core/Src/sgm58031.c
 )
 
 # Add include paths
@@ -68,4 +73,13 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 
     # Add user defined libraries
+    collector_app
+)
+
+# Images for STM32CubeProgrammer next to the .elf, and a size summary.
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.hex
+    COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.bin
+    COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
+    VERBATIM
 )

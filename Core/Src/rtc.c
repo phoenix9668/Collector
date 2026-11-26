@@ -21,7 +21,7 @@
 #include "rtc.h"
 
 /* USER CODE BEGIN 0 */
-
+#include "rtc_clock.h"
 /* USER CODE END 0 */
 
 RTC_HandleTypeDef hrtc;
@@ -57,7 +57,10 @@ void MX_RTC_Init(void)
   }
 
   /* USER CODE BEGIN Check_RTC_BKUP */
-
+  if (HAL_RTCEx_BKUPRead(&hrtc, RTC_CLOCK_BKP_VALID) == RTC_CLOCK_VALID_MAGIC)
+  {
+    return; /* Warm reset: the calendar kept running, do not overwrite it. */
+  }
   /* USER CODE END Check_RTC_BKUP */
 
   /** Initialize RTC and set the Time and Date
@@ -81,7 +84,7 @@ void MX_RTC_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN RTC_Init 2 */
-
+  HAL_RTCEx_BKUPWrite(&hrtc, RTC_CLOCK_BKP_VALID, RTC_CLOCK_VALID_MAGIC);
   /* USER CODE END RTC_Init 2 */
 
 }
@@ -119,54 +122,6 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 }
 
 /* USER CODE BEGIN 1 */
-
-void GetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer)
-{
-    RTC_TimeTypeDef sTime = {0};
-    RTC_DateTypeDef sDate = {0};
-
-    HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
-    HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
-
-    timeBuffer[0] = sTime.Hours;
-    timeBuffer[1] = sTime.Minutes;
-    timeBuffer[2] = sTime.Seconds;
-    dateBuffer[3] = sDate.WeekDay;
-    dateBuffer[1] = sDate.Month;
-    dateBuffer[2] = sDate.Date;
-    dateBuffer[0] = sDate.Year;
-
-    debug_printf("%02d/%02d/%02d ", 2000 + sDate.Year, sDate.Month, sDate.Date);
-    debug_printf("%02d:%02d:%02d\n", sTime.Hours, sTime.Minutes, sTime.Seconds);
-}
-
-void SetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer)
-{
-    RTC_TimeTypeDef sTime = {0};
-    RTC_DateTypeDef sDate = {0};
-    /** Initialize RTC and set the Time and Date
-    */
-    sTime.Hours = timeBuffer[0];
-    sTime.Minutes = timeBuffer[1];
-    sTime.Seconds = timeBuffer[2];
-    sTime.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
-    sTime.StoreOperation = RTC_STOREOPERATION_RESET;
-
-    if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-    sDate.WeekDay = dateBuffer[3];
-    sDate.Month = dateBuffer[1];
-    sDate.Date = dateBuffer[2];
-    sDate.Year = dateBuffer[0];
-
-    if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
-    {
-        Error_Handler();
-    }
-}
 
 /* USER CODE END 1 */
 

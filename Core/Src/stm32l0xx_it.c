@@ -22,8 +22,7 @@
 #include "stm32l0xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "cmsis_os.h"
-#include "usart.h"
+#include "app_isr.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -43,10 +42,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern __IO ITStatus rxCatch;
-extern __IO ITStatus txFiFoUnFlow;
-extern osMessageQId usartRxQueueHandle;
-extern osSemaphoreId rxBufferBinarySemHandle;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -60,7 +56,6 @@ extern osSemaphoreId rxBufferBinarySemHandle;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern LPTIM_HandleTypeDef hlptim1;
 extern TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN EV */
@@ -92,7 +87,7 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
-
+  App_FatalError(APP_FAULT_HARDFAULT);
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -120,7 +115,7 @@ void EXTI2_3_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_3);
     /* USER CODE BEGIN LL_EXTI_LINE_3 */
-    rxCatch = SET;
+    radio_gdo0_irq();
     /* USER CODE END LL_EXTI_LINE_3 */
   }
   /* USER CODE BEGIN EXTI2_3_IRQn 1 */
@@ -140,7 +135,7 @@ void EXTI4_15_IRQHandler(void)
   {
     LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
     /* USER CODE BEGIN LL_EXTI_LINE_4 */
-    txFiFoUnFlow = SET;
+    radio_gdo2_irq();
     /* USER CODE END LL_EXTI_LINE_4 */
   }
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
@@ -154,48 +149,11 @@ void EXTI4_15_IRQHandler(void)
 void DMA1_Channel2_3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 0 */
-  uint32_t d = 1;
-
-  if (LL_DMA_IsEnabledIT_HT(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_HT3(DMA1))
-  {
-    LL_DMA_ClearFlag_HT3(DMA1);
-    osMessagePut(usartRxQueueHandle, d, 0);
-    debug_printf("[DEBUG] DMA HT中断触发\n");
-  }
-
-  if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_3) && LL_DMA_IsActiveFlag_TC3(DMA1))
-  {
-    LL_DMA_ClearFlag_TC3(DMA1);
-    osMessagePut(usartRxQueueHandle, d, 0);
-    debug_printf("[DEBUG] DMA TC中断触发\n");
-  }
+  link_uart_dma_irq();
   /* USER CODE END DMA1_Channel2_3_IRQn 0 */
   /* USER CODE BEGIN DMA1_Channel2_3_IRQn 1 */
-  /* Events for DMA Channel 2 = USART DMA TX */
-  /* Check transfer complete */
-  if (LL_DMA_IsEnabledIT_TC(DMA1, LL_DMA_CHANNEL_2) && LL_DMA_IsActiveFlag_TC2(DMA1))
-  {
-    LL_DMA_ClearFlag_TC2(DMA1);                                      /* Clear transfer complete flag */
-    lwrb_skip(&ec600x_usart_tx_rb, ec600x_usart_tx_dma_current_len); /* Skip sent data, mark as read */
-    ec600x_usart_tx_dma_current_len = 0;                             /* Clear length variable */
-    ec600x_usart_start_tx_dma_transfer();                            /* Start sending more data */
-  }
 
   /* USER CODE END DMA1_Channel2_3_IRQn 1 */
-}
-
-/**
-  * @brief This function handles LPTIM1 global interrupt / LPTIM1 wake-up interrupt through EXTI line 29.
-  */
-void LPTIM1_IRQHandler(void)
-{
-  /* USER CODE BEGIN LPTIM1_IRQn 0 */
-
-  /* USER CODE END LPTIM1_IRQn 0 */
-  HAL_LPTIM_IRQHandler(&hlptim1);
-  /* USER CODE BEGIN LPTIM1_IRQn 1 */
-
-  /* USER CODE END LPTIM1_IRQn 1 */
 }
 
 /**
@@ -218,28 +176,24 @@ void TIM2_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
-  uint32_t d = 1;
-
-  if (LL_USART_IsEnabledIT_IDLE(USART1) && LL_USART_IsActiveFlag_IDLE(USART1))
-  {
-    LL_USART_ClearFlag_IDLE(USART1);
-    osMessagePut(usartRxQueueHandle, d, 0);
-    osSemaphoreRelease(rxBufferBinarySemHandle);
-    debug_printf("[DEBUG] USART1 IDLE中断触发\n");
-
-    // 打印DMA缓冲区前16字节内容
-    debug_printf("[DEBUG] DMA缓冲区内容: ");
-    for (int i = 0; i < 16; i++)
-    {
-      debug_printf("%02X ", ec600x_usart_rx_dma_buffer[i]);
-    }
-    debug_printf("\n");
-  }
-
+  link_uart_irq();
   /* USER CODE END USART1_IRQn 0 */
   /* USER CODE BEGIN USART1_IRQn 1 */
 
   /* USER CODE END USART1_IRQn 1 */
+}
+
+/**
+  * @brief This function handles LPUART1 global interrupt / LPUART1 wake-up interrupt through EXTI line 28.
+  */
+void LPUART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN LPUART1_IRQn 0 */
+  aux_uart_irq();
+  /* USER CODE END LPUART1_IRQn 0 */
+  /* USER CODE BEGIN LPUART1_IRQn 1 */
+
+  /* USER CODE END LPUART1_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

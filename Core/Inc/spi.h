@@ -39,9 +39,7 @@ extern "C" {
 void MX_SPI1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-void Activate_SPI(void);
-uint8_t SPI_ExchangeByte(uint8_t input);
-void SpiFunction(uint8_t *OutputBuff,uint8_t *InputBuff, uint16_t OutNoOfBytes, uint16_t InNoOfBytes);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

@@ -45,35 +45,17 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-extern __IO uint32_t CollectorID;
-#define	_DEBUG    	 0 //  use printf debug
-#define	_SGM58031    0 //  enable sgm58031
-
-#if (_DEBUG == 1)
-#define debug_printf(...)     			printf(__VA_ARGS__)
-#define debug_info(format,...)   		printf("[info] %s() %d "format"\r\n",__func__,__LINE__,##__VA_ARGS__)
-#define debug_error(format,...)  		printf("[error] %s %s()%d "format"\r\n",__FILE__,__func__,__LINE__,##__VA_ARGS__)
-
-#else
-#define debug_printf(...)     			{};
-#define debug_info(format,...)     	{};
-#define debug_error(format,...)    	{};
-#endif
-
-#define	_Error_Handler(file, line)	printf("[error] %s %d \r\n", (file), (line))
 
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-#define EEPROM_START_ADDR   0x08080000   /* Start @ of user eeprom area */
+
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -115,14 +97,7 @@ void Error_Handler(void);
 #define EC600X_RST_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-void SystemInitial(void);
-void ShowMessage(void);
-void ModuleLtePowerOn(void);
-void strcatArray(uint8_t *dest, uint8_t *src, uint8_t position, uint8_t srclength);
-uint8_t AsciiToHex(uint8_t * pAscii, uint8_t * pHex, uint16_t nLen);
-void DATAEEPROM_Program(uint32_t Address, uint32_t Data);
-uint32_t DATAEEPROM_Read(uint32_t Address);
-void LED_Blinking(uint32_t Period);
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
