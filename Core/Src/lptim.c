@@ -109,3 +109,4 @@ void HAL_LPTIM_AutoReloadMatchCallback(LPTIM_HandleTypeDef *hlptim)
 }
 
 /* USER CODE END 1 */
+

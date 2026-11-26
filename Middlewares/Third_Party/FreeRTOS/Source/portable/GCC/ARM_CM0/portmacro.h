@@ -85,18 +85,27 @@ extern void vPortYield( void );
 #define portYIELD_FROM_ISR( x ) portEND_SWITCHING_ISR( x )
 /*-----------------------------------------------------------*/
 
+
 /* Critical section management. */
 extern void vPortEnterCritical( void );
 extern void vPortExitCritical( void );
-extern uint32_t ulSetInterruptMaskFromISR( void );
-extern void vClearInterruptMaskFromISR( uint32_t ulMask );
+extern uint32_t ulSetInterruptMaskFromISR( void ) __attribute__((naked));
+extern void vClearInterruptMaskFromISR( uint32_t ulMask )  __attribute__((naked));
 
 #define portSET_INTERRUPT_MASK_FROM_ISR()		ulSetInterruptMaskFromISR()
 #define portCLEAR_INTERRUPT_MASK_FROM_ISR(x)	vClearInterruptMaskFromISR( x )
-#define portDISABLE_INTERRUPTS()				__disable_irq()
-#define portENABLE_INTERRUPTS()					__enable_irq()
+#define portDISABLE_INTERRUPTS()				__asm volatile 	( " cpsid i " ::: "memory" )
+#define portENABLE_INTERRUPTS()					__asm volatile 	( " cpsie i " ::: "memory" )
 #define portENTER_CRITICAL()					vPortEnterCritical()
 #define portEXIT_CRITICAL()						vPortExitCritical()
+
+/*-----------------------------------------------------------*/
+
+/* Tickless idle/low power functionality. */
+#ifndef portSUPPRESS_TICKS_AND_SLEEP
+	extern void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime );
+	#define portSUPPRESS_TICKS_AND_SLEEP( xExpectedIdleTime ) vPortSuppressTicksAndSleep( xExpectedIdleTime )
+#endif
 
 /*-----------------------------------------------------------*/
 
@@ -105,6 +114,8 @@ extern void vClearInterruptMaskFromISR( uint32_t ulMask );
 #define portTASK_FUNCTION( vFunction, pvParameters ) void vFunction( void *pvParameters )
 
 #define portNOP()
+
+#define portMEMORY_BARRIER() __asm volatile( "" ::: "memory" )
 
 #ifdef __cplusplus
 }

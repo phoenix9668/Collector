@@ -85,7 +85,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  setvbuf(stdout, NULL, _IONBF, 0); /* newlib: unbuffered stdout, same as MicroLIB fputc */
   /* USER CODE END Init */
 
   /* Configure the system clock */

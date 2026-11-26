@@ -1,100 +1,35 @@
-# user-defined files
-*._2i
-*.axf
-*.fed
-*.l2p
+# CMake and local build output
+/build/
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+*.ninja
+.ninja_*
 
-# git ignore file for Keil 碌Vision Project
-
-# 碌Vision 5 and 碌Vision 4 Project screen layout file
-*.uvguix.*
-*.uvgui.*
-
-# Listing Files
-*.i
-*.lst
-*.m51
-*.m66
-*.map
-
-# Object Files
-#*.axf
-*.b[0-2][0-9]
-*.b3[0-1]
-*.bak
-*.build_log.htm
-*.crf
-*.d
-*.dep
+# Firmware images and listings produced outside build/
 *.elf
-*.htm
-*.iex
-*.lnp
-*.o
-*.obj
-*.sbr
-
-# Firmware Files
+*.hex
 *.bin
-*.h86
-*.hex
-
-# Build Files
-.bat
-
-# Debugger Files
-.ini
-
-# JLink Files
-JLinkLog.txt
-
-# Other Files
-
-# something maybe need to add
-# *.bat  # generate batch file
-# output/project_name # uv project generate without file ext
-# *.SRC # generate source file
-# *.src
-
-# Prerequisites
-*.d
-*.dep
-# Object files
-*.o
-*.obj
-*.OBJ
-
-# Listing Files
-*.COD
-*.cod
-*.[Ii]
-*.LST
-*.lst
-*.MAP
 *.map
-*.[Mm]51
-*.[Mm]66
-*.SCR
-*.scr
+*.su
 
-# LINK output
-*.ABS
+# STM32CubeMX scratch output
+/MXTmpFiles/
+*_save
 
-# Libraries
-#*.lib
-#*.LIB
+# STM32Cube for VS Code local metadata (.vscode/ is tracked on purpose)
+/.clangd
+/.settings/
 
+# Local agent worktrees
+/.claude/worktrees/
 
-# uv output
-*.lnp
-*.build_log.htm
-*.HEX
-*.hex
+# Python cache
+__pycache__/
+*.pyc
 
-
-# Build Files
-*._IA
-*.__[Ii]
-*._[Ii][Ii]
-*.SCR
-*.scr
+# OS and office temporary files
+.DS_Store
+~$*

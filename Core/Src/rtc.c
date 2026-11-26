@@ -169,3 +169,4 @@ void SetRTC(uint8_t *timeBuffer, uint8_t *dateBuffer)
 }
 
 /* USER CODE END 1 */
+

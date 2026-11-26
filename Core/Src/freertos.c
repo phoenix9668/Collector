@@ -64,17 +64,7 @@ static uint32_t lastHeartbeatTick = 0;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define _FIFO_SAMPLES_LEN 900
-#define _AXIS_LEN 150
-typedef struct
-{
-    int16_t x;
-    int16_t y;
-    int16_t z;
-} axis_info_t;
 
-axis_info_t three_axis_info[_AXIS_LEN];
-uint8_t fifo[_FIFO_SAMPLES_LEN];
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -93,7 +83,6 @@ osSemaphoreId rxBufferBinarySemHandle;
 void EepromCtrl(uint8_t *command);
 void FunctionCtrl(uint8_t *command);
 void SendToCloud(uint8_t functionID, uint8_t length);
-void FireWater(uint8_t length);
 /* USER CODE END FunctionPrototypes */
 
 void StartUsartRxDmaTask(void const * argument);
@@ -287,78 +276,6 @@ void SendToCloud(uint8_t functionID, uint8_t length)
     }
 }
 
-/*===========================================================================
-* void FireWater(uint8_t length) => firewater frame
-============================================================================*/
-void FireWater(uint8_t length)
-{
-    //    for(uint16_t i = 0; i < (length - 15); i++)
-    //    {
-    //        debug_printf("fifo[%d] :%x,", i, cc1101.recvBuffer[11 + i]);
-    //    }
-
-    // 3.To 16-bit complement
-    for (uint16_t i = 0; i < (length - 20 - 18 - 4) / 2; i++)
-    {
-        if ((cc1101.recvBuffer[20 + 18 + 2 * i + 1] >> 6 & 0x03) == 0x0)
-        {
-            if ((cc1101.recvBuffer[20 + 18 + 2 * i + 1] & 0x08))
-                three_axis_info[i / 3].x = (short int)(cc1101.recvBuffer[20 + 18 + 2 * i] + (0x0f00 & (cc1101.recvBuffer[20 + 18 + 2 * i + 1] << 8)) + 0xf000);
-            else
-                three_axis_info[i / 3].x = (short int)(cc1101.recvBuffer[20 + 18 + 2 * i] + (0x0f00 & (cc1101.recvBuffer[20 + 18 + 2 * i + 1] << 8)));
-
-            //				rfid_printf("X[%d] = %hd, %hx ", i/3, xAxis[i/3], xAxis[i/3]);
-            printf("s[%d]:%d,", i / 3, cc1101.recvBuffer[6]);
-            printf("%hd,", three_axis_info[i / 3].x);
-        }
-        else if ((cc1101.recvBuffer[20 + 18 + 2 * i + 1] >> 6 & 0x03) == 0x1)
-        {
-            if ((cc1101.recvBuffer[20 + 18 + 2 * i + 1] & 0x08))
-                three_axis_info[i / 3].y = (short int)(cc1101.recvBuffer[20 + 18 + 2 * i] + (0x0f00 & (cc1101.recvBuffer[20 + 18 + 2 * i + 1] << 8)) + 0xf000);
-            else
-                three_axis_info[i / 3].y = (short int)(cc1101.recvBuffer[20 + 18 + 2 * i] + (0x0f00 & (cc1101.recvBuffer[20 + 18 + 2 * i + 1] << 8)));
-
-            //				rfid_printf("Y[%d] = %hd, %hx ", i/3, yAxis[i/3], yAxis[i/3]);
-            printf("%hd,", three_axis_info[i / 3].y);
-        }
-        else if ((cc1101.recvBuffer[20 + 18 + 2 * i + 1] >> 6 & 0x03) == 0x2)
-        {
-            if ((cc1101.recvBuffer[20 + 18 + 2 * i + 1] & 0x08))
-                three_axis_info[i / 3].z = (short int)(cc1101.recvBuffer[20 + 18 + 2 * i] + (0x0f00 & (cc1101.recvBuffer[20 + 18 + 2 * i + 1] << 8)) + 0xf000);
-            else
-                three_axis_info[i / 3].z = (short int)(cc1101.recvBuffer[20 + 18 + 2 * i] + (0x0f00 & (cc1101.recvBuffer[20 + 18 + 2 * i + 1] << 8)));
-
-            //				rfid_printf("Z[%d] = %hd, %hx\n", i/3, zAxis[i/3], zAxis[i/3]);
-            printf("%hd,", three_axis_info[i / 3].z);
-
-            printf("%d,", cc1101.recvBuffer[7] * 50);
-            printf("%d,", (uint16_t)(0xFF00 & cc1101.recvBuffer[8] << 8) + (uint16_t)(0x00FF & cc1101.recvBuffer[9]));
-            printf("%d,", (uint16_t)(0xFF00 & cc1101.recvBuffer[10] << 8) + (uint16_t)(0x00FF & cc1101.recvBuffer[11]));
-            printf("%d,", (uint16_t)(0xFF00 & cc1101.recvBuffer[12] << 8) + (uint16_t)(0x00FF & cc1101.recvBuffer[13]));
-            printf("%d,", (uint16_t)(0xFF00 & cc1101.recvBuffer[14] << 8) + (uint16_t)(0x00FF & cc1101.recvBuffer[15]));
-            printf("%d,", (uint16_t)(0xFF00 & cc1101.recvBuffer[16] << 8) + (uint16_t)(0x00FF & cc1101.recvBuffer[17]));
-            printf("%d,", (uint16_t)(0xFF00 & cc1101.recvBuffer[18] << 8) + (uint16_t)(0x00FF & cc1101.recvBuffer[19]));
-            printf("%d,", cc1101.recvBuffer[20]);
-            printf("%d,", cc1101.recvBuffer[21]);
-            printf("%d,", cc1101.recvBuffer[22]);
-            printf("%d,", cc1101.recvBuffer[23]);
-            printf("%d,", cc1101.recvBuffer[24]);
-            printf("%d,", cc1101.recvBuffer[25]);
-            printf("%d,", cc1101.recvBuffer[26]);
-            printf("%d,", cc1101.recvBuffer[27]);
-            printf("%d,", cc1101.recvBuffer[28]);
-            printf("%d,", cc1101.recvBuffer[29]);
-            printf("%d,", cc1101.recvBuffer[30]);
-            printf("%d,", cc1101.recvBuffer[31]);
-            printf("%d,", cc1101.recvBuffer[32]);
-            printf("%d,", cc1101.recvBuffer[33]);
-            printf("%d,", cc1101.recvBuffer[34]);
-            printf("%d,", cc1101.recvBuffer[35]);
-            printf("%d,", cc1101.recvBuffer[36]);
-            printf("%d\n", cc1101.recvBuffer[37]);
-        }
-    }
-}
 /* USER CODE END 2 */
 
 /* USER CODE BEGIN GET_IDLE_TASK_MEMORY */

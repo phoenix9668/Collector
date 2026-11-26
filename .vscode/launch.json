@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "stlinkgdbtarget",
+      "request": "launch",
+      "name": "Debug (ST-Link)",
+      "origin": "snippet",
+      "cwd": "${workspaceFolder}",
+      "preBuild": "${command:st-stm32-ide-debug-launch.build}",
+      "runEntry": "main",
+      "imagesAndSymbols": [
+        { "imageFileName": "${command:st-stm32-ide-debug-launch.get-projects-binary-from-context1}" }
+      ]
+    },
+    {
+      "type": "stlinkgdbtarget",
+      "request": "launch",
+      "name": "Flash and run (ST-Link)",
+      "origin": "snippet",
+      "cwd": "${workspaceFolder}",
+      "preBuild": "${command:st-stm32-ide-debug-launch.build}",
+      "runEntry": "main",
+      "serverVerify": true,
+      "imagesAndSymbols": [
+        { "imageFileName": "${command:st-stm32-ide-debug-launch.get-projects-binary-from-context1}" }
+      ]
+    }
+  ]
+}

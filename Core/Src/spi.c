@@ -129,3 +129,4 @@ void SpiFunction(uint8_t *OutputBuff, uint8_t *InputBuff, uint16_t OutNoOfBytes,
 }
 //##################################################################################################################
 /* USER CODE END 1 */
+

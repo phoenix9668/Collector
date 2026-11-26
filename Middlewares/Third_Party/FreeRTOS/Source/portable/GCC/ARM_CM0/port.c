@@ -38,25 +38,22 @@
 #endif
 
 /* Constants required to manipulate the NVIC. */
-#define portNVIC_SYSTICK_CTRL		( *( ( volatile uint32_t *) 0xe000e010 ))
-#define portNVIC_SYSTICK_LOAD		( *( ( volatile uint32_t *) 0xe000e014 ))
-#define portNVIC_SYSTICK_CURRENT_VALUE	( * ( ( volatile uint32_t * ) 0xe000e018 ) )
-#define portNVIC_INT_CTRL			( ( volatile uint32_t *) 0xe000ed04 )
-#define portNVIC_SYSPRI2			( ( volatile uint32_t *) 0xe000ed20 )
-#define portNVIC_SYSTICK_CLK		0x00000004
-#define portNVIC_SYSTICK_INT		0x00000002
-#define portNVIC_SYSTICK_ENABLE		0x00000001
-#define portNVIC_SYSTICK_COUNT_FLAG		( 1UL << 16UL )
-#define portNVIC_PENDSVSET			0x10000000
-#define portMIN_INTERRUPT_PRIORITY	( 255UL )
-#define portNVIC_PENDSV_PRI			( portMIN_INTERRUPT_PRIORITY << 16UL )
-#define portNVIC_SYSTICK_PRI		( portMIN_INTERRUPT_PRIORITY << 24UL )
+#define portNVIC_SYSTICK_CTRL		(* ( ( volatile uint32_t *) 0xe000e010 ) )
+#define portNVIC_SYSTICK_LOAD		(* ( ( volatile uint32_t *) 0xe000e014 ) )
+#define portNVIC_SYSTICK_CURRENT_VALUE	(* ( ( volatile uint32_t * ) 0xe000e018 ))
+#define portNVIC_INT_CTRL				( ( volatile uint32_t *) 0xe000ed04 )
+#define portNVIC_SYSPRI2				( ( volatile uint32_t *) 0xe000ed20 )
+#define portNVIC_SYSTICK_CLK			0x00000004
+#define portNVIC_SYSTICK_INT			0x00000002
+#define portNVIC_SYSTICK_ENABLE			0x00000001
+#define portNVIC_SYSTICK_COUNT_FLAG	( 1UL << 16UL )
+#define portNVIC_PENDSVSET				0x10000000
+#define portMIN_INTERRUPT_PRIORITY		( 255UL )
+#define portNVIC_PENDSV_PRI				( portMIN_INTERRUPT_PRIORITY << 16UL )
+#define portNVIC_SYSTICK_PRI			( portMIN_INTERRUPT_PRIORITY << 24UL )
 
 /* Constants required to set up the initial stack. */
 #define portINITIAL_XPSR			( 0x01000000 )
-
-/* Constants used with memory barrier intrinsics. */
-#define portSY_FULL_READ_WRITE		( 15 )
 
 /* The systick is a 24-bit counter. */
 #define portMAX_24_BIT_NUMBER				( 0xffffffUL )
@@ -66,9 +63,14 @@ occurred while the SysTick counter is stopped during tickless idle
 calculations. */
 #define portMISSED_COUNTS_FACTOR			( 45UL )
 
-/* Each task maintains its own interrupt status in the critical nesting
-variable. */
-static UBaseType_t uxCriticalNesting = 0xaaaaaaaa;
+/* Let the user override the pre-loading of the initial LR with the address of
+prvTaskExitError() in case it messes up unwinding of the stack in the
+debugger. */
+#ifdef configTASK_RETURN_ADDRESS
+	#define portTASK_RETURN_ADDRESS	configTASK_RETURN_ADDRESS
+#else
+	#define portTASK_RETURN_ADDRESS	prvTaskExitError
+#endif
 
 /*
  * Setup the timer to generate the tick interrupts.
@@ -78,19 +80,25 @@ static void prvSetupTimerInterrupt( void );
 /*
  * Exception handlers.
  */
-void xPortPendSVHandler( void );
+void xPortPendSVHandler( void ) __attribute__ (( naked ));
 void xPortSysTickHandler( void );
 void vPortSVCHandler( void );
 
 /*
  * Start first task is a separate function so it can be tested in isolation.
  */
-static void prvPortStartFirstTask( void );
+static void vPortStartFirstTask( void ) __attribute__ (( naked ));
 
 /*
  * Used to catch tasks that attempt to return from their implementing function.
  */
 static void prvTaskExitError( void );
+
+/*-----------------------------------------------------------*/
+
+/* Each task maintains its own interrupt status in the critical nesting
+variable. */
+static UBaseType_t uxCriticalNesting = 0xaaaaaaaa;
 
 /*-----------------------------------------------------------*/
 
@@ -117,6 +125,8 @@ static void prvTaskExitError( void );
 	static unsigned long ulStoppedTimerCompensation = 0;
 #endif /* configUSE_TICKLESS_IDLE */
 
+/*-----------------------------------------------------------*/
+
 /*
  * See header file for description.
  */
@@ -129,7 +139,7 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t px
 	pxTopOfStack--;
 	*pxTopOfStack = ( StackType_t ) pxCode;	/* PC */
 	pxTopOfStack--;
-	*pxTopOfStack = ( StackType_t ) prvTaskExitError;	/* LR */
+	*pxTopOfStack = ( StackType_t ) portTASK_RETURN_ADDRESS;	/* LR */
 	pxTopOfStack -= 5;	/* R12, R3, R2 and R1. */
 	*pxTopOfStack = ( StackType_t ) pvParameters;	/* R0 */
 	pxTopOfStack -= 8; /* R11..R4. */
@@ -140,6 +150,8 @@ StackType_t *pxPortInitialiseStack( StackType_t *pxTopOfStack, TaskFunction_t px
 
 static void prvTaskExitError( void )
 {
+volatile uint32_t ulDummy = 0UL;
+
 	/* A function that implements a task must not exit or attempt to return to
 	its caller as there is nothing to return to.  If a task wants to exit it
 	should instead call vTaskDelete( NULL ).
@@ -148,7 +160,16 @@ static void prvTaskExitError( void )
 	defined, then stop here so application writers can catch the error. */
 	configASSERT( uxCriticalNesting == ~0UL );
 	portDISABLE_INTERRUPTS();
-	for( ;; );
+	while( ulDummy == 0 )
+	{
+		/* This file calls prvTaskExitError() after the scheduler has been
+		started to remove a compiler warning about the function being defined
+		but never called.  ulDummy is used purely to quieten other warnings
+		about code appearing after this function is called - making ulDummy
+		volatile makes the compiler think the function could return and
+		therefore not output an 'unreachable code' warning for code that appears
+		after it. */
+	}
 }
 /*-----------------------------------------------------------*/
 
@@ -159,32 +180,31 @@ void vPortSVCHandler( void )
 }
 /*-----------------------------------------------------------*/
 
-__asm void prvPortStartFirstTask( void )
+void vPortStartFirstTask( void )
 {
-	extern pxCurrentTCB;
-
-	PRESERVE8
-
 	/* The MSP stack is not reset as, unlike on M3/4 parts, there is no vector
 	table offset register that can be used to locate the initial stack value.
 	Not all M0 parts have the application vector table at address 0. */
-
-	ldr	r3, =pxCurrentTCB	/* Obtain location of pxCurrentTCB. */
-	ldr r1, [r3]
-	ldr r0, [r1]			/* The first item in pxCurrentTCB is the task top of stack. */
-	adds r0, #32			/* Discard everything up to r0. */
-	msr psp, r0				/* This is now the new top of stack to use in the task. */
-	movs r0, #2				/* Switch to the psp stack. */
-	msr CONTROL, r0
-	isb
-	pop {r0-r5}				/* Pop the registers that are saved automatically. */
-	mov lr, r5				/* lr is now in r5. */
-	pop {r3}				/* The return address is now in r3. */
-	pop {r2}				/* Pop and discard the XPSR. */
-	cpsie i					/* The first task has its context and interrupts can be enabled. */
-	bx r3					/* Finally, jump to the user defined task code. */
-
-	ALIGN
+	__asm volatile(
+	"	.syntax unified				\n"
+	"	ldr  r2, pxCurrentTCBConst2	\n" /* Obtain location of pxCurrentTCB. */
+	"	ldr  r3, [r2]				\n"
+	"	ldr  r0, [r3]				\n" /* The first item in pxCurrentTCB is the task top of stack. */
+	"	adds r0, #32					\n" /* Discard everything up to r0. */
+	"	msr  psp, r0					\n" /* This is now the new top of stack to use in the task. */
+	"	movs r0, #2					\n" /* Switch to the psp stack. */
+	"	msr  CONTROL, r0				\n"
+	"	isb							\n"
+	"	pop  {r0-r5}					\n" /* Pop the registers that are saved automatically. */
+	"	mov  lr, r5					\n" /* lr is now in r5. */
+	"	pop  {r3}					\n" /* Return address is now in r3. */
+	"	pop  {r2}					\n" /* Pop and discard XPSR. */
+	"	cpsie i						\n" /* The first task has its context and interrupts can be enabled. */
+	"	bx   r3						\n" /* Finally, jump to the user defined task code. */
+	"								\n"
+	"	.align 4					\n"
+	"pxCurrentTCBConst2: .word pxCurrentTCB	  "
+				  );
 }
 /*-----------------------------------------------------------*/
 
@@ -205,7 +225,16 @@ BaseType_t xPortStartScheduler( void )
 	uxCriticalNesting = 0;
 
 	/* Start the first task. */
-	prvPortStartFirstTask();
+	vPortStartFirstTask();
+
+	/* Should never get here as the tasks will now be executing!  Call the task
+	exit error function to prevent compiler warnings about a static function
+	not being called in the case that the application writer overrides this
+	functionality by defining configTASK_RETURN_ADDRESS.  Call
+	vTaskSwitchContext() so link time optimisation does not remove the
+	symbol. */
+	vTaskSwitchContext();
+	prvTaskExitError();
 
 	/* Should not get here! */
 	return 0;
@@ -227,8 +256,8 @@ void vPortYield( void )
 
 	/* Barriers are normally not required but do ensure the code is completely
 	within the specified behaviour for the architecture. */
-	__dsb( portSY_FULL_READ_WRITE );
-	__isb( portSY_FULL_READ_WRITE );
+	__asm volatile( "dsb" ::: "memory" );
+	__asm volatile( "isb" );
 }
 /*-----------------------------------------------------------*/
 
@@ -236,8 +265,8 @@ void vPortEnterCritical( void )
 {
     portDISABLE_INTERRUPTS();
     uxCriticalNesting++;
-	__dsb( portSY_FULL_READ_WRITE );
-	__isb( portSY_FULL_READ_WRITE );
+	__asm volatile( "dsb" ::: "memory" );
+	__asm volatile( "isb" );
 }
 /*-----------------------------------------------------------*/
 
@@ -252,64 +281,87 @@ void vPortExitCritical( void )
 }
 /*-----------------------------------------------------------*/
 
-__asm uint32_t ulSetInterruptMaskFromISR( void )
+uint32_t ulSetInterruptMaskFromISR( void )
 {
-	mrs r0, PRIMASK
-	cpsid i
-	bx lr
+	__asm volatile(
+					" mrs r0, PRIMASK	\n"
+					" cpsid i			\n"
+					" bx lr				  "
+					::: "memory"
+				  );
+
+#if !defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+	/* To avoid compiler warnings.  The return statement will nevere be reached,
+	but some compilers warn if it is not included, while others won't compile if
+	it is. */
+	return 0;
+#endif
 }
 /*-----------------------------------------------------------*/
 
-__asm void vClearInterruptMaskFromISR( uint32_t ulMask )
+void vClearInterruptMaskFromISR( __attribute__( ( unused ) ) uint32_t ulMask )
 {
-	msr PRIMASK, r0
-	bx lr
+	__asm volatile(
+					" msr PRIMASK, r0	\n"
+					" bx lr				  "
+					::: "memory"
+				  );
+
+#if !defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
+	/* Just to avoid compiler warning.  ulMask is used from the asm code but
+	the compiler can't see that.  Some compilers generate warnings without the
+	following line, while others generate warnings if the line is included. */
+	( void ) ulMask;
+#endif
 }
 /*-----------------------------------------------------------*/
 
-__asm void xPortPendSVHandler( void )
+void xPortPendSVHandler( void )
 {
-	extern vTaskSwitchContext
-	extern pxCurrentTCB
+	/* This is a naked function. */
 
-	PRESERVE8
-
-	mrs r0, psp
-
-	ldr	r3, =pxCurrentTCB 	/* Get the location of the current TCB. */
-	ldr	r2, [r3]
-
-	subs r0, #32			/* Make space for the remaining low registers. */
-	str r0, [r2]			/* Save the new top of stack. */
-	stmia r0!, {r4-r7}		/* Store the low registers that are not saved automatically. */
-	mov r4, r8				/* Store the high registers. */
-	mov r5, r9
-	mov r6, r10
-	mov r7, r11
-	stmia r0!, {r4-r7}
-
-	push {r3, r14}
-	cpsid i
-	bl vTaskSwitchContext
-	cpsie i
-	pop {r2, r3}			/* lr goes in r3. r2 now holds tcb pointer. */
-
-	ldr r1, [r2]
-	ldr r0, [r1]			/* The first item in pxCurrentTCB is the task top of stack. */
-	adds r0, #16			/* Move to the high registers. */
-	ldmia r0!, {r4-r7}		/* Pop the high registers. */
-	mov r8, r4
-	mov r9, r5
-	mov r10, r6
-	mov r11, r7
-
-	msr psp, r0				/* Remember the new top of stack for the task. */
-
-	subs r0, #32			/* Go back for the low registers that are not automatically restored. */
-	ldmia r0!, {r4-r7}      /* Pop low registers.  */
-
-	bx r3
-	ALIGN
+	__asm volatile
+	(
+	"	.syntax unified						\n"
+	"	mrs r0, psp							\n"
+	"										\n"
+	"	ldr	r3, pxCurrentTCBConst			\n" /* Get the location of the current TCB. */
+	"	ldr	r2, [r3]						\n"
+	"										\n"
+	"	subs r0, r0, #32					\n" /* Make space for the remaining low registers. */
+	"	str r0, [r2]						\n" /* Save the new top of stack. */
+	"	stmia r0!, {r4-r7}					\n" /* Store the low registers that are not saved automatically. */
+	" 	mov r4, r8							\n" /* Store the high registers. */
+	" 	mov r5, r9							\n"
+	" 	mov r6, r10							\n"
+	" 	mov r7, r11							\n"
+	" 	stmia r0!, {r4-r7}					\n"
+	"										\n"
+	"	push {r3, r14}						\n"
+	"	cpsid i								\n"
+	"	bl vTaskSwitchContext				\n"
+	"	cpsie i								\n"
+	"	pop {r2, r3}						\n" /* lr goes in r3. r2 now holds tcb pointer. */
+	"										\n"
+	"	ldr r1, [r2]						\n"
+	"	ldr r0, [r1]						\n" /* The first item in pxCurrentTCB is the task top of stack. */
+	"	adds r0, r0, #16					\n" /* Move to the high registers. */
+	"	ldmia r0!, {r4-r7}					\n" /* Pop the high registers. */
+	" 	mov r8, r4							\n"
+	" 	mov r9, r5							\n"
+	" 	mov r10, r6							\n"
+	" 	mov r11, r7							\n"
+	"										\n"
+	"	msr psp, r0							\n" /* Remember the new top of stack for the task. */
+	"										\n"
+	"	subs r0, r0, #32					\n" /* Go back for the low registers that are not automatically restored. */
+	" 	ldmia r0!, {r4-r7}					\n" /* Pop low registers.  */
+	"										\n"
+	"	bx r3								\n"
+	"										\n"
+	"	.align 4							\n"
+	"pxCurrentTCBConst: .word pxCurrentTCB	  "
+	);
 }
 /*-----------------------------------------------------------*/
 
@@ -332,7 +384,7 @@ uint32_t ulPreviousMask;
 
 #if configUSE_TICKLESS_IDLE == 1
 
-	__weak void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime )
+	__attribute__((weak)) void vPortSuppressTicksAndSleep( TickType_t xExpectedIdleTime )
 	{
 	uint32_t ulReloadValue, ulCompleteTickPeriods, ulCompletedSysTickDecrements, ulSysTickCTRL;
 	TickType_t xModifiableIdleTime;
@@ -360,7 +412,7 @@ uint32_t ulPreviousMask;
 
 		/* Enter a critical section but don't use the taskENTER_CRITICAL()
 		method as that will mask interrupts that should exit sleep mode. */
-		__disable_irq();
+		__asm volatile( "cpsid i" );
 
 		/* If a context switch is pending or a task is waiting for the scheduler
 		to be unsuspended then abandon the low power entry. */
@@ -377,9 +429,9 @@ uint32_t ulPreviousMask;
 			periods. */
 			portNVIC_SYSTICK_LOAD = ulTimerCountsForOneTick - 1UL;
 
-			/* Re-enable interrupts - see comments above __disable_irq() call
+			/* Re-enable interrupts - see comments above the cpsid instruction()
 			above. */
-			__enable_irq();
+			__asm volatile( "cpsie i" );
 		}
 		else
 		{
@@ -402,9 +454,9 @@ uint32_t ulPreviousMask;
 			configPRE_SLEEP_PROCESSING( &xModifiableIdleTime );
 			if( xModifiableIdleTime > 0 )
 			{
-				__dsb( portSY_FULL_READ_WRITE );
-				__wfi();
-				__isb( portSY_FULL_READ_WRITE );
+				__asm volatile( "dsb" );
+				__asm volatile( "wfi" );
+				__asm volatile( "isb" );
 			}
 			configPOST_SLEEP_PROCESSING( &xExpectedIdleTime );
 
@@ -415,9 +467,9 @@ uint32_t ulPreviousMask;
 			ulSysTickCTRL = portNVIC_SYSTICK_CTRL;
 			portNVIC_SYSTICK_CTRL = ( ulSysTickCTRL & ~portNVIC_SYSTICK_ENABLE );
 
-			/* Re-enable interrupts - see comments above __disable_irq() call
+			/* Re-enable interrupts - see comments above the cpsid instruction()
 			above. */
-			__enable_irq();
+			__asm volatile( "cpsie i" );
 
 			if( ( ulSysTickCTRL & portNVIC_SYSTICK_COUNT_FLAG ) != 0 )
 			{
@@ -480,7 +532,6 @@ uint32_t ulPreviousMask;
 	}
 
 #endif /* #if configUSE_TICKLESS_IDLE */
-
 /*-----------------------------------------------------------*/
 
 /*
@@ -489,22 +540,22 @@ uint32_t ulPreviousMask;
  */
 void prvSetupTimerInterrupt( void )
 {
-			/* Calculate the constants required to configure the tick interrupt. */
-  #if configUSE_TICKLESS_IDLE == 1
-		{
-			ulTimerCountsForOneTick = ( configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ );
-			xMaximumPossibleSuppressedTicks = portMAX_24_BIT_NUMBER / ulTimerCountsForOneTick;
-			ulStoppedTimerCompensation = portMISSED_COUNTS_FACTOR / ( configCPU_CLOCK_HZ / configSYSTICK_CLOCK_HZ );
-		}
-		#endif /* configUSE_TICKLESS_IDLE */
+ /* Calculate the constants required to configure the tick interrupt. */
+ #if configUSE_TICKLESS_IDLE == 1
+ {
+   ulTimerCountsForOneTick = ( configSYSTICK_CLOCK_HZ / configTICK_RATE_HZ );
+   xMaximumPossibleSuppressedTicks = portMAX_24_BIT_NUMBER / ulTimerCountsForOneTick;
+   ulStoppedTimerCompensation = portMISSED_COUNTS_FACTOR / ( configCPU_CLOCK_HZ / configSYSTICK_CLOCK_HZ );
+ }
+ #endif /* configUSE_TICKLESS_IDLE */
 
-	/* Stop and reset the SysTick. */
+/* Stop and reset the SysTick. */
 	portNVIC_SYSTICK_CTRL = 0UL;
 	portNVIC_SYSTICK_CURRENT_VALUE = 0UL;
 
-	/* Configure SysTick to interrupt at the requested rate. */
-	portNVIC_SYSTICK_LOAD = ( configCPU_CLOCK_HZ / configTICK_RATE_HZ ) - 1UL;
-	portNVIC_SYSTICK_CTRL = portNVIC_SYSTICK_CLK | portNVIC_SYSTICK_INT | portNVIC_SYSTICK_ENABLE;
+ /* Configure SysTick to interrupt at the requested rate. */
+ portNVIC_SYSTICK_LOAD = ( configCPU_CLOCK_HZ / configTICK_RATE_HZ ) - 1UL;
+ portNVIC_SYSTICK_CTRL = portNVIC_SYSTICK_CLK | portNVIC_SYSTICK_INT | portNVIC_SYSTICK_ENABLE;
 }
 /*-----------------------------------------------------------*/
 

@@ -67,7 +67,7 @@ extern __IO uint32_t CollectorID;
 #define debug_error(format,...)    	{};
 #endif
 
-#define	_Error_Handler(__FILE__, __LINE__)	printf("[error] %s %d \r\n",__FILE__,__LINE__)
+#define	_Error_Handler(file, line)	printf("[error] %s %d \r\n", (file), (line))
 
 /* USER CODE END ET */
 
