@@ -116,7 +116,7 @@ GitHub Actions 对每次推送与 PR 编译三个预设、检查内存预算（`
 
 USB-TTL 接 USART1（PA9 TX / PA10 RX，115200）：
 
-1. 上电：`##Collector 2.0.0 ID=... reset=POR fault=0##`、`##LTE Module Power On Complete##`。
+1. 上电约 2 秒：`##LTE Module Power On Complete##`；约 20 秒：`##Collector 2.0.0 ID=... reset=POR fault=0##`（等 4G 模组 / ESP32 适配板就绪后才发）。
 2. 插跳线：约 60 s 后出现 `0B …… B2 ……`，按上式换算与万用表一致；之后每 20 min 一帧。
 3. 拔跳线：只出现 `##SGM58031 not found##`，20 min 后板子不复位。
 4. 每 120 s 发 `Heartbeat`：PB8 无脉冲；停发 10 min：PB8 拉低 500 ms，并输出 `##LTE Module Reset (no heartbeat)##`。

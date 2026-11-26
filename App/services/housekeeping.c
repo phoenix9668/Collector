@@ -3,6 +3,7 @@
  * @brief   Housekeeping_Task: boot report, 4G module supervision, supply
  *          monitoring, the alive LED and the watchdog, on a 1 s cycle.
  */
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "app_config.h"
@@ -27,13 +28,13 @@ void Housekeeping_Task(void *argument)
 {
     (void)argument;
 
-    app_report_boot();
     modem_supervisor_start();
 
     uint32_t now = osKernelGetTickCount();
     power_monitor_start(now);
     uint32_t next = now;
     uint32_t next_led = now + APP_LED_BLINK_PERIOD_MS;
+    bool boot_reported = false;
 #if APP_DEBUG_LOG
     uint32_t next_report = now;
 #endif
@@ -44,6 +45,12 @@ void Housekeeping_Task(void *argument)
         watchdog_service();
 
         now = osKernelGetTickCount();
+        if (!boot_reported && now >= APP_BOOT_REPORT_DELAY_MS)
+        {
+            /* Late enough for the 4G module / ESP32 adapter to be listening. */
+            app_report_boot();
+            boot_reported = true;
+        }
         if ((int32_t)(now - next_led) >= 0)
         {
             board_led1_toggle();

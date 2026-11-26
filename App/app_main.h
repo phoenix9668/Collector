@@ -27,7 +27,8 @@ void App_FatalError(app_fault_t fault) __attribute__((noreturn));
 /* CollectorID as stored in the data EEPROM, most significant byte first. */
 const uint8_t *app_collector_id(void);
 
-/* Housekeeping task, once: "##Collector <ver> ID=... reset=... fault=...##". */
+/* Housekeeping task, once, APP_BOOT_REPORT_DELAY_MS after power-up:
+ * "##Collector <ver> ID=... reset=... fault=...##". */
 void app_report_boot(void);
 
 #endif /* APP_MAIN_H */

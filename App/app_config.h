@@ -69,6 +69,9 @@
  * Housekeeping
  * ------------------------------------------------------------------------- */
 #define APP_LED_BLINK_PERIOD_MS     4000u   /* LED1 toggles: firmware alive */
+/* "##Collector <ver> ID=.. reset=.. fault=..##" goes out this long after
+ * power-up, when the 4G module or the ESP32 adapter is ready to receive it. */
+#define APP_BOOT_REPORT_DELAY_MS    APP_RF_START_DELAY_MS
 #define APP_WDG_CHECKIN_TIMEOUT_MS  10000u  /* a task silent this long stops IWDG refresh */
 
 /* ---------------------------------------------------------------------------
