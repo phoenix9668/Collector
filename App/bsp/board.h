@@ -22,9 +22,8 @@ static inline void board_write(GPIO_TypeDef *port, uint32_t pin, bool high)
     }
 }
 
-/* LED1 (PA8): toggles every 4 s, on while a B0 frame is sent. */
-static inline void board_led1(bool on) { board_write(LED1_GPIO_Port, LED1_Pin, on); }
-static inline void board_led1_toggle(void) { LL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin); }
+/* STATUS_LED (PA8): the external status lamp on P4, owned by station_status.c. */
+static inline void board_status_led(bool on) { board_write(STATUS_LED_GPIO_Port, STATUS_LED_Pin, on); }
 /* LED2 (PA11): on while a downlink frame is handled. */
 static inline void board_led2(bool on) { board_write(LED2_GPIO_Port, LED2_Pin, on); }
 /* LED_GREEN (PA12): fault indicator before a fatal reset. */

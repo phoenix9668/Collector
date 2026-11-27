@@ -22,6 +22,7 @@ int main(int argc, char **argv)
     test_downlink();
     test_sgm58031();
     test_misc();
+    test_status();
 
     if (argc == 3 && strcmp(argv[1], "--dump") == 0)
     {

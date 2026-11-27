@@ -22,19 +22,23 @@ add_executable(collector_tests
     test_fmt.c
     test_misc.c
     test_sgm58031.c
+    test_status.c
     test_uplink.c
     ${APP_DIR}/drivers/sgm58031.c
     ${APP_DIR}/protocol/crc32_sw.c
     ${APP_DIR}/protocol/downlink.c
     ${APP_DIR}/protocol/uplink.c
+    ${APP_DIR}/services/status_logic.c
     ${APP_DIR}/util/fmt.c
 )
 
 target_include_directories(collector_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${APP_DIR}
     ${APP_DIR}/bsp
     ${APP_DIR}/drivers
     ${APP_DIR}/protocol
+    ${APP_DIR}/services
     ${APP_DIR}/util
 )
 

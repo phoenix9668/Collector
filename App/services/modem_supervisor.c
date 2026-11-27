@@ -9,8 +9,11 @@
 #include "cmsis_os2.h"
 #include "log.h"
 
-static volatile uint32_t s_last_heartbeat;
+static volatile uint32_t s_last_heartbeat; /* reset timer: also restarts after a reset pulse */
 static uint32_t s_next_pwrkey;
+/* Only real heartbeats, for the status lamp. */
+static volatile bool s_heartbeat_received;
+static volatile uint32_t s_last_received;
 
 static void pwrkey_pulse(void)
 {
@@ -30,7 +33,16 @@ void modem_supervisor_start(void)
 
 void modem_supervisor_on_heartbeat(void)
 {
-    s_last_heartbeat = osKernelGetTickCount();
+    uint32_t now = osKernelGetTickCount();
+    s_last_heartbeat = now;
+    s_last_received = now;
+    s_heartbeat_received = true;
+}
+
+bool modem_supervisor_last_heartbeat(uint32_t *tick_ms)
+{
+    *tick_ms = s_last_received;
+    return s_heartbeat_received;
 }
 
 void modem_supervisor_poll(uint32_t now)

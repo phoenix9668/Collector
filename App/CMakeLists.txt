@@ -23,6 +23,8 @@ add_library(collector_app OBJECT
     services/modem_supervisor.c
     services/power_monitor.c
     services/radio_service.c
+    services/station_status.c
+    services/status_logic.c
     util/fmt.c
     util/log.c
     util/watchdog.c

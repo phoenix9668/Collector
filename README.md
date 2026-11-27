@@ -60,7 +60,7 @@ Doc/                     硬件协议、器件资料、采购与生产文档
 |---|---|---|---|
 | `Radio_Task` | High | 640 B | 独占 SPI1/CC1101；GDO 中断唤醒，按 RXBYTES 读 FIFO；CRC 校验后发 B0；每 2 h 断电重新初始化射频 |
 | `Link_Task` | AboveNormal | 640 B | USART1 DMA 接收，按线路空闲分帧；处理 `Heartbeat` 与下行命令 |
-| `Housekeeping_Task` | Normal | 640 B | 开机报告、4G 模组 PWRKEY / 心跳看护、SGM58031 与 B2、LED、看门狗 |
+| `Housekeeping_Task` | Normal | 640 B | 开机报告、4G 模组 PWRKEY / 心跳看护、SGM58031 与 B2、状态灯故障判定、看门狗 |
 
 - USART1 发送用 DMA，由互斥量 `linkTxMutex` 串行化，B0 帧不会被日志插断。
 - IWDG（约 28 s）只在三个任务都于 10 s 内签到时才喂，任一任务卡死都会复位。
@@ -99,6 +99,29 @@ CollectorID 存在数据 EEPROM 偏移 `0x0000`，改写后复位生效。EEPROM
 - 开机 60 s 发第一帧 B2，之后每 20 min 一帧。
 - 未插跳线时只输出一次 `##SGM58031 not found##`，不发 B2，板子照常运行；读数出错输出 `##SGM58031 read error N##`，本周期不发 B2。
 - 关闭：`App/app_config.h` 中 `APP_SGM58031_ENABLE` 置 0。
+
+## 状态灯（P4）
+
+P4 插座上的外部单色灯（PA8，`.ioc` 标签 `STATUS_LED`）显示整个基站的状态。灯语由 100 ms 的 FreeRTOS 软件定时器驱动，housekeeping 每秒重新判定一次故障（`App/services/station_status.c`、`status_logic.c`）。
+
+| 状态 | 闪法 |
+|---|---|
+| 启动（射频开始收包前，约 20 s） | 5 Hz 连闪 |
+| 正常 | 每 3 s 亮 100 ms |
+| 正常时收到有效项圈包 | 下一个周期改为快闪 2 下 |
+| 有异常 | 故障码 N：闪 N 下（亮 200 ms、灭 300 ms），再灭 2 s；多个异常按码从小到大轮流显示 |
+| 致命错误 | 复位前常亮 |
+
+| 码 | 含义 | 判定（`app_config.h` 的 `APP_STATUS_*`） |
+|---|---|---|
+| 1 | 上行离线（ESP32_V2、工控机或 4G 模组） | 6 min 没收到 `Heartbeat`；适配板只在与工控机链路正常时每 120 s 发一次 |
+| 2 | 项圈无数据 | 30 min 没有有效项圈包（开机起算） |
+| 3 | 外部电源断开，靠电池供电 | 最近一帧 B2 的电源电压 < 9.0 V |
+| 4 | 电池电压低 | 最近一帧 B2 的电池电压 < 10.5 V |
+| 5 | 电压采集异常 | SGM58031 未找到或读数失败 |
+| 6 | 射频模块故障 | CC1101 初始化失败 |
+
+码 3、4 依据最近一帧 B2，最多滞后 20 min。板上的 LED2（PA11，处理下行命令时亮）和 LED_GREEN（PA12，致命错误）仍按原用途。
 
 ## 测试
 

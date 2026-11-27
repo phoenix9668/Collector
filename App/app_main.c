@@ -49,7 +49,7 @@ void App_Init(void)
     s_collector_id[2] = (uint8_t)(id >> 8);
     s_collector_id[3] = (uint8_t)id;
 
-    board_led1(false);
+    board_status_led(false);
     board_led2(false);
     board_led_fault(false);
     board_modem_pwrkey(false);
@@ -118,6 +118,7 @@ void App_FatalError(app_fault_t fault)
         HAL_RTCEx_BKUPWrite(&hrtc, RTC_CLOCK_BKP_FAULT, (uint32_t)fault);
     }
     board_led_fault(true);
+    board_status_led(true); /* P4 lamp steady on until the reset */
     if (LL_USART_IsEnabled(USART1))
     {
         char line[32];

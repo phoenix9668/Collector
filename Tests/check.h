@@ -39,11 +39,13 @@ extern int g_failures;
 #define CHECK_STR(a, b)                                                                   \
     do                                                                                    \
     {                                                                                     \
+        const char *a_ = (a); /* evaluate each argument once */                            \
+        const char *b_ = (b);                                                             \
         g_checks++;                                                                       \
-        if (strcmp((a), (b)) != 0)                                                        \
+        if (strcmp(a_, b_) != 0)                                                          \
         {                                                                                 \
             g_failures++;                                                                 \
-            printf("%s:%d: \"%s\" != \"%s\"\n", __FILE__, __LINE__, (a), (b));            \
+            printf("%s:%d: \"%s\" != \"%s\"\n", __FILE__, __LINE__, a_, b_);              \
         }                                                                                 \
     } while (0)
 
@@ -64,6 +66,7 @@ void test_uplink(void);
 void test_downlink(void);
 void test_sgm58031(void);
 void test_misc(void);
+void test_status(void);
 
 /* Frames for Tools/crosscheck_frames.py (written by main.c --dump). */
 void dump_frames(FILE *out);

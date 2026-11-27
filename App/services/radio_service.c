@@ -20,6 +20,7 @@
 #include "link_uart.h"
 #include "log.h"
 #include "rtc_clock.h"
+#include "station_status.h"
 #include "uplink.h"
 #include "watchdog.h"
 
@@ -117,6 +118,7 @@ static bool radio_bring_up(void)
     (void)osThreadFlagsClear(APP_FLAG_RF_ALL);
     gdo_irq_enable(true);
     cc1101_rx_start();
+    station_status_radio(ok);
     return ok;
 }
 
@@ -223,7 +225,6 @@ static void forward_b0(const rf_packet_t *pkt)
     {
         return;
     }
-    board_led1(true);
 #if APP_B0_MIRROR_LPUART1
     aux_uart_start(s_frame, n);
 #endif
@@ -231,7 +232,7 @@ static void forward_b0(const rf_packet_t *pkt)
 #if APP_B0_MIRROR_LPUART1
     (void)aux_uart_wait();
 #endif
-    board_led1(false);
+    station_status_collar_ok();
     LOG_DEBUG("rf: B0 sent, payload %u B, RSSI %d dBm", pkt->len, cc1101_rssi_dbm(pkt->rssi));
 }
 

@@ -83,8 +83,8 @@ void Error_Handler(void);
 #define GDO2_EXTI_IRQn EXTI4_15_IRQn
 #define RX_EN_Pin LL_GPIO_PIN_2
 #define RX_EN_GPIO_Port GPIOB
-#define LED1_Pin LL_GPIO_PIN_8
-#define LED1_GPIO_Port GPIOA
+#define STATUS_LED_Pin LL_GPIO_PIN_8
+#define STATUS_LED_GPIO_Port GPIOA
 #define LED2_Pin LL_GPIO_PIN_11
 #define LED2_GPIO_Port GPIOA
 #define LED_GREEN_Pin LL_GPIO_PIN_12

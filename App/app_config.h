@@ -68,11 +68,23 @@
 /* ---------------------------------------------------------------------------
  * Housekeeping
  * ------------------------------------------------------------------------- */
-#define APP_LED_BLINK_PERIOD_MS     4000u   /* LED1 toggles: firmware alive */
 /* "##Collector <ver> ID=.. reset=.. fault=..##" goes out this long after
  * power-up, when the 4G module or the ESP32 adapter is ready to receive it. */
 #define APP_BOOT_REPORT_DELAY_MS    APP_RF_START_DELAY_MS
 #define APP_WDG_CHECKIN_TIMEOUT_MS  10000u  /* a task silent this long stops IWDG refresh */
+
+/* ---------------------------------------------------------------------------
+ * Status lamp on P4 (PA8): fault codes, see station_status.h / README
+ * ------------------------------------------------------------------------- */
+/* 1: no "Heartbeat". The ESP32 adapter sends one every 120 s while its station
+ * link is up, the 4G module at most every 5 min. */
+#define APP_STATUS_UPLINK_TIMEOUT_MS  (6u * 60u * 1000u)
+/* 2: no valid collar packet (collars report every 20 min). */
+#define APP_STATUS_COLLAR_TIMEOUT_MS  (30u * 60u * 1000u)
+/* 3: external supply below this: running on the battery. */
+#define APP_STATUS_SUPPLY_MIN_MV      9000u
+/* 4: battery below this (3 Li-ion cells at ~3.5 V each). */
+#define APP_STATUS_BATTERY_LOW_MV     10500u
 
 /* ---------------------------------------------------------------------------
  * Data EEPROM layout (offsets from 0x08080000)

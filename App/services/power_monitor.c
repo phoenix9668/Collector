@@ -12,6 +12,7 @@
 #include "log.h"
 #include "sensor_i2c.h"
 #include "sgm58031.h"
+#include "station_status.h"
 #include "uplink.h"
 
 #if APP_SGM58031_ENABLE
@@ -43,6 +44,7 @@ static void measure_and_send(void)
     if (st != SGM58031_OK)
     {
         set_chip_state(CHIP_ABSENT);
+        station_status_supply(SUPPLY_CHIP_ABSENT, 0, 0);
         sensor_i2c_recover();
         return;
     }
@@ -59,14 +61,17 @@ static void measure_and_send(void)
     {
         /* No B2 this period: a 0 would read as a dead battery or lost supply. */
         log_status("SGM58031 read error %u", (unsigned)st);
+        station_status_supply(SUPPLY_READ_ERROR, 0, 0);
         sensor_i2c_recover();
         return;
     }
 
+    uint16_t battery_code = sgm58031_uplink_code(battery);
+    uint16_t power_code = sgm58031_uplink_code(power);
     uint8_t frame[UPLINK_B2_LEN];
-    size_t n = uplink_build_b2(frame, sizeof(frame), app_collector_id(), sgm58031_uplink_code(battery),
-                               sgm58031_uplink_code(power));
+    size_t n = uplink_build_b2(frame, sizeof(frame), app_collector_id(), battery_code, power_code);
     (void)link_uart_write(frame, n);
+    station_status_supply(SUPPLY_OK, battery_code, power_code);
     LOG_DEBUG("B2 battery code %d, power code %d", battery, power);
 }
 

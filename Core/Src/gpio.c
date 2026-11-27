@@ -60,7 +60,7 @@ void MX_GPIO_Init(void)
   LL_GPIO_ResetOutputPin(RX_EN_GPIO_Port, RX_EN_Pin);
 
   /**/
-  LL_GPIO_ResetOutputPin(LED1_GPIO_Port, LED1_Pin);
+  LL_GPIO_ResetOutputPin(STATUS_LED_GPIO_Port, STATUS_LED_Pin);
 
   /**/
   LL_GPIO_ResetOutputPin(LED2_GPIO_Port, LED2_Pin);
@@ -153,12 +153,12 @@ void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /**/
-  GPIO_InitStruct.Pin = LED1_Pin;
+  GPIO_InitStruct.Pin = STATUS_LED_Pin;
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
   GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  LL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
+  LL_GPIO_Init(STATUS_LED_GPIO_Port, &GPIO_InitStruct);
 
   /**/
   GPIO_InitStruct.Pin = LED2_Pin;

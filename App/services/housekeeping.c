@@ -1,7 +1,8 @@
 /**
  * @file    housekeeping.c
  * @brief   Housekeeping_Task: boot report, 4G module supervision, supply
- *          monitoring, the alive LED and the watchdog, on a 1 s cycle.
+ *          monitoring, the status lamp's fault evaluation and the watchdog,
+ *          on a 1 s cycle.
  */
 #include <stdbool.h>
 #include <stdint.h>
@@ -14,6 +15,7 @@
 #include "log.h"
 #include "modem_supervisor.h"
 #include "power_monitor.h"
+#include "station_status.h"
 #include "watchdog.h"
 
 #if APP_DEBUG_LOG
@@ -28,12 +30,12 @@ void Housekeeping_Task(void *argument)
 {
     (void)argument;
 
+    station_status_start(); /* lamp blinks "booting" from here on */
     modem_supervisor_start();
 
     uint32_t now = osKernelGetTickCount();
     power_monitor_start(now);
     uint32_t next = now;
-    uint32_t next_led = now + APP_LED_BLINK_PERIOD_MS;
     bool boot_reported = false;
 #if APP_DEBUG_LOG
     uint32_t next_report = now;
@@ -51,13 +53,9 @@ void Housekeeping_Task(void *argument)
             app_report_boot();
             boot_reported = true;
         }
-        if ((int32_t)(now - next_led) >= 0)
-        {
-            board_led1_toggle();
-            next_led += APP_LED_BLINK_PERIOD_MS;
-        }
         modem_supervisor_poll(now);
         power_monitor_poll(now);
+        station_status_tick(osKernelGetTickCount());
 
 #if APP_DEBUG_LOG
         if ((int32_t)(now - next_report) >= 0)

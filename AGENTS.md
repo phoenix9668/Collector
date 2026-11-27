@@ -26,6 +26,14 @@
   FreeRTOS heap. A `_Static_assert` in `App/app_main.c` keeps the heap big
   enough; a heap too small for it shows on the board as a reset loop with
   fault code 4 (`APP_FAULT_MALLOC`).
+- The one RTOS object not in the `.ioc` is the status lamp's 100 ms software
+  timer, created with `xTimerCreateStatic()` in
+  `App/services/station_status.c`. `osTimerNew()` would allocate its callback
+  wrapper from the FreeRTOS heap, which only has room for `linkTxMutex`.
+- PA8 (`STATUS_LED`, the external lamp on P4) belongs to `station_status.c`;
+  nothing else may drive it, apart from `App_FatalError()` switching it on.
+  Fault codes and thresholds: README "状态灯（P4）", `APP_STATUS_*` in
+  `app_config.h`; the logic is host-tested (`Tests/test_status.c`).
 - `Core/`, `Drivers/`, `Middlewares/`, `cmake/` and the linker script are
   generated. In `Core/` only USER CODE sections may be edited, and they only
   call into `App/`:
