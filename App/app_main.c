@@ -22,6 +22,14 @@
 #include "rtc_clock.h"
 #include "task.h"
 
+/* CubeMX creates linkTxMutex with osMutexNew() and no control block, so it
+ * comes from the FreeRTOS heap (configTOTAL_HEAP_SIZE is set in the USER CODE
+ * Defines of FreeRTOSConfig.h). Too small a heap only shows on the board, as a
+ * reset loop with fault code 4: catch it at build time instead. heap_4 adds an
+ * 8-byte block header and may lose up to 7 bytes to alignment. */
+_Static_assert(configTOTAL_HEAP_SIZE >= sizeof(StaticQueue_t) + 16u,
+               "FreeRTOS heap too small for linkTxMutex (see FreeRTOSConfig.h USER CODE Defines)");
+
 static uint8_t s_collector_id[4];
 static uint32_t s_reset_flags;
 static uint32_t s_last_fault;

@@ -16,11 +16,16 @@
 ## Ownership
 
 - `Collector.ioc` owns pins, clocks, peripherals and the RTOS objects (the
-  three tasks and `linkTxMutex`, all static, task code "As external"). Change
+  three tasks, static, task code "As external", and `linkTxMutex`). Change
   them there and regenerate (STM32CubeMX 6.18+, headless works:
   `STM32CubeMX.exe -q <script>` with `config load`, `project generate`,
   `exit`). Headless generation does not recompute derived values: set the
   I2C `Timing` explicitly and check the generated code.
+- CubeMX generates `linkTxMutex` dynamically (`osMutexNew()` without a
+  control block) although the `.ioc` says "Static", so it comes from the
+  FreeRTOS heap. A `_Static_assert` in `App/app_main.c` keeps the heap big
+  enough; a heap too small for it shows on the board as a reset loop with
+  fault code 4 (`APP_FAULT_MALLOC`).
 - `Core/`, `Drivers/`, `Middlewares/`, `cmake/` and the linker script are
   generated. In `Core/` only USER CODE sections may be edited, and they only
   call into `App/`:
@@ -29,14 +34,14 @@
   - `stm32l0xx_it.c`: the EXTI3/4, DMA1_Channel2_3, USART1, LPUART1 and
     HardFault hooks declared in `App/app_isr.h`.
   - `rtc.c`: keep the calendar across resets (`Check_RTC_BKUP`, DR0 magic).
-  - `FreeRTOSConfig.h` USER CODE Defines: shrinks `configTOTAL_HEAP_SIZE`
-    (everything is static; CubeMX enforces a larger minimum).
+  - `FreeRTOSConfig.h` USER CODE Defines: sets `configTOTAL_HEAP_SIZE` to
+    160 B, enough for `linkTxMutex` only (CubeMX enforces 512 B).
 - `App/` is owned code; `CMakeLists.txt` (top level) is user-owned and adds
   `App/`, the post-build hex/bin and `-Og` for Debug.
 
 ## RAM and stacks
 
-- Release uses about 6.8 KB of 8 KB. `Tools/check_size.py` (also in CI)
+- Release uses about 6.9 KB of 8 KB. `Tools/check_size.py` (also in CI)
   fails above 7368 B RAM or 48 KB flash.
 - CMSIS-RTOS2 fixes `configMAX_PRIORITIES` at 56 (1.1 KB of ready lists);
   do not override it, the generated tasks use CMSIS priorities.

@@ -130,13 +130,14 @@ standard names. */
 
 /* USER CODE BEGIN Defines */
 /* Section where parameter definitions can be added (for instance, to override default ones in FreeRTOS.h) */
-/* Every RTOS object is statically allocated (Collector.ioc: tasks and mutex
-   "Static", idle/timer task memory from cmsis_os2.c), so the FreeRTOS heap
-   is never used. CubeMX enforces at least 4 * MINIMAL_STACK_SIZE; shrink it
-   here. vApplicationMallocFailedHook() resets the board if anything ever
-   allocates. */
+/* The tasks, the idle and the timer task are statically allocated. The only
+   dynamic object is linkTxMutex: CubeMX generates it with osMutexNew() and no
+   control block even though Collector.ioc asks for "Static" (about 88 B with
+   the heap_4 header). CubeMX enforces at least 4 * MINIMAL_STACK_SIZE (512 B);
+   160 B holds the mutex with margin. vApplicationMallocFailedHook() resets the
+   board (fault code 4) if an allocation ever fails. */
 #undef configTOTAL_HEAP_SIZE
-#define configTOTAL_HEAP_SIZE                    ((size_t)64)
+#define configTOTAL_HEAP_SIZE                    ((size_t)160)
 /* USER CODE END Defines */
 
 #endif /* FREERTOS_CONFIG_H */

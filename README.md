@@ -64,7 +64,7 @@ Doc/                     硬件协议、器件资料、采购与生产文档
 
 - USART1 发送用 DMA，由互斥量 `linkTxMutex` 串行化，B0 帧不会被日志插断。
 - IWDG（约 28 s）只在三个任务都于 10 s 内签到时才喂，任一任务卡死都会复位。
-- 空闲任务执行 `WFI`。所有 RTOS 对象静态分配，Release 版 RAM 约 6.8 KB / 8 KB。
+- 空闲任务执行 `WFI`。任务均静态分配；`linkTxMutex` 由 CubeMX 动态创建，FreeRTOS 堆只留 160 B 给它。Release 版 RAM 约 6.9 KB / 8 KB。
 - 致命错误（HAL 错误、HardFault、栈溢出）会把原因写入 RTC 备份寄存器后复位，下次开机在报告中给出。
 
 ## 串口协议（USART1，115200 8N1）
